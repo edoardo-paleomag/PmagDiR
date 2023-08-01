@@ -1,0 +1,18 @@
+Package: PmagDirs
+Type: Package
+Title: Plot and assess reliability of paleomagnetic directions
+Version: 0.1.0
+Author: Edoardo Dallanave
+Maintainer: Edoardo Dallanave <edoardo@uni-bremen.de>
+Description: The main functions of the package are:
+    >plotting paleomagnetic directions, average and confidence cone
+    >applying virtual-geomagneticpoles-based cut-off 
+    >testing for antipodality
+    >testing and correcting for paleomagnetic inclination shallowing
+    >testing and (when possible) correcting for tectonic strain
+Imports: 
+    tidyverse(>= 2.0.0), matlib(>= 0.9.6), dplyr(>= 1.1.0)
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: TRUE
+RoxygenNote: 7.2.3
