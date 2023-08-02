@@ -935,7 +935,7 @@ fisher <- function(DI, export=FALSE, name="fisher_mean"){
   #magnitude of average
   B <- sqrt((X_aver^2)+(Y_aver^2)+(Z_aver^2))
   #Fisher (1953) parameters R,K, a95
-  N <- length(data[,1])
+  N <- length(data$dec)
   R <- sqrt(X_sum^2+Y_sum^2+Z_sum^2)
   K <- (N-1)/(N-R)
   a95 <- r2d(acos(1-(((N-R)/R)*(((1/0.05)^(1/(N-1)))-1))))
@@ -2326,3 +2326,75 @@ Graph saved as Unstrained_directions_plot.pdf
   }
 }
 
+#calculate virtual geomagnetic pole(s)
+VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs"){
+  #conversion functions
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #start data table
+  data <- DI
+  data <- na.omit(data)
+  #add lat and long columns if not present in file
+  if(in_file==FALSE){
+    data$slat <- rep(lat)
+    data$slong <- rep(long)
+  }
+  #fix col names
+  colnames(data) <- c("dec","inc","slat","slong")
+  #populate data table with used data
+  data$dec_r <- d2r(data$dec)
+  data$inc_r <- d2r(data$inc)
+  data$slat_r <- d2r(data$slat)
+  data$slong_r <- d2r(data$slong)
+  #calculate pole colatitude
+  data$p_colat_r <- atan(2/tan(data$inc_r))
+  data$p_colat_d <- r2d(data$p_colat_r)
+  #calculate pole latitude
+  data$PLat_r <- asin((sin(data$slat_r)*cos(data$p_colat_r))+
+                        (cos(data$slat_r)*sin(data$p_colat_r)*cos(data$dec_r)))
+  data$Plat_d<- r2d(data$PLat)
+  #Longitudinal difference between site and pole
+  data$LDist_r <- asin((sin(data$p_colat_r)*sin(data$dec_r))/cos(data$PLat_r))
+  data$LDist_d <- r2d(data$LDist_r)
+  #calculate longitude
+  data$PLong_d <- ifelse(cos(data$p_colat_r)<(sin(data$slat_r)*sin(data$PLat_r)),
+                         data$slong+180-data$LDist_d,
+                         data$slong+data$LDist_d)
+  #adjust vgp for normal and reversed
+  data$Pole_longitude <- ifelse(data$p_colat_d<0,ifelse((data$PLong_d+180)>360,
+                                                        data$PLong_d-180,data$PLong_d+180),
+                                data$PLong_d)
+  data$Pole_latitude <- ifelse(data$p_colat_d<0,-data$Plat_d,data$Plat_d)
+  #isolate VGPs with reversals
+  VGPs <- data[,c(16,17)]
+
+  #isolate VGPs all normal
+  VGPsN <- data[,c(15,12)]
+  colnames(VGPsN) <- c("Plong_N","Plat_N")
+
+  #calculate average VGP
+  PmagPole <- fisher(VGPsN)
+
+  #rename columns of PmagPole
+  colnames(PmagPole)[1:2] <- c("long","lat")
+
+  #rotate VGPs to North pole
+  VGPsR <- bed_DI(DI = VGPs,in_file = F,bed_az = ifelse((PmagPole[1,1]+180)>360,PmagPole[1,1]-180,PmagPole[1,1]),
+                  bed_plunge = 90-PmagPole$lat)
+  colnames(VGPsR) <- c("Plong_R","Plat_R")
+
+  if(export==TRUE){
+    write.csv(round(PmagPole,digits=2),file=paste(name,"_average_pole.csv"),row.names = F)
+    write.csv(round(VGPsN,digits = 2),file=paste(name,"_single_mode.csv"),row.names = F)
+    write.csv(round(VGPs, digits = 2),file=paste(name,"_bimodal.csv"),row.names = F)
+    write.csv(round(VGPsR,digits = 2),file=paste(name,"_rotated.csv"),row.names = F)
+    cat("File exported as csv within the working directory")
+  }
+  cat("Paleomagnetic pole:
+
+")
+  print(round(PmagPole,digits=2))
+  if(type=="VGPs"){return(VGPs)}
+  if(type=="VGPsN"){return(VGPsN)}
+  if(type=="VGPsR"){return(VGPsR)}
+}
