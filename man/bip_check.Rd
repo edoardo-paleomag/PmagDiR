@@ -12,7 +12,6 @@ bip_check(DI)
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
 }
-}
 \details{
 }
 \value{

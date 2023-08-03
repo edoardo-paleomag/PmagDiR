@@ -2388,12 +2388,15 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
     write.csv(round(VGPsN,digits = 2),file=paste(name,"_single_mode.csv"),row.names = F)
     write.csv(round(VGPs, digits = 2),file=paste(name,"_bimodal.csv"),row.names = F)
     write.csv(round(VGPsR,digits = 2),file=paste(name,"_rotated.csv"),row.names = F)
-    cat("File exported as csv within the working directory")
+    cat("File exported as csv within the working directory
+
+")
   }
   cat("Paleomagnetic pole:
 
 ")
-  print(round(PmagPole,digits=2))
+  print(round(PmagPole,digits=2),row.names=FALSE)
+
   if(type=="VGPs"){return(VGPs)}
   if(type=="VGPsN"){return(VGPsN)}
   if(type=="VGPsR"){return(VGPsR)}

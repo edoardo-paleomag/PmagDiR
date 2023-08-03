@@ -25,7 +25,6 @@ plot_plane(D, I, col_cD = "black", col_cU = "grey", pole = TRUE, col_d = "red", 
 }
 \details{
 }
-}
 \author{
 Edoardo Dallanave
 }

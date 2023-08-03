@@ -15,8 +15,8 @@ VGP_DI(DI,in_file=FALSE,lat,long,type="VGPsN",export=TRUE,name="VGPs")
   \item{in_file}{if TRUE, site latitude and longitude are within the entry file, if FALSE are specified in the command line, default is FALSE}
   \item{lat}{site latitude, do not spcify if in_file=TRUE}
   \item{long}{site longitude, do not spcify if in_file=TRUE}
-  \item{export}{if TRUE, results are exported as .csv files}
-  \item{type}{type of value saved: "VGPs"= VGP with reversals, "VGPsN" = VGP in a common mode, "VGPsR" = VGP rotated with the mean value (Paleomagnetic Pole) rotated onto the North Pole}
+  \item{export}{if TRUE, results are exported as .csv files, default is TRUE}
+  \item{type}{type of value saved: "VGPs"= VGP with reversals,  "VGPsN" = VGP in a common mode (default),   "VGPsR" = VGP rotated with the mean value (Paleomagnetic Pole) rotated onto the North Pole}
   \item{name}{name of the exported .csv files, default is "VGPs"}
 }
 \details{
