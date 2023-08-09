@@ -424,9 +424,13 @@ EI_boot <- function(DI,nb=1000,conf=95,export=TRUE, name="EI_boot_plot") {
   Inc_E <- Inc_E[order(Inc_E$E),]
   Inc_E_bk <- Inc_E
   Inc_E <- Inc_E_bk
+
+  Lconf <- num
+  Uconf <- nb-num
   confn <- conf/100
-  Lconf <- round(as.numeric(nb*(1-confn)), digit=0)
-  Uconf <- round(nb*confn, digit=0)
+  num <- round((nb*(1-conf))/2,digits=0)
+  Lconf <- num
+  Uconf <- nb-num
   Inc_E <- Inc_E[Lconf:Uconf,]
 
   N <- as.character(length(data[,1]))
@@ -575,11 +579,11 @@ equalarea <- function(title="") {
   lines(c(0, 0), c(-1, 1), col = "gray")
   lines(c(xd1_1, xd1_2), c(yd1_1, yd1_2), col = "gray")
   lines(c(xd2_1, xd2_2), c(yd2_1, yd2_2), col = "gray")
-  title(xlab = ifelse(title!="", title,""), line=0.2, cex=0.1)
+  title(xlab = title, line=0.2, cex=0.1)
 }
 
 #Function that correct inclination shallowing after tk03.GAD model
-ffind_boot <- function(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE, name="Unflattened_dirs") {
+ffind_boot <- function(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE,return=TRUE, name="Unflattened_dirs") {
   data <- DI[,1:2]
   data <- na.omit(data)
   N <- length(data[,1])
@@ -663,7 +667,7 @@ DISTRIBUTION NOT FLATTENED.")
   cat("Bootstrapping.
 Simulation ends when", nb, "valid pseudosamples are saved.
 
-      ")
+")
   n <- 0
   par(fig=c(0,0.7,0,1), new=TRUE)
   plot(NA, xlim= c(0,90), ylim= c(1,3.5), xaxt="n",yaxt="n",
@@ -716,8 +720,9 @@ Simulation ends when", nb, "valid pseudosamples are saved.
   final_E_Ibk <- final_E_I
 
   conf <- confidence/100
-  Lconf <- round(as.numeric(nb*(1-conf)), digit=0)
-  Uconf <- round(nb*conf, digit=0)
+  num <- round((nb*(1-conf))/2,digits=0)
+  Lconf <- num
+  Uconf <- nb-num
   final_E_I <- final_E_I[Lconf:Uconf,]    #cut bootstrapped results for 95% confidence
 
   #draw two lines for 95% confidence margin
@@ -795,6 +800,7 @@ Graph saved as",paste(name,".pdf"),"
     write.csv(stat,paste(name,"_statistic.csv"), row.names=FALSE)
     save_pdf(name=paste(name,".pdf"))
   }
+  if(return==TRUE){return(unf_data)}
 }
 
 #flattening factor finder function from Dec Inc, results in Inc, E, and E declination
@@ -907,7 +913,7 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
   }
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6,height = 6)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #function that return fisher statistic from dec_inc
@@ -1173,7 +1179,130 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
            bg=col_u)
   }
   lines(circle$x,circle$y,lty=1, col=col_l, lwd=1.8)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6,height = 6)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
+#plot A95 on a spherical orthographic plot
+plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black", symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP=FALSE,S_APWP=FALSE){
+  library("dplyr", warn.conflicts = FALSE)
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+
+  #functions spherical (lon=x, lat=y) to Cartesian
+  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
+  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
+  s2cz <- function(y) {sin(d2r(y))}
+  #save declination and inc and calculate new system for rotation
+  #dec <- D
+  newSlon <- ifelse((lon+180)>360,lon-180,lon+180)
+  #inc <- I
+  newSlat <- 90-lat
+  newSlonr <- d2r(newSlon)
+  newSlatr <- d2r(newSlat)
+  a95 <- A
+  circle <- as.data.frame(matrix(ncol=2,nrow=0))
+  #loop that create a95 and rotate it around new coordinate (dec, inc)
+  for (i in seq(0,360,2)){
+    circleP <- as.data.frame(matrix(ncol=2,nrow=1))
+    x <- s2cx(i,(90-a95))
+    y <- s2cy(i,(90-a95))
+    z <- s2cz(90-a95)
+    vec <- as.matrix(c(x,y,z))
+    R_elements <- c(cos(newSlatr)*cos(newSlonr), -sin(newSlonr), -sin(newSlatr)*cos(newSlonr),
+                    cos(newSlatr)*sin(newSlonr), cos(newSlonr), -sin(newSlatr)*sin(newSlonr),
+                    sin(newSlatr), 0, cos(newSlatr))
+    R <- matrix(R_elements,nrow=3, byrow=TRUE)
+    newvec <- R%*%vec
+    newlon <- r2d(atan2(newvec[2,1],newvec[1,1]))
+    newlon <- ifelse(newlon<0,newlon+360,newlon)
+    #absolute value avoid point outside the graph
+    newlat <- r2d(asin(newvec[3,1]))
+    circleP[1,1:2] <- c(newlon,newlat)
+    circle <- rbind(circle,circleP)
+  }
+  colnames(circle) <- c("lon","lat")
+  circle$x <- c2x(circle$lon,circle$lat)
+  circle$y <- c2y(circle$lon,circle$lat)
+  circle$cut <- cut(circle$lon,circle$lat)
+  #restore screen
+  par(fig=c(0,1,0,1))
+  #standalone graph or on existing graph
+  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid)
+
+  #plot coastline if true
+  if(coast==TRUE){
+    cst <- world_coastline
+    colnames(cst) <- c("lon","lat")
+    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
+    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
+    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+  }
+  X <- c2x(lon,lat)
+  Y <- c2y(lon,lat)
+  CUT <- cut(lon,lat)
+  #select symbol
+  if(symbol=="c") pch <- 21
+  if(symbol=="s") pch <- 22
+  if(symbol=="d") pch <- 23
+  if(symbol=="t") pch <- 24
+
+  if(CUT>0){
+    points(X,Y, pch=pch,cex=1, col="black",
+           bg= col_f)
+  }else{
+    points(X,Y, pch=pch,cex=1, col="black",
+           bg=col_b)
+  }
+  lines(circle$x,circle$y, col=col_l, lwd=0.8,lty= ifelse(CUT>0,1,3))
+  #plot APWP if requested during process
+  if(APWP==TRUE){
+    library(plyr, warn.conflicts = FALSE)
+    library(dplyr,warn.conflicts = FALSE)
+    cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
+    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- (Y/10)+1
+    O <- (O/10)+1
+    cat("Frames:
+(1) South Africa
+(2) North America
+(3) Europe
+(4) India
+(5) Amazonia
+(6) Australia
+(7) East Antarctica")
+    frame <- as.numeric(readline("insert frame (number): "))
+    col1 <- (frame*2)+1
+    col2 <- (frame*2)+2
+    G <- GAPWP
+    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
+    par(fig=c(0,1,0,1), new=TRUE)
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    #line connecting APWP
+    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
+    colnames(lin) <- "lx"
+    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
+    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
+    lines(lin$lx,lin$ly,cex=1)
+    #plot poles APWP
+    for (i in Y:O){
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_d = "gray",col_l = "black")
+    }
+    text1 <- paste(G[Y,1],"Ma")
+    text2 <- paste(G[O,1], "Ma")
+    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
+    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+  }
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #function plotting directions
@@ -1211,7 +1340,7 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
          bg= col_d)
   points(xU,yU, pch=pch,col=col_ext,
          bg=col_u)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6,height = 6)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #plot plain intersection in equal area given declination and inclination of pole
@@ -1299,7 +1428,67 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
   }
   points(x=circle_U$x,y=circle_U$y,type="l", col=col_cU,lty=2)
   points(x=circle_D$x,y=circle_D$y,type="l", col=col_cD)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6,height = 6)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
+#plot virtual geomagnetic poles
+plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,exp=TRUE,coast=TRUE, title="",save=TRUE,A95=FALSE ,name="VGP"){
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #manipulate data
+  #VGP <- na.omit(VGP)
+  colnames(VGP) <- c("lon","lat")
+  vgpsN <- common_DI(VGP,down = ifelse(mean(VGP$lat)<0,FALSE,TRUE))
+  PPole <- fisher(vgpsN)
+
+  #fix point of view
+  if(auto_cent==FALSE){
+    #center of proj is Lon0 & Lat0
+    lon0 <- long
+    lat0 <- lat
+  }else{
+    lon0 <- PPole[1,1]
+    lat0 <- PPole[1,2]
+  }
+  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid, title=title)}
+  if(coast==TRUE){
+    cst <- world_coastline
+    colnames(cst) <- c("lon","lat")
+    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
+    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
+    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+  }
+  coord <- as.data.frame(lon0)
+  coord$lat0 <- lat0
+  if(exp==TRUE){
+    write.csv(round(coord, digits=2),file="center_coordinates.csv", row.names = F)
+  }
+  cat(paste("Center coordinates:
+
+"))
+  print(round(coord,digits=2),row.names=F)
+
+  VGP$x <- c2x(VGP$lon,VGP$lat)
+  VGP$y <- c2y(VGP$lon,VGP$lat)
+  VGP$cut <- cut(VGP$lon,VGP$lat)
+
+  points(VGP$x,VGP$y,pch=ifelse(VGP$cut>0,16,1),col=col)
+  if(A95==TRUE){
+    plot_PA95(lon = PPole[1,1],lat = PPole[1,2],A = PPole[1,3],lon0 = lon0,lat0 = lat0,on_plot = TRUE,symbol = "d",col_l = "red")
+    text <- paste("N: ",PPole[1,4],"
+Long: ", round(PPole[1,1],digits=2),"
+Lat: ", round(PPole[1,2], digits=2),"
+A95: ", round(PPole[1,3], digits=2))
+    text(x=0.75, y=-0.85,pos=4,text, cex= 0.85)
+  }
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #reversal test boostrapped following Tauxe
@@ -1425,8 +1614,9 @@ DISTRIBUTION NOT BIMODAL")
 
   #define low and high boostrapped margins
   confn <- 0.95
-  Lconf <- round(as.numeric(nb*(1-confn)), digit=0)
-  Uconf <- round(nb*confn, digit=0)
+  num <- round((nb*(1-confn))/2,digits=0)
+  Lconf <- num
+  Uconf <- nb-num
   B1x_l <- c(B1x[Lconf],B1x[Uconf])
   B2x_l <- c(B2x[Lconf],B2x[Uconf])
   B1y_l <- c(B1y[Lconf],B1y[Uconf])
@@ -1536,6 +1726,61 @@ DISTRIBUTION NOT BIMODAL")
 #pdf printing standard size
 save_pdf <- function(name="Figure.pdf",width=11,height=8){
   dev.print(pdf,name,width = width, height = height)
+}
+
+#plot spherical ortographic projection centered in specified coordinates
+sph_ortho <- function(lat=90,long=0,grid=30, title="") {
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  #center of proj is Lon0 & Lat0
+  lon0 <- long
+  lat0 <- lat
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+
+  #fix frame
+  plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+  #plot_main_parallel
+  #longitude circle
+  lats <- seq(-(90-grid),(90-grid),grid)
+  for(i in lats){
+    lon_lat_p <-  as.data.frame(1:360)
+    lon_lat_p$lat <- rep(i)
+    lon_lat_p$x <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
+                          c2x(lon_lat_p[,1],lon_lat_p[,2]))
+    lon_lat_p$y <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
+                          c2y(lon_lat_p[,1],lon_lat_p[,2]))
+    lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3)
+  }
+
+  #plot_main_meridians
+  lons <- seq(grid,360,grid)
+  for(i in lons){
+    lat_lon_m <- as.data.frame(seq(-89,89,1))
+    lat_lon_m$lon <- rep(i)
+    lat_lon_m$x <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
+                          c2x(lat_lon_m[,2],lat_lon_m[,1]))
+    lat_lon_m$y <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
+                          c2y(lat_lon_m[,2],lat_lon_m[,1]))
+    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3)
+  }
+  #plot black frame around globe
+  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
+  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+  #plot external circle
+  frame_dec = 0:360
+  frame_inc=rep(0,length(frame_dec))
+  x = a2cx(frame_inc,frame_dec)
+  y = a2cy(frame_inc,frame_dec)
+  lines(x, y, col = "black")
+  title(xlab = title, line=0.2, cex=0.1)
 }
 
 #function that deform dec Inc from eigenvectors
@@ -1822,8 +2067,9 @@ Edec:", Edec_nstr)
 
   #cut bootstrapped results for 95% (unless different) confidence
   conf <- confidence/100
-  Lconf <- round(as.numeric(nb*(1-conf)), digit=0)
-  Uconf <- round(nb*conf, digit=0)
+  num <- round((nb*(1-conf))/2,digits=0)
+  Lconf <- num
+  Uconf <- nb-num
   final_E_I <- final_E_I[order(final_E_I$Inc),]
   final_E_I <- final_E_I[Lconf:Uconf,]
 
@@ -2179,10 +2425,10 @@ unstr_stat <- function(unstr_file, nb=1000,confidence=95,hist=TRUE, export=TRUE,
   Inc_E <- Inc_E[order(Inc_E$E),]
   NInc_E <- NInc_E[order(NInc_E$E),]
   #trims files for confidence
-  conf <- confidence
-  confn <- conf/100
-  Lconf <- round(as.numeric(nb*(1-confn)), digit=0)
-  Uconf <- round(nb*confn, digit=0)
+  conf <- confidence/100
+  num <- round((nb*(1-conf))/2,digits=0)
+  Lconf <- num
+  Uconf <- nb-num
   Inc_E <- Inc_E[Lconf:Uconf,]
   NInc_E <- NInc_E[Lconf:Uconf,]
 
@@ -2326,6 +2572,341 @@ Graph saved as Unstrained_directions_plot.pdf
   }
 }
 
+#plot A95 from VGP data and compare with GAPWP
+VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95", S_APWP=FALSE){
+  library("dplyr", warn.conflicts = FALSE)
+
+  #warning for on-plot, to avoid wrong coordinates
+  if(on_plot==TRUE && auto_cent==TRUE) {
+    stop("Please SPECIFY center coordinates when on_plot==TRUE",call. = F)
+  }
+
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+
+  #functions spherical (lon=x, lat=y) to Cartesian
+  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
+  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
+  s2cz <- function(y) {sin(d2r(y))}
+
+  colnames(VGP) <- c("lon","lat")
+  vgpsN <- common_DI(VGP,down = ifelse(mean(VGP$lat)<0,FALSE,TRUE))
+  PPole <- fisher(vgpsN)
+  Plon <- PPole[1,1]
+  Plat <- PPole[1,2]
+  A <- PPole[1,3]
+
+  #fix point of view
+  if(auto_cent==FALSE){
+    #center of proj is Lon0 & Lat0
+    lon0 <- long
+    lat0 <- lat
+  }else{
+    lon0 <- Plon
+    lat0 <- Plat
+  }
+  #save declination and inc and calculate new system for rotation
+  newSlon <- ifelse((Plon+180)>360,Plon-180,Plon+180)
+  newSlat <- 90-Plat
+  newSlonr <- d2r(newSlon)
+  newSlatr <- d2r(newSlat)
+  a95 <- A
+  circle <- as.data.frame(matrix(ncol=2,nrow=0))
+  #loop that create a95 and rotate it around new coordinate (dec, inc)
+  for (i in seq(0,360,2)){
+    circleP <- as.data.frame(matrix(ncol=2,nrow=1))
+    x <- s2cx(i,(90-a95))
+    y <- s2cy(i,(90-a95))
+    z <- s2cz(90-a95)
+    vec <- as.matrix(c(x,y,z))
+    R_elements <- c(cos(newSlatr)*cos(newSlonr), -sin(newSlonr), -sin(newSlatr)*cos(newSlonr),
+                    cos(newSlatr)*sin(newSlonr), cos(newSlonr), -sin(newSlatr)*sin(newSlonr),
+                    sin(newSlatr), 0, cos(newSlatr))
+    R <- matrix(R_elements,nrow=3, byrow=TRUE)
+    newvec <- R%*%vec
+    newlon <- r2d(atan2(newvec[2,1],newvec[1,1]))
+    newlon <- ifelse(newlon<0,newlon+360,newlon)
+    #absolute value avoid point outside the graph
+    newlat <- r2d(asin(newvec[3,1]))
+    circleP[1,1:2] <- c(newlon,newlat)
+    circle <- rbind(circle,circleP)
+  }
+  colnames(circle) <- c("lon","lat")
+  circle$x <- c2x(circle$lon,circle$lat)
+  circle$y <- c2y(circle$lon,circle$lat)
+  circle$cut <- cut(circle$lon,circle$lat)
+  #standalone graph or on existing graph
+  if (on_plot==FALSE) {sph_ortho(lat = lat0,long = lon0,grid = grid)}
+  if(coast==TRUE){
+    cst <- world_coastline
+    colnames(cst) <- c("lon","lat")
+    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
+    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
+    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+  }
+
+  #select symbol
+  if(symbol=="c") sym <- 21
+  if(symbol=="s") sym <- 22
+  if(symbol=="d") sym <- 23
+  if(symbol=="t") sym <- 24
+
+  #plot pole
+  Px <- c2x(Plon,Plat)
+  Py <- c2y(Plon,Plat)
+  Pcut <- cut(Plon,Plat)
+
+  #plot symbol open if behind
+  if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
+  }else{points(Px,Py,pch=sym,col="black",bg="white")}
+
+  lines(circle$x,circle$y, col="black", lwd=1.2,lty= ifelse(Pcut>0,1,3))
+
+  text <- paste("N: ",round(PPole[1,4],digits=2),"
+Long: ", round(PPole[1,1],digits=2),"
+Lat: ", round(PPole[1,2],digits=2),"
+A95: ", round(PPole[1,3],digits=2))
+  text(x=0.75, y=-0.85,pos=4,text, cex= 0.85)
+
+  #plot APWP if requested during process
+  pAPWP <- readline("Plot APWP? (y or n): ")
+  if(pAPWP=="y"){
+    library(plyr, warn.conflicts = FALSE)
+    library(dplyr,warn.conflicts = FALSE)
+    cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
+    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- (Y/10)+1
+    O <- (O/10)+1
+    cat("Frames:
+(1) South Africa
+(2) North America
+(3) Europe
+(4) India
+(5) Amazonia
+(6) Australia
+(7) East Antarctica")
+    frame <- as.numeric(readline("insert frame (number): "))
+    col1 <- (frame*2)+1
+    col2 <- (frame*2)+2
+    G <- GAPWP
+    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
+    par(fig=c(0,1,0,1), new=TRUE)
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    #line connecting APWP
+    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
+    colnames(lin) <- "lx"
+    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
+    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
+    lines(lin$lx,lin$ly,cex=1)
+    #plot poles APWP
+    for (i in Y:O){
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_d = "gray",col_l = "black")
+    }
+    text1 <- paste(G[Y,1],"Ma")
+    text2 <- paste(G[O,1], "Ma")
+    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
+    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+  }
+  if(save==TRUE){
+    save_pdf(name = paste(name,".pdf"),width = 8,height = 8)
+    cat("Figure saved as",name, ".pdf")
+    }
+}
+
+#bootstrap of VGPs
+VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=FALSE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",S_APWP=FALSE){
+
+  #warning for on-plot, to avoid wrong coordinates
+  if(on_plot==TRUE && auto_cent==TRUE) {
+    stop("Please SPECIFY center coordinates when on_plot==TRUE",call. = F)
+  }
+
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #manipulate data
+  colnames(VGP) <- c("lon","lat")
+  vgpsN <- common_DI(VGP,down = ifelse(mean(VGP$lat)<0,FALSE,TRUE))
+  PPole <- fisher(vgpsN)
+  Plon <- PPole[1,1]
+  Plat <- PPole[1,2]
+  #fix point of view
+  if(auto_cent==FALSE){
+    #center of proj is Lon0 & Lat0
+    lon0 <- long
+    lat0 <- lat
+  }else{
+    lon0 <- Plon
+    lat0 <- Plat
+  }
+  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid, title="")}
+  if(coast==TRUE){
+    cst <- world_coastline
+    colnames(cst) <- c("lon","lat")
+    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
+    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
+    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+  }
+  cat("Bootstrapping.
+Simulation ends when", nb, " pseudosamples are saved.
+
+")
+  bootlonlat <- as.data.frame(matrix(ncol = 2,nrow = 0))
+  n <- 0
+  repeat{
+    n <- n+1
+    VGPb <- boots_DI(VGP)
+    VGPb_av <- fisher(VGPb)
+    blon <- VGPb_av[1,1]
+    blat <- VGPb_av[1,2]
+    blonlat <- as.data.frame(t(c(blon,blat)))
+    bootlonlat <- rbind(bootlonlat,blonlat)
+    x <- c2x(blon,blat)
+    y <- c2y(blon,blat)
+    cutt <- cut(blon,blat)
+    points(x,y,pch=ifelse(cutt>0,16,1),col=rgb(1,0,0,0.15))
+    if(((n%%50)==0)==TRUE){
+
+      cat(paste(n,"simulations out of",nb,"done
+"))
+
+      if(n==nb) break
+    }
+  }
+  colnames(bootlonlat) <- c("vgp_lon","vgp_lat")
+  bootlonlat$Plon <- rep(Plon)
+  bootlonlat$Plat <- rep(Plat)
+  bootlonlat$delta <- abs(bootlonlat$vgp_lon-bootlonlat$Plon)
+  bootlonlat$diff <- r2d(acos((sin(d2r(bootlonlat$vgp_lat))*sin(d2r(bootlonlat$Plat)))+
+                                (cos(d2r(bootlonlat$vgp_lat))*cos(d2r(bootlonlat$Plat))*cos(d2r(bootlonlat$delta)))))
+  ang_dis <- as.data.frame(bootlonlat$diff)
+  ang_dis <- (ang_dis[order(ang_dis[,1]),])
+  conf <- 0.95
+  Uconf <- round(nb*conf,digits=0)
+  angular_conf <- ang_dis[Uconf]
+
+  #select symbol
+  if(symbol=="c") sym <- 21
+  if(symbol=="s") sym <- 22
+  if(symbol=="d") sym <- 23
+  if(symbol=="t") sym <- 24
+
+  #plot pole
+  Px <- c2x(Plon,Plat)
+  Py <- c2y(Plon,Plat)
+  Pcut <- cut(Plon,Plat)
+
+  #plot symbol open if behind
+  if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
+  }else{points(Px,Py,pch=sym,col="black",bg=NA)}
+
+  #plot angular error estimation
+  if(hist==TRUE){
+    par(fig=c(0,0.5,0,0.5), new=TRUE)
+    plot(NA, xlim=c(0,1), ylim=c(0,1),
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    rect(xleft = 0,ybottom = 0,xright = 1,ytop = 1,col = "white",border = "black",cex=0.5)
+
+    par(fig=c(0,0.5,0,0.5), new=TRUE)
+    hist(x = bootlonlat$diff,xlab=NA,main="",ylab=NA,
+         xlim=c(0,10),breaks=40,cex.axis=0.9,
+         col="red",border ="red")
+    abline(v=angular_conf,lwd=1,lty=2)
+    title(xlab = "Angular distance (°)", line=2, cex=0.2)
+    title(ylab = "Frequency", line=2, cex=0.2)
+  }
+  par(fig=c(0,1,0,1), new=TRUE)
+  #plot text with results
+  results <- as.data.frame(Plon)
+  results$Plat <- Plat
+  results$N <- length(VGP$lon)
+  results$ang_conf <- angular_conf
+  results <- round(results, digits=2)
+  if (text==TRUE){
+    text <- paste("N: ",results$N,"
+Long: ", results$Plon,"
+Lat: ", results$Plat,"
+95%: ", results$ang_conf)
+    plot(NA, xlim=c(0,1), ylim=c(0,1),
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+    text(x=0.76, y=0,pos=4,text, cex= 0.85)
+  }
+  #plot APWP if requested during process
+  pAPWP <- readline("Plot APWP? (y or n): ")
+  if(pAPWP=="y"){
+    library(plyr, warn.conflicts = FALSE)
+    library(dplyr,warn.conflicts = FALSE)
+    cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
+    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- (Y/10)+1
+    O <- (O/10)+1
+    cat("Frames:
+(1) South Africa
+(2) North America
+(3) Europe
+(4) India
+(5) Amazonia
+(6) Australia
+(7) East Antarctica")
+    frame <- as.numeric(readline("insert frame (number): "))
+    col1 <- (frame*2)+1
+    col2 <- (frame*2)+2
+    G <- GAPWP
+    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
+    par(fig=c(0,1,0,1), new=TRUE)
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    #line connecting APWP
+    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
+    colnames(lin) <- "lx"
+    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
+    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
+    lines(lin$lx,lin$ly,cex=1)
+    #plot poles APWP
+    for (i in Y:O){
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_d = "gray",col_l = "black")
+    }
+    text1 <- paste(G[Y,1],"Ma")
+    text2 <- paste(G[O,1], "Ma")
+    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
+    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+  }
+  #replot pole data on apwp
+  par(fig=c(0,1,0,1), new=TRUE)
+  plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+  if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
+  }else{points(Px,Py,pch=sym,col="black",bg=NA)}
+
+
+
+  if (save==TRUE){
+    write.csv(results, file = paste(name,".csv"), row.names = FALSE)
+    save_pdf(name = paste(name,".pdf"),width = 8,height = 8)
+    cat("Figure saved as",name, ".pdf
+","Result file saved as", name,".csv")
+  }
+}
+
 #calculate virtual geomagnetic pole(s)
 VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs"){
   #conversion functions
@@ -2401,3 +2982,4 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   if(type=="VGPsN"){return(VGPsN)}
   if(type=="VGPsR"){return(VGPsR)}
 }
+

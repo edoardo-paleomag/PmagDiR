@@ -7,9 +7,8 @@ VGP calculator
 Calculate virtual geomagnetic poles and paleomagnetic pole from paleomagneti directions
 }
 \usage{
-VGP_DI(DI,in_file=FALSE,lat,long,type="VGPsN",export=TRUE,name="VGPs")
+VGP_DI(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs")
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{DI}{if in_file=TRUE: declination and inclination, site latitude and longitude, single file with four colums. If in_file=FALSE, declination and inclination, single file with two columns.}
   \item{in_file}{if TRUE, site latitude and longitude are within the entry file, if FALSE are specified in the command line, default is FALSE}

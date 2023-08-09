@@ -7,7 +7,7 @@ Inclination flattening and confidence finder
 Function that detects and corrects for inclination flattening of paleomagnetic directions by comparing the elongation-inclination of the directions with the tk03.GAD reference values during unflattening as described in Tauxe and Kent (2004). The unflattening is performed by using the tangent function first proposed by King (1955). Confidence margins of the test are determined by bootstrap statistic.
 }
 \usage{
-ffind_boot(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE, name="Unflattened_dirs")
+ffind_boot(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE,return=TRUE, name="Unflattened_dirs")
 }
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
@@ -15,6 +15,7 @@ ffind_boot(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE, name="Unflatt
   \item{nb}{number of bootstrapped pseudosamples, default is 1000}
   \item{f_increment}{rate of progressive unflattening of the bootstrapped pseudosamples. Default is 0.01}
   \item{export}{if TRUE result file and graph are exported in the working directory. Default is TRUE}
+  \item{return}{if TRUE it returns the unflattened directions. Default is TRUE}
   \item{name}{name of output files, default is "Unflattened_dirs"}
 }
 \details{

@@ -77,3 +77,39 @@
 #' @source <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2019GC008699>
 "km_AMS"
 
+#' world coastline
+#'
+#'
+#'
+#'
+#'
+#' @format ## `world_coastline`
+#' A data frame with 5399 rows and 2 columns:
+#' \describe{
+#'   \item{lon}{point longitude}
+#'   \item{lat}{point latitude}
+#'   ...
+#' }
+#' @author Edoardo Dallanave
+"world_coastline"
+
+#' Global apparent polar wander path
+#'
+#' Global synthetic apparent polar wander path
+#' (Torsvik,T.H., R. Van der Voo, U. Preeden, C. Mac Niocaill, B. Steinberger, P. V. Doubrovine, D. J. J. van Hinsbergen, M. Domeier, C. Gaina, E. Tohver, J. G. Meert, P. J. a. McCausland, L. R. M. Cocks, Phanerozoic polar wander, palaeogeography and dynamics. Earth-Science Rev. 114, 325–368 (2012).)
+#'
+#'
+#'
+#' @format ## `GAPWP`
+#' A data frame with 33 rows and 16 columns:
+#' \describe{
+#'   \item{Age}{age of the moving window}
+#'   \item{lat}{pole latitude}
+#'   \item{long}{pole longitude; the different coordinate reference systems are AF= south africa
+#'   Nam= North America; EU= Stable Europe; In= India; Amz= Amazonia; Aus= Australia; Eant= East Antarctica}
+#'   ...
+#' }
+#' @author Edoardo Dallanave
+#' @source <https://www.sciencedirect.com/science/article/abs/pii/S0012825212000797>
+"GAPWP"
+

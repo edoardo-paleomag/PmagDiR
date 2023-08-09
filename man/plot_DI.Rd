@@ -19,7 +19,7 @@ plot_DI(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col_u="cyan",co
   \item{col_ext}{defines the color of the symbols countour. Default is black.}
   \item{on_plot}{if TRUE it plots directions on an existing plot. Default is FALSE.}
   \item{title}{string that will appear as title under the equal area plot}
-  \item{save}{export graphic. Default is FALSE}
+  \item{save}{if TRUE exports graphic. Default is FALSE}
   \item{name}{name of the exported plot, default is "Equal_area"}
 }
 \details{
