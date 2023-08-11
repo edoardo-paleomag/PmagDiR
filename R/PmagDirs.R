@@ -1263,9 +1263,9 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   lines(circle$x,circle$y, col=col_l, lwd=0.8,lty= ifelse(CUT>0,1,3))
   #plot APWP if requested during process
   if(APWP==TRUE){
-    detach("package:dplyr", unload = TRUE)
+    detach("package:tidyr", unload = TRUE)
     library("plyr", warn.conflicts = FALSE)
-    library("dplyr",warn.conflicts = FALSE)
+    library("tidyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
     Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
@@ -2679,13 +2679,10 @@ A95: ", round(PPole[1,3],digits=2))
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    detach("package:dplyr", unload = TRUE)
-    library("plyr", warn.conflicts = FALSE)
-    library("dplyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
-    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
-    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+    O <- round(as.numeric(readline("Older age: ")),-1)
     Y <- (Y/10)+1
     O <- (O/10)+1
     cat("Frames:
@@ -2853,12 +2850,10 @@ Lat: ", results$Plat,"
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    library("plyr", warn.conflicts = FALSE)
-    library("dplyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
-    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
-    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+    O <- round(as.numeric(readline("Older age: ")),-1)
     Y <- (Y/10)+1
     O <- (O/10)+1
     cat("Frames:
