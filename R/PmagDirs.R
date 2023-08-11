@@ -1263,8 +1263,9 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   lines(circle$x,circle$y, col=col_l, lwd=0.8,lty= ifelse(CUT>0,1,3))
   #plot APWP if requested during process
   if(APWP==TRUE){
-    library(plyr, warn.conflicts = FALSE)
-    library(dplyr,warn.conflicts = FALSE)
+    detach("package:dplyr", unload = TRUE)
+    library("plyr", warn.conflicts = FALSE)
+    library("dplyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
     Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
@@ -1751,7 +1752,7 @@ sph_ortho <- function(lat=90,long=0,grid=30, title="") {
   #longitude circle
   lats <- seq(-(90-grid),(90-grid),grid)
   for(i in lats){
-    lon_lat_p <-  as.data.frame(1:360)
+    lon_lat_p <-  as.data.frame(0:360)
     lon_lat_p$lat <- rep(i)
     lon_lat_p$x <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
                           c2x(lon_lat_p[,1],lon_lat_p[,2]))
@@ -2678,8 +2679,9 @@ A95: ", round(PPole[1,3],digits=2))
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    library(plyr, warn.conflicts = FALSE)
-    library(dplyr,warn.conflicts = FALSE)
+    detach("package:dplyr", unload = TRUE)
+    library("plyr", warn.conflicts = FALSE)
+    library("dplyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
     Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
@@ -2710,7 +2712,7 @@ A95: ", round(PPole[1,3],digits=2))
     lines(lin$lx,lin$ly,cex=1)
     #plot poles APWP
     for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_d = "gray",col_l = "black")
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black")
     }
     text1 <- paste(G[Y,1],"Ma")
     text2 <- paste(G[O,1], "Ma")
@@ -2851,8 +2853,8 @@ Lat: ", results$Plat,"
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    library(plyr, warn.conflicts = FALSE)
-    library(dplyr,warn.conflicts = FALSE)
+    library("plyr", warn.conflicts = FALSE)
+    library("dplyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
     Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
@@ -2883,7 +2885,7 @@ Lat: ", results$Plat,"
     lines(lin$lx,lin$ly,cex=1)
     #plot poles APWP
     for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_d = "gray",col_l = "black")
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black")
     }
     text1 <- paste(G[Y,1],"Ma")
     text2 <- paste(G[O,1], "Ma")
