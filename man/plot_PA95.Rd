@@ -19,6 +19,7 @@ plot_PA95(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="bla
   \item{col_b}{color of pole in the back side of the spherical projection}
   \item{col_l}{color of the A95 cone of confidence, default is "black"}
   \item{symbol}{define the points shape: "c"= circle (default), "s"= square, "d"= diamond, "t"=triangle}
+  \item{coast}{draw present day coastlines, default is FALSE}
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
   \item{APWP}{if TRUE an apparent polar wander of choice is plotted, default is FALSE}
