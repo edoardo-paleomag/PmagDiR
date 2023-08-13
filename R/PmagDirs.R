@@ -425,10 +425,8 @@ EI_boot <- function(DI,nb=1000,conf=95,export=TRUE, name="EI_boot_plot") {
   Inc_E_bk <- Inc_E
   Inc_E <- Inc_E_bk
 
-  Lconf <- num
-  Uconf <- nb-num
   confn <- conf/100
-  num <- round((nb*(1-conf))/2,digits=0)
+  num <- round((nb*(1-confn))/2,digits=0)
   Lconf <- num
   Uconf <- nb-num
   Inc_E <- Inc_E[Lconf:Uconf,]
