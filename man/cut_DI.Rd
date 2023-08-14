@@ -7,7 +7,7 @@ Paleomagnetic directions dynamic cutoff
 Function that applies a cutoff to paleomagnetic directions based on the angular distance of the virtual geomagnetic poles with respect the average paleomagnetic pole position.
 }
 \usage{
-cut_DI(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE, export=FALSE, name="cut_dirs")
+cut_DI(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE, inc_f=TRUE, export=FALSE, name="cut_dirs")
 }
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
@@ -16,6 +16,7 @@ cut_DI(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE, export=FALSE, name="cut_dirs")
   \item{long}{longitude of the sampling site}
   \item{cutoff}{maximum angular dinstance of vgp from the average pole used for the non-Vandamme cutoff, default is 45 degrees}
   \item{geo}{if TRUE directions are assumed in geographic coordinate and input file must consist of four columns with declination, inclination, plung azimuth and plunge. Default is FALSE}
+  \item{inc_f}{if TRUE includes the inclination flattening estimation within the filtering reiteration, default is TRUE}
   \item{export}{If TRUE, rotated data are automatically exported as .csv file in the working folder. Default is FALSE}
   \item{name}{name of the exported file. Default is "cut_dirs"}
 

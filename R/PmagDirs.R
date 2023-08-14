@@ -290,7 +290,7 @@ curve_cross <- function(a, b) {
 
 #Dynamic VANDAMME or VGP(45) cutoff (EI before the filter)
 #(Physics of the Earth and Planetary Interiors 85;1994)
-cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE, export=FALSE, name="cut_dirs"){
+cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=FALSE, name="cut_dirs"){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
 
@@ -312,9 +312,11 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE, export=FALSE, name=
   repeat{
     #number of reiteration
     n <- n+1
-    #calculate f factor of distribution and f=1 if it is not flattened
-    I_E_Edec_f <- ffind(data,f_inc = 0.005)
-    f <- ifelse(is.na(I_E_Edec_f[1,4])==TRUE, 1, I_E_Edec_f[length(I_E_Edec_f[,4]),4])
+    if(inc_f==TRUE){
+      #calculate f factor of distribution and f=1 if it is not flattened
+      I_E_Edec_f <- ffind(data,f_inc = 0.005)
+      f <- ifelse(is.na(I_E_Edec_f[1,4])==TRUE, 1, I_E_Edec_f[length(I_E_Edec_f[,4]),4])
+    }else{f <- 1}
 
     #add column with inc unflattened, plus different parameters
     unfl_data <- unflat_DI(data,f)
