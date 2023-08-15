@@ -836,7 +836,7 @@ ffind <-function(DI, f_inc=0.005) {
 }
 
 #flips plot bimodal fisher from dec_inc, plot false gives only results, on_plot=False create new stereonet
-fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",export=TRUE,save=FALSE,name="Fisher_mean") {
+fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=TRUE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   data <- DI
@@ -895,6 +895,31 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   }
   data_M12 <- common_DI(data)
   fisher_M12 <- fisher(data_M12)
+  #plot text if true
+  par(fig=c(0,1,0,1), new=TRUE)
+  #plot text with results
+  Dec <- round(fisher_M12[1,1],digits=2)
+  Inc <- round(fisher_M12[1,2],digits=2)
+  a <- round(fisher_M12[1,3],digits=2)
+  N <- round(fisher_M12[1,4],digits=2)
+
+  if (text==TRUE){
+    text <- paste("N: ",N,"
+Dec: ", Dec,"
+Inc: ", Inc,"
+a95%: ", a)
+    plot(NA, xlim=c(0,1), ylim=c(0,1),
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+    text(x=0.79, y=0.05,pos=4,text, cex= 0.85)
+  }
+
+
+
+
+
+
+
   if(any(data$diff<=90)) {
     cat("fisher Mode 1:
 ")
@@ -913,7 +938,7 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
   }
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 7,height = 7)}
 }
 
 #function that return fisher statistic from dec_inc

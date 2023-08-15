@@ -7,16 +7,17 @@ Fisher statistic calculator and plot
 Function that calculates Fisher (1953) average direction(s) and confidence of single (or bimodal) distribution and plot, print, and export the results.
 }
 \usage{
-fisher_plot(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",export=TRUE,save=FALSE,name="Fisher_mean")
+fisher_plot(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=TRUE,export=TRUE,save=FALSE,name="Fisher_mean")
 }
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
-  \item{plot}{if TRUE, results are plotted, while if FALSE are only printed}
+  \item{plot}{if TRUE, results are plotted, while if FALSE are only printed, default is TRUE}
   \item{on_plot}{if TRUE, results are plotted on existing equal area diagram. Default is TRUE}
   \item{col_d}{color of the average down-pointing direction point, default is "red"}
   \item{col_u}{color of the average up-pointing direction point, default is "white"}
   \item{col_l}{color of the a95 cone of confidence, default is "black"}
   \item{symbol}{define the points shape:   "c"= circle (default),   "s"= square,   "d"= diamond,   "t"=triangle}
+  \item{text}{if TRUE print fisher results in bottom right corner, default is TRUE}
   \item{export}{if TRUE the results are automatically exported as csv file. Default is TRUE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
   \item{name}{name of the exported files. Defualt is "Fisher_mean"}
