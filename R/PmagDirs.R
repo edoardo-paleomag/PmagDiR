@@ -172,7 +172,7 @@ bip_check <- function(DI){
 
 #function that generates resampled Data dec_inc
 boots_DI <- function(DI,export=FALSE,name="bootstrapped_dirs") {
-  library("tidyverse", warn.conflicts = FALSE)
+  #library("tidyverse", warn.conflicts = FALSE)
   data <- DI[,1:2]
   data <- na.omit(data)
   colnames(data) <- c("dec", "inc")
@@ -911,7 +911,7 @@ a95%: ", a)
     plot(NA, xlim=c(0,1), ylim=c(0,1),
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 
-    text(x=0.79, y=0.05,pos=4,text, cex= 0.85)
+    text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
   }
 
 
@@ -938,7 +938,7 @@ a95%: ", a)
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
   }
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 7,height = 7)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
 #function that return fisher statistic from dec_inc
@@ -1204,7 +1204,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
            bg=col_u)
   }
   lines(circle$x,circle$y,lty=1, col=col_l, lwd=1.8)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
 #plot A95 on a spherical orthographic plot
@@ -1454,7 +1454,7 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
   }
   points(x=circle_U$x,y=circle_U$y,type="l", col=col_cU,lty=2)
   points(x=circle_D$x,y=circle_D$y,type="l", col=col_cD)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
 #plot virtual geomagnetic poles
