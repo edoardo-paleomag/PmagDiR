@@ -172,7 +172,7 @@ bip_check <- function(DI){
 
 #function that generates resampled Data dec_inc
 boots_DI <- function(DI,export=FALSE,name="bootstrapped_dirs") {
-  #library("tidyverse", warn.conflicts = FALSE)
+  library("tidyverse", warn.conflicts = FALSE)
   data <- DI[,1:2]
   data <- na.omit(data)
   colnames(data) <- c("dec", "inc")
@@ -1269,9 +1269,14 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
     cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
     points(cst$x,cst$y,type="l",col="black",lwd=0.5)
   }
+
   X <- c2x(lon,lat)
   Y <- c2y(lon,lat)
   CUT <- cut(lon,lat)
+
+  #plot alfa 95
+  polygon(circle$x,circle$y, col=rgb(1,0.9,0,0.30), lwd=0.8,lty= ifelse(CUT>0,1,3))
+
   #select symbol
   if(symbol=="c") pch <- 21
   if(symbol=="s") pch <- 22
@@ -1285,16 +1290,12 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
     points(X,Y, pch=pch,cex=1, col="black",
            bg=col_b)
   }
-  lines(circle$x,circle$y, col=col_l, lwd=0.8,lty= ifelse(CUT>0,1,3))
   #plot APWP if requested during process
   if(APWP==TRUE){
-    detach("package:tidyr", unload = TRUE)
-    library("plyr", warn.conflicts = FALSE)
-    library("tidyr",warn.conflicts = FALSE)
     cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
-    Y <- round_any(as.numeric(readline("Insert younger age: ")),10,f=ceiling)
-    O <- round_any(as.numeric(readline("Older age: ")),10,)
+    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+    O <- round(as.numeric(readline("Older age: ")),-1)
     Y <- (Y/10)+1
     O <- (O/10)+1
     cat("Frames:
@@ -1328,6 +1329,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
     text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
     text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
   }
+
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
@@ -2693,7 +2695,7 @@ VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color=
   if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
   }else{points(Px,Py,pch=sym,col="black",bg="white")}
 
-  lines(circle$x,circle$y, col="black", lwd=1.2,lty= ifelse(Pcut>0,1,3))
+  polygon(circle$x,circle$y, col=rgb(1,0,0,0.3), lwd=1.2,lty= ifelse(Pcut>0,1,3))
 
   if(on_plot==FALSE){
     text <- paste("N: ",round(PPole[1,4],digits=2),"
