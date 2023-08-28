@@ -17,7 +17,7 @@ plot_VGP(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,ex
   \item{on_plot}{plot VGPs on an existing projection, default is FALSE}
   \item{auto_cent}{centers the projection on the average pole automatically, default is TRUE}
   \item{exp}{export csv file with coordinates of the center, default is TRUE}
-  \item{coast}{plot global coastline, default is TRUE}
+  \item{coast}{plot global coastline, default is FALSE}
   \item{title}{string added below the plot}
   \item{save}{if TRUE exports graphic. Default is FALSE}
   \item{A95}{if TRUE plots 95 cone of confidence, default is FALSE}

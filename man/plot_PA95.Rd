@@ -9,15 +9,16 @@ Plot a triplet of longiture, latitude, and confidence angle on a spherical ortho
 plot_PA95(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black", symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP=FALSE,S_APWP=FALSE)
 }
 \arguments{
-  \item{lon}{longitude, positive East}
-  \item{lat}{latitude, positive North}
-  \item{A}{cone of confidence at 95 percent}
+  \item{lon}{pole longitude, positive East}
+  \item{lat}{pole latitude, positive North}
+  \item{A}{semi angle of confidence at 95 percent}
   \item{lat0}{latitude of the spherical orthogonal projection center, default is 90}
   \item{lon0}{longitude of the spherical orthogonal projection center, default is 0}
   \item{grid}{angular distance of the grid lines, meridian and parallel, default is 30}
   \item{col_f}{color of pole in the front side of the spherical projection}
   \item{col_b}{color of pole in the back side of the spherical projection}
-  \item{col_l}{color of the A95 cone of confidence, default is "black"}
+  \item{col_l}{color of the A95 confidence, default is transparent yellow}
+  \item{col_A}{filling of the A95 confidence, default is "black"}
   \item{symbol}{define the points shape: "c"= circle (default), "s"= square, "d"= diamond, "t"=triangle}
   \item{coast}{draw present day coastlines, default is FALSE}
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}

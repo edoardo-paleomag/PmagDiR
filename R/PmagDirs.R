@@ -1208,7 +1208,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
 }
 
 #plot A95 on a spherical orthographic plot
-plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black", symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP=FALSE,S_APWP=FALSE){
+plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0.9,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP=FALSE,S_APWP=FALSE){
   library("dplyr", warn.conflicts = FALSE)
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
@@ -1275,7 +1275,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   CUT <- cut(lon,lat)
 
   #plot alfa 95
-  polygon(circle$x,circle$y, col=rgb(1,0.9,0,0.30), lwd=0.8,lty= ifelse(CUT>0,1,3))
+  polygon(circle$x,circle$y, col=col_A, lwd=0.8,lty= ifelse(CUT>0,1,3))
 
   #select symbol
   if(symbol=="c") pch <- 21
@@ -1460,7 +1460,7 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
 }
 
 #plot virtual geomagnetic poles
-plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,exp=TRUE,coast=TRUE, title="",save=TRUE,A95=FALSE ,name="VGP"){
+plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,exp=TRUE,coast=FALSE, title="",save=TRUE,A95=FALSE ,name="VGP"){
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -2601,7 +2601,7 @@ Graph saved as Unstrained_directions_plot.pdf
 }
 
 #plot A95 from VGP data and compare with GAPWP
-VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95", S_APWP=FALSE){
+VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3), coast=FALSE, on_plot=FALSE, save=FALSE, name="A95", S_APWP=FALSE){
   library("dplyr", warn.conflicts = FALSE)
 
   #warning for on-plot, to avoid wrong coordinates
@@ -2695,7 +2695,7 @@ VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color=
   if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
   }else{points(Px,Py,pch=sym,col="black",bg="white")}
 
-  polygon(circle$x,circle$y, col=rgb(1,0,0,0.3), lwd=1.2,lty= ifelse(Pcut>0,1,3))
+  polygon(circle$x,circle$y, col=col_A, lwd=1.2,lty= ifelse(Pcut>0,1,3))
 
   if(on_plot==FALSE){
     text <- paste("N: ",round(PPole[1,4],digits=2),"

@@ -7,7 +7,7 @@ Plot A95 confidence
 Calculate A95 cone of confidence from VGPs and allows comparison with reference apparent polar wander path in main coordinates systems.
 }
 \usage{
-VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE)
+VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3),coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,6 +18,7 @@ VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",coast
   \item{auto_cent}{center automatically the projection on the paleomagnetic pole, default is FALSE}
   \item{symbol}{define the points shape: "c"= circle (default), "s"= square, "d"= diamond, "t"=triangle}
   \item{color}{color of the paleomagnetic pole, default is "blue"}
+  \item{col_A}{color of the A95 confidence, default is transparent red}
   \item{coast}{draw present day coastlines, default is FALSE}
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
