@@ -1259,16 +1259,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   #restore screen
   par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
-  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid)
-
-  #plot coastline if true
-  if(coast==TRUE){
-    cst <- world_coastline
-    colnames(cst) <- c("lon","lat")
-    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
-    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
-    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
-  }
+  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
 
   X <- c2x(lon,lat)
   Y <- c2y(lon,lat)
@@ -1485,14 +1476,8 @@ plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_
     lon0 <- PPole[1,1]
     lat0 <- PPole[1,2]
   }
-  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid, title=title)}
-  if(coast==TRUE){
-    cst <- world_coastline
-    colnames(cst) <- c("lon","lat")
-    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
-    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
-    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
-  }
+  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid,coast=coast, title=title)}
+
   coord <- as.data.frame(lon0)
   coord$lat0 <- lat0
   if(exp==TRUE){
@@ -1757,7 +1742,7 @@ save_pdf <- function(name="Figure.pdf",width=11,height=8){
 }
 
 #plot spherical ortographic projection centered in specified coordinates
-sph_ortho <- function(lat=90,long=0,grid=30, title="") {
+sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -1774,6 +1759,14 @@ sph_ortho <- function(lat=90,long=0,grid=30, title="") {
   #fix frame
   plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
        xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+  #plot coastline if true
+  if(coast==TRUE){
+    cst <- world_coastline
+    colnames(cst) <- c("lon","lat")
+    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
+    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
+    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+  }
 
   #plot_main_parallel
   #longitude circle
@@ -2671,14 +2664,7 @@ VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color=
   circle$y <- c2y(circle$lon,circle$lat)
   circle$cut <- cut(circle$lon,circle$lat)
   #standalone graph or on existing graph
-  if (on_plot==FALSE) {sph_ortho(lat = lat0,long = lon0,grid = grid)}
-  if(coast==TRUE){
-    cst <- world_coastline
-    colnames(cst) <- c("lon","lat")
-    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
-    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
-    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
-  }
+  if (on_plot==FALSE) {sph_ortho(lat = lat0,long = lon0,grid = grid,coast=coast)}
 
   #select symbol
   if(symbol=="c") sym <- 21
@@ -2783,14 +2769,7 @@ VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=FALSE,on_plot=F
     lon0 <- Plon
     lat0 <- Plat
   }
-  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid, title="")}
-  if(coast==TRUE){
-    cst <- world_coastline
-    colnames(cst) <- c("lon","lat")
-    cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
-    cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
-    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
-  }
+  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid, coast=coast)}
   cat("Bootstrapping.
 Simulation ends when", nb, " pseudosamples are saved.
 
@@ -3011,7 +2990,10 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 }
 
 
-#IODP_plotting only for ECORD School
+
+
+
+#IODP_plotting only for ECORD School_will be deleted the 15-09-2023
 IODP_log <- function(){
   library("zoo", warn.conflicts = FALSE)
   library("plyr")
