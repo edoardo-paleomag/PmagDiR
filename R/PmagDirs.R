@@ -1765,7 +1765,7 @@ sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
     colnames(cst) <- c("lon","lat")
     cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
     cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
-    points(cst$x,cst$y,type="l",col="black",lwd=0.5)
+    lines(cst$x,cst$y,col="black",lwd=0.75)
   }
 
   #plot_main_parallel

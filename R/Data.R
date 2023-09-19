@@ -84,7 +84,7 @@
 #'
 #'
 #' @format ## `world_coastline`
-#' A data frame with 5399 rows and 2 columns:
+#' A data frame with 5261 rows and 2 columns:
 #' \describe{
 #'   \item{lon}{point longitude}
 #'   \item{lat}{point latitude}
