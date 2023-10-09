@@ -79,7 +79,7 @@
 
 #' world coastline
 #'
-#'
+#' Detail= 1:110,000,000
 #'
 #'
 #'
@@ -91,6 +91,7 @@
 #'   ...
 #' }
 #' @author Edoardo Dallanave
+#' @source https://www.naturalearthdata.com/downloads/110m-physical-vectors/
 "world_coastline"
 
 #' Global apparent polar wander path

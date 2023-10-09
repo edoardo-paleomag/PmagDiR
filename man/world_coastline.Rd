@@ -13,11 +13,14 @@ A data frame with 5261 rows and 2 columns:
   ...
 }
 }
+\source{
+https://www.naturalearthdata.com/downloads/110m-physical-vectors/
+}
 \usage{
 world_coastline
 }
 \description{
-world coastline
+Detail= 1:110,000,000
 }
 \author{
 Edoardo Dallanave

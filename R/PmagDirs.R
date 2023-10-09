@@ -1225,9 +1225,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
   s2cz <- function(y) {sin(d2r(y))}
   #save declination and inc and calculate new system for rotation
-  #dec <- D
   newSlon <- ifelse((lon+180)>360,lon-180,lon+180)
-  #inc <- I
   newSlat <- 90-lat
   newSlonr <- d2r(newSlon)
   newSlatr <- d2r(newSlat)
