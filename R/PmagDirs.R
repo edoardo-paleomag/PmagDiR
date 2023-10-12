@@ -915,11 +915,6 @@ a95%: ", a)
   }
 
 
-
-
-
-
-
   if(any(data$diff<=90)) {
     cat("fisher Mode 1:
 ")
@@ -938,6 +933,7 @@ a95%: ", a)
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
   }
+  par(fig=c(0,1,0,1), new=TRUE)
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
@@ -1347,7 +1343,12 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
   xD <- a2cx(data_D$inc,data_D$dec)
   yD <- a2cy(data_D$inc,data_D$dec)
   if(on_plot==FALSE){
-    equalarea(title=ifelse(title=="","",title))
+    equalarea(title=title)
+  }else{
+    #restore screen
+    par(fig=c(0,1,0,1), new=TRUE)
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
   }
   if(symbol=="c") pch <- 21
   if(symbol=="s") pch <- 22
