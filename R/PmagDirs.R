@@ -903,17 +903,6 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   a <- round(fisher_M12[1,3],digits=2)
   N <- round(fisher_M12[1,4],digits=2)
 
-  if (text==TRUE){
-    text <- paste("N: ",N,"
-Dec: ", Dec,"
-Inc: ", Inc,"
-a95%: ", a)
-    plot(NA, xlim=c(0,1), ylim=c(0,1),
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-
-    text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
-  }
-
 
   if(any(data$diff<=90)) {
     cat("fisher Mode 1:
@@ -933,7 +922,20 @@ a95%: ", a)
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
   }
-  par(fig=c(0,1,0,1), new=TRUE)
+  if (text==TRUE){
+    text <- paste("N: ",N,"
+Dec: ", Dec,"
+Inc: ", Inc,"
+a95%: ", a)
+    plot(NA, xlim=c(0,1), ylim=c(0,1),
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+    text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
+    cat("
+Do not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.
+")
+  }
+
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
@@ -1343,18 +1345,15 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
   xD <- a2cx(data_D$inc,data_D$dec)
   yD <- a2cy(data_D$inc,data_D$dec)
   if(on_plot==FALSE){
+
     equalarea(title=title)
-  }else{
-    #restore screen
-    par(fig=c(0,1,0,1), new=TRUE)
-    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
   }
   if(symbol=="c") {pch <- 21}
   else if(symbol=="s") {pch <- 22}
   else if(symbol=="d") {pch <- 23}
   else if(symbol=="t") {pch <- 24}
   else{stop("Please select valid symbol. Check help for info.",call. = F)}
+
   points(xD,yD, pch=pch,col=col_ext,
          bg= col_d)
   points(xU,yU, pch=pch,col=col_ext,
@@ -1672,6 +1671,8 @@ DISTRIBUTION NOT BIMODAL")
   text1 <- "Equal area projections"
   text2 <- "Normalized
   cumulative distributions"
+
+  #plot title for equal area
   par(fig=c(0,0.65,0.4,1))
   plot(NA, xlim=c(0,1), ylim=c(0,1),
        xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
