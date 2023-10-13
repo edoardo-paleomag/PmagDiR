@@ -836,7 +836,7 @@ ffind <-function(DI, f_inc=0.005) {
 }
 
 #flips plot bimodal fisher from dec_inc, plot false gives only results, on_plot=False create new stereonet
-fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=TRUE,export=TRUE,save=FALSE,name="Fisher_mean") {
+fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   data <- DI
