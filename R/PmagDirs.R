@@ -1181,16 +1181,16 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
   #restore screen
   par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
-  if (on_plot==FALSE) equalarea()
+  if (on_plot==FALSE) {equalarea()}
   UD <- ifelse(inc>0,"D","U")
   inc <- abs(inc)
   X <- a2cx(inc,dec)
   Y <- a2cy(inc,dec)
-  #select symbol
-  if(symbol=="c") pch <- 21
-  if(symbol=="s") pch <- 22
-  if(symbol=="d") pch <- 23
-  if(symbol=="t") pch <- 24
+  if(symbol=="c") {pch <- 21}
+  else if(symbol=="s") {pch <- 22}
+  else if(symbol=="d") {pch <- 23}
+  else if(symbol=="t") {pch <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
 
   if(UD=="D"){
     points(X,Y, pch=pch,cex=1.3, col="black",
@@ -1262,11 +1262,11 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   #plot alfa 95
   polygon(circle$x,circle$y, col=col_A, lwd=0.8,lty= ifelse(CUT>0,1,3))
 
-  #select symbol
-  if(symbol=="c") pch <- 21
-  if(symbol=="s") pch <- 22
-  if(symbol=="d") pch <- 23
-  if(symbol=="t") pch <- 24
+  if(symbol=="c") {pch <- 21}
+  else if(symbol=="s") {pch <- 22}
+  else if(symbol=="d") {pch <- 23}
+  else if(symbol=="t") {pch <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
 
   if(CUT>0){
     points(X,Y, pch=pch,cex=1, col="black",
@@ -1350,10 +1350,11 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
   }
-  if(symbol=="c") pch <- 21
-  if(symbol=="s") pch <- 22
-  if(symbol=="d") pch <- 23
-  if(symbol=="t") pch <- 24
+  if(symbol=="c") {pch <- 21}
+  else if(symbol=="s") {pch <- 22}
+  else if(symbol=="d") {pch <- 23}
+  else if(symbol=="t") {pch <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
   points(xD,yD, pch=pch,col=col_ext,
          bg= col_d)
   points(xU,yU, pch=pch,col=col_ext,
@@ -1428,11 +1429,11 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
   I <- abs(I)
   X <- a2cx(I,D)
   Y <- a2cy(I,D)
-  #select symbol
-  if(symbol=="c") pch <- 21
-  if(symbol=="s") pch <- 22
-  if(symbol=="d") pch <- 23
-  if(symbol=="t") pch <- 24
+  if(symbol=="c") {pch <- 21}
+  else if(symbol=="s") {pch <- 22}
+  else if(symbol=="d") {pch <- 23}
+  else if(symbol=="t") {pch <- 24}
+  else{stop("Please select valid symbol. Type ?plot_DI for info.",call. = F)}
 
   #plot pole only if pole==TRUE
   if(pole==TRUE){
@@ -2665,11 +2666,11 @@ VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color=
   #standalone graph or on existing graph
   if (on_plot==FALSE) {sph_ortho(lat = lat0,long = lon0,grid = grid,coast=coast)}
 
-  #select symbol
-  if(symbol=="c") sym <- 21
-  if(symbol=="s") sym <- 22
-  if(symbol=="d") sym <- 23
-  if(symbol=="t") sym <- 24
+  if(symbol=="c") {sym <- 21}
+  else if(symbol=="s") {sym <- 22}
+  else if(symbol=="d") {sym <- 23}
+  else if(symbol=="t") {sym <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
 
   #plot pole
   Px <- c2x(Plon,Plat)
@@ -2807,11 +2808,11 @@ Simulation ends when", nb, " pseudosamples are saved.
   Uconf <- round(nb*conf,digits=0)
   angular_conf <- ang_dis[Uconf]
 
-  #select symbol
-  if(symbol=="c") sym <- 21
-  if(symbol=="s") sym <- 22
-  if(symbol=="d") sym <- 23
-  if(symbol=="t") sym <- 24
+  if(symbol=="c") {sym <- 21}
+  else if(symbol=="s") {sym <- 22}
+  else if(symbol=="d") {sym <- 23}
+  else if(symbol=="t") {sym <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
 
   #plot pole
   Px <- c2x(Plon,Plat)
