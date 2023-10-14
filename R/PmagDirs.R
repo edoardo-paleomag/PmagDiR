@@ -931,9 +931,9 @@ a95%: ", a)
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 
     text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
-    cat("
+    warning("
 Do not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.
-")
+", call.= F)
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
