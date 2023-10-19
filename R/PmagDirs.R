@@ -2992,3 +2992,64 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 
 
 
+#temporary IRM_plot code 4 Camilla
+irm_plot <- function(col="red"){
+  library("dplyr", warn=FALSE)
+
+  #function creating log scale ticks
+  minor.ticks.axis <- function(ax,n,t.ratio=0.8,mn,mx,...){
+    lims <- par("usr")
+    if(ax %in%c(1,3)) lims <- lims[1:2] else lims[3:4]
+    major.ticks <- pretty(lims,n=4)
+    if(missing(mn)) mn <- min(major.ticks)
+    if(missing(mx)) mx <- max(major.ticks)
+    major.ticks <- major.ticks[major.ticks >= mn & major.ticks <= mx]
+    labels <- sapply(major.ticks,function(i)
+      as.expression(bquote(10^ .(i)))
+    )
+    axis(ax,at=major.ticks,labels=labels,...)
+    n <- n+2
+    minors <- log10(pretty(10^major.ticks[1:2],n))-major.ticks[1]
+    minors <- minors[-c(1,n)]
+    minor.ticks = c(outer(minors,major.ticks,`+`))
+    minor.ticks <- minor.ticks[minor.ticks > mn & minor.ticks < mx]
+    axis(ax,at=minor.ticks,tcl=par("tcl")*t.ratio,labels=FALSE)
+  }
+
+  #import file with data
+  data <- read.csv(file.choose())
+  data <- na.omit(data)
+  colnames(data) <- c("name", "field","M")
+  #eliminate 0 field values
+  data <- filter_all(data, all_vars(data$field != 0.0))
+  #generate sample list
+  sample_list <- data.frame(unique(data$name))
+  colnames(sample_list) <- "samples"
+
+  #generate frame
+  plot(NA, type= "n",
+       xlim= c(1,4),
+       ylim= c(0,1),
+       xlab= "Field (mT)",
+       xaxt="n",
+       ylab= 'IRM (normalized)'
+  )
+  #generate log scale ticks
+  minor.ticks.axis(1,9,mn=1,mx=4)
+
+  #plot curve for each sample
+  for (i in sample_list$samples) {
+    irm_temp <- filter_all(data,all_vars(data$name==i))
+    irm_max <- max(irm_temp$M)
+    irm_temp$norm <- (irm_temp$M)/irm_max
+    points(x=log10(irm_temp$field),
+           y=irm_temp$norm,
+           type="l",
+           col=col)
+    rm(irm_temp, irm_max,i)
+  }
+}
+
+
+
+
