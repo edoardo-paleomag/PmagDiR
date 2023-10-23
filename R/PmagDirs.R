@@ -1206,7 +1206,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
 }
 
 #plot A95 on a spherical orthographic plot
-plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0.9,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP=FALSE,S_APWP=FALSE){
+plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95"){
   library("dplyr", warn.conflicts = FALSE)
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
@@ -1268,7 +1268,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   else if(symbol=="s") {pch <- 22}
   else if(symbol=="d") {pch <- 23}
   else if(symbol=="t") {pch <- 24}
-  else{stop("Please select valid symbol. Check help for info.",call. = F)}
+  else{stop("Please select valid symbol. Check help (type ?plot_PA95) for info.",call. = F)}
 
   if(CUT>0){
     points(X,Y, pch=pch,cex=1, col="black",
@@ -1277,15 +1277,32 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
     points(X,Y, pch=pch,cex=1, col="black",
            bg=col_b)
   }
-  #plot APWP if requested during process
-  if(APWP==TRUE){
-    cat("APWP range from 0 to 320 Ma every 10 Myr.
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
+#plot pole with A95 and Apparent polar wander path
+plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE){
+  #plot pole
+  plot_PA95(lon=lon, lat = lat,A = A,lon0=lon0, lat0=lat0, grid=grid, col_f = col_f, col_b= col_b, col_l=col_l, col_A = col_A, symbol=symbol, coast=coast, on_plot = on_plot,save=FALSE)
+
+  #plot APWP
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #questions on APW age and frame
+  cat("APWP range from 0 to 320 Ma every 10 Myr.
 ")
-    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-    O <- round(as.numeric(readline("Older age: ")),-1)
-    Y <- (Y/10)+1
-    O <- (O/10)+1
-    cat("Frames:
+  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+  O <- round(as.numeric(readline("Older age: ")),-1)
+  Y <- (Y/10)+1
+  O <- (O/10)+1
+  cat("Frames:
 (1) South Africa
 (2) North America
 (3) Europe
@@ -1293,29 +1310,83 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
 (5) Amazonia
 (6) Australia
 (7) East Antarctica")
-    frame <- as.numeric(readline("insert frame (number): "))
-    col1 <- (frame*2)+1
-    col2 <- (frame*2)+2
-    G <- GAPWP
-    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
-    par(fig=c(0,1,0,1), new=TRUE)
-    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-    #line connecting APWP
-    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
-    colnames(lin) <- "lx"
-    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
-    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
-    lines(lin$lx,lin$ly,cex=1)
-    #plot poles APWP
-    for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black")
-    }
-    text1 <- paste(G[Y,1],"Ma")
-    text2 <- paste(G[O,1], "Ma")
-    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
-    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+  frame <- as.numeric(readline("insert frame (number): "))
+  col1 <- (frame*2)+1
+  col2 <- (frame*2)+2
+  G <- GAPWP
+  if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
+  par(fig=c(0,1,0,1), new=TRUE)
+  plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+  #line connecting APWP
+  lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
+  colnames(lin) <- "lx"
+  lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
+  lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
+  lines(lin$lx,lin$ly,cex=1)
+  #plot poles APWP
+  for (i in Y:O){
+    plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black",col_A=rgb(1,0.9,0,0.30))
   }
+  text1 <- paste(G[Y,1],"Ma")
+  text2 <- paste(G[O,1], "Ma")
+  text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
+  text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
+#plot only apparent polar wander path
+plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE){
+  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+
+  #plot APWP
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #questions on APW age and frame
+  cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+  O <- round(as.numeric(readline("Older age: ")),-1)
+  Y <- (Y/10)+1
+  O <- (O/10)+1
+  cat("Frames:
+(1) South Africa
+(2) North America
+(3) Europe
+(4) India
+(5) Amazonia
+(6) Australia
+(7) East Antarctica")
+  frame <- as.numeric(readline("insert frame (number): "))
+  col1 <- (frame*2)+1
+  col2 <- (frame*2)+2
+  G <- GAPWP
+  if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
+  par(fig=c(0,1,0,1), new=TRUE)
+  plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+  #line connecting APWP
+  lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
+  colnames(lin) <- "lx"
+  lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
+  lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
+  lines(lin$lx,lin$ly,cex=1)
+  #plot poles APWP
+  for (i in Y:O){
+    plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = col,symbol=symbol, col_l = "black",col_A=rgb(1,0.9,0,0.30))
+  }
+  text1 <- paste(G[Y,1],"Ma")
+  text2 <- paste(G[O,1], "Ma")
+  text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
+  text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
@@ -2988,66 +3059,6 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   if(type=="VGPs"){return(VGPs)}
   if(type=="VGPsN"){return(VGPsN)}
   if(type=="VGPsR"){return(VGPsR)}
-}
-
-
-
-#temporary IRM_plot code 4 Camilla
-irm_plot <- function(col="red"){
-  library("dplyr", warn=FALSE)
-
-  #function creating log scale ticks
-  minor.ticks.axis <- function(ax,n,t.ratio=0.8,mn,mx,...){
-    lims <- par("usr")
-    if(ax %in%c(1,3)) lims <- lims[1:2] else lims[3:4]
-    major.ticks <- pretty(lims,n=4)
-    if(missing(mn)) mn <- min(major.ticks)
-    if(missing(mx)) mx <- max(major.ticks)
-    major.ticks <- major.ticks[major.ticks >= mn & major.ticks <= mx]
-    labels <- sapply(major.ticks,function(i)
-      as.expression(bquote(10^ .(i)))
-    )
-    axis(ax,at=major.ticks,labels=labels,...)
-    n <- n+2
-    minors <- log10(pretty(10^major.ticks[1:2],n))-major.ticks[1]
-    minors <- minors[-c(1,n)]
-    minor.ticks = c(outer(minors,major.ticks,`+`))
-    minor.ticks <- minor.ticks[minor.ticks > mn & minor.ticks < mx]
-    axis(ax,at=minor.ticks,tcl=par("tcl")*t.ratio,labels=FALSE)
-  }
-
-  #import file with data
-  data <- read.csv(file.choose())
-  data <- na.omit(data)
-  colnames(data) <- c("name", "field","M")
-  #eliminate 0 field values
-  data <- filter_all(data, all_vars(data$field != 0.0))
-  #generate sample list
-  sample_list <- data.frame(unique(data$name))
-  colnames(sample_list) <- "samples"
-
-  #generate frame
-  plot(NA, type= "n",
-       xlim= c(1,4),
-       ylim= c(0,1),
-       xlab= "Field (mT)",
-       xaxt="n",
-       ylab= 'IRM (normalized)'
-  )
-  #generate log scale ticks
-  minor.ticks.axis(1,9,mn=1,mx=4)
-
-  #plot curve for each sample
-  for (i in sample_list$samples) {
-    irm_temp <- filter_all(data,all_vars(data$name==i))
-    irm_max <- max(irm_temp$M)
-    irm_temp$norm <- (irm_temp$M)/irm_max
-    points(x=log10(irm_temp$field),
-           y=irm_temp$norm,
-           type="l",
-           col=col)
-    rm(irm_temp, irm_max,i)
-  }
 }
 
 

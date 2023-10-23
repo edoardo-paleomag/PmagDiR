@@ -1,12 +1,12 @@
-\name{plot_PA95}
-\alias{plot_PA95}
+\name{plot_pole_APWP}
+\alias{plot_pole_APWP}
 \title{
-Plot paleomagnetic pole and confidence
+Plot paleomagnetic pole, confidence, and reference apparent polar wander path
 }
 \description{
-Plot a triplet of longiture, latitude, and confidence angle on a spherical orthographic projection}
+Plot a triplet of longiture, latitude, and confidence angle on a spherical orthographic projection, together with an apparent polar wander path selected within a specific time interval and reference frame by interactive data entry}
 \usage{
-plot_PA95(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black", symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95")
+plot_pole_APWP(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE)
 }
 \arguments{
   \item{lon}{pole longitude, positive East}
@@ -24,6 +24,8 @@ plot_PA95(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="bla
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
   \item{name}{name of exported files, default is "A95"}
+  \item{S_APWP}{plots the reference APWP of choice as South Poles}
+
 }
 \details{
 }
@@ -42,8 +44,7 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##plot generic Dec Inc with cone of confidence
-plot_PA95(lon=0,lat=45,A=15,lon0=10,lat0=0,grid=30, col_f="red",col_b="white",col_l="black", symbol="c", on_plot=FALSE, save=FALSE, name="A95",coast=TRUE)
-plot_PA95(lon=180,lat=-45,A=15,lon0=10,lat0=0,grid=30, col_f="red",col_b="white", symbol="d", on_plot=TRUE)
+##type what follows in the console and follow the instructions
+plot_pole_APWP(lon=0,lat=45,A=10,coast=TRUE)
 
 }
