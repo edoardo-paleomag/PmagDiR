@@ -2810,7 +2810,7 @@ A95: ", round(PPole[1,3],digits=2))
 }
 
 #bootstrap of VGPs
-VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=FALSE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",S_APWP=FALSE){
+VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",S_APWP=FALSE){
 
   #warning for on-plot, to avoid wrong coordinates
   if(on_plot==TRUE && auto_cent==TRUE) {
