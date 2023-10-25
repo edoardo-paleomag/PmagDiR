@@ -2961,7 +2961,7 @@ Lat: ", results$Plat,"
     lines(lin$lx,lin$ly,cex=1)
     #plot poles APWP
     for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black")
+      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black",col_A=rgb(1,0.9,0,0.30))
     }
     text1 <- paste(G[Y,1],"Ma")
     text2 <- paste(G[O,1], "Ma")
