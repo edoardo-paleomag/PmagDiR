@@ -1285,54 +1285,11 @@ plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="
   #plot pole
   plot_PA95(lon=lon, lat = lat,A = A,lon0=lon0, lat0=lat0, grid=grid, col_f = col_f, col_b= col_b, col_l=col_l, col_A = col_A, symbol=symbol, coast=coast, on_plot = on_plot,save=FALSE)
 
-  #plot APWP
-  #functions converting degree and radians
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-
-  #functions converting long & lat to xy
-  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
-  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
-  #cut is cosin of c, when negative is behind projections, needs to be cut
-  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
-  #questions on APW age and frame
-  cat("APWP range from 0 to 320 Ma every 10 Myr.
-")
-  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-  O <- round(as.numeric(readline("Older age: ")),-1)
-  Y <- (Y/10)+1
-  O <- (O/10)+1
-  cat("Frames:
-(1) South Africa
-(2) North America
-(3) Europe
-(4) India
-(5) Amazonia
-(6) Australia
-(7) East Antarctica")
-  frame <- as.numeric(readline("insert frame (number): "))
-  col1 <- (frame*2)+1
-  col2 <- (frame*2)+2
-  G <- GAPWP
-  if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
-  par(fig=c(0,1,0,1), new=TRUE)
-  plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-  #line connecting APWP
-  lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
-  colnames(lin) <- "lx"
-  lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
-  lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
-  lines(lin$lx,lin$ly,cex=1)
-  #plot poles APWP
-  for (i in Y:O){
-    plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black",col_A=rgb(1,0.9,0,0.30))
+  #plot APWP if requested during process
+  pAPWP <- readline("Plot APWP? (y or n): ")
+  if(pAPWP=="y"){
+    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
-  text1 <- paste(G[Y,1],"Ma")
-  text2 <- paste(G[O,1], "Ma")
-  text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
-  text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
-
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
@@ -1355,6 +1312,9 @@ plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE,
 ")
   Y <- round(as.numeric(readline("Insert younger age: ")),-1)
   O <- round(as.numeric(readline("Older age: ")),-1)
+  if(is.na(O)==TRUE){O <- 320}
+  if(O>320){O <- 320}
+  if(is.na(Y)==TRUE){Y <- 0}
   Y <- (Y/10)+1
   O <- (O/10)+1
   cat("Frames:
@@ -2665,7 +2625,7 @@ Graph saved as Unstrained_directions_plot.pdf
   }
 }
 
-#plot A95 from VGP data and compare with GAPWP
+# #plot A95 from VGP data and compare with GAPWP
 VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3), coast=FALSE, on_plot=FALSE, save=FALSE, name="A95", S_APWP=FALSE){
   library("dplyr", warn.conflicts = FALSE)
 
@@ -2766,47 +2726,12 @@ A95: ", round(PPole[1,3],digits=2))
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    cat("APWP range from 0 to 320 Ma every 10 Myr.
-")
-    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-    O <- round(as.numeric(readline("Older age: ")),-1)
-    Y <- (Y/10)+1
-    O <- (O/10)+1
-    cat("Frames:
-(1) South Africa
-(2) North America
-(3) Europe
-(4) India
-(5) Amazonia
-(6) Australia
-(7) East Antarctica")
-    frame <- as.numeric(readline("insert frame (number): "))
-    col1 <- (frame*2)+1
-    col2 <- (frame*2)+2
-    G <- GAPWP
-    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
-    par(fig=c(0,1,0,1), new=TRUE)
-    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-    #line connecting APWP
-    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
-    colnames(lin) <- "lx"
-    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
-    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
-    lines(lin$lx,lin$ly,cex=1)
-    #plot poles APWP
-    for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black",col_A=rgb(1,0.9,0,0.30))
-    }
-    text1 <- paste(G[Y,1],"Ma")
-    text2 <- paste(G[O,1], "Ma")
-    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
-    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
   if(save==TRUE){
     save_pdf(name = paste(name,".pdf"),width = 8,height = 8)
     cat("Figure saved as",name, ".pdf")
-    }
+  }
 }
 
 #bootstrap of VGPs
@@ -2929,44 +2854,10 @@ Lat: ", results$Plat,"
     text(x=0.76, y=0,pos=4,text, cex= 0.85)
   }
   #plot APWP if requested during process
+  #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    cat("APWP range from 0 to 320 Ma every 10 Myr.
-")
-    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-    O <- round(as.numeric(readline("Older age: ")),-1)
-    Y <- (Y/10)+1
-    O <- (O/10)+1
-    cat("Frames:
-(1) South Africa
-(2) North America
-(3) Europe
-(4) India
-(5) Amazonia
-(6) Australia
-(7) East Antarctica")
-    frame <- as.numeric(readline("insert frame (number): "))
-    col1 <- (frame*2)+1
-    col2 <- (frame*2)+2
-    G <- GAPWP
-    if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
-    par(fig=c(0,1,0,1), new=TRUE)
-    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-    #line connecting APWP
-    lin <- as.data.frame(c2x(G[Y:O,col1],G[Y:O,col2]))
-    colnames(lin) <- "lx"
-    lin$ly <- c2y(G[Y:O,col1],G[Y:O,col2])
-    lin$cut <- cut(G[Y:O,col1],G[Y:O,col2])
-    lines(lin$lx,lin$ly,cex=1)
-    #plot poles APWP
-    for (i in Y:O){
-      plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = "gray",col_l = "black",col_A=rgb(1,0.9,0,0.30))
-    }
-    text1 <- paste(G[Y,1],"Ma")
-    text2 <- paste(G[O,1], "Ma")
-    text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
-    text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
   #replot pole data on apwp
   par(fig=c(0,1,0,1), new=TRUE)
@@ -2974,8 +2865,6 @@ Lat: ", results$Plat,"
        xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
   if(Pcut>0) {points(Px,Py,pch=sym,col="black",bg=color)
   }else{points(Px,Py,pch=sym,col="black",bg=NA)}
-
-
 
   if (save==TRUE){
     write.csv(results, file = paste(name,".csv"), row.names = FALSE)
