@@ -1703,6 +1703,11 @@ DISTRIBUTION NOT BIMODAL")
   text2 <- "Normalized
   cumulative distributions"
 
+  #clean screen to avoid figure over figure
+  par(fig=c(0,1,0,1))
+  plot(0, xlim=c(0,1), ylim=c(0,1),
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
   #plot title for equal area
   par(fig=c(0,0.65,0.4,1))
   plot(NA, xlim=c(0,1), ylim=c(0,1),
