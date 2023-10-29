@@ -7,7 +7,7 @@ Geo localities and poles plot
 Plot a points and poles (with confidence circle) on a map using a KavrayskiyVII projection
 }
 \usage{
-Geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 = FALSE, fill_A = TRUE, export = TRUE)
+Geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 = FALSE, fill_A = TRUE, export = TRUE, on_plot=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +19,7 @@ Geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 
   \item{A95}{if FALSE (default), the angle of confidence circle is not requested or added in the file}
   \item{fill_A}{if TRUE (default) the circle of confidence is filled in transparent yellow, except when it crosses the map margin}
   \item{export}{if TRUE (default), the map is exported as pdf file}
+  \item{on_plot}{if TRUE the point is added to the existing map, default is FALSE}
 }
 \details{
 }

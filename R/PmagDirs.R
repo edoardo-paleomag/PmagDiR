@@ -1001,7 +1001,7 @@ flip_DI <- function(DI,export=FALSE,name="flipped_dirs"){
 }
 
 #function that plots points on a KavrayskiyVII geographic map
-Geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE){
+Geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE,on_plot=FALSE){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
 
@@ -1083,7 +1083,12 @@ Geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FAL
   }
 
   #plot map
-  Map_KVII(grid=grid,center=center)
+  if(on_plot==FALSE) {
+    Map_KVII(grid=grid,center=center)
+  }else{cat("
+Double check the center meridian of the map!
+")}
+
 
   #plot points from file
   if(S_file==TRUE){
