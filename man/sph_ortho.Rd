@@ -12,7 +12,7 @@ sph_ortho(lat=90,long=0,grid=30, title="")
 \arguments{
   \item{lat}{latitude of center, default is 90}
   \item{long}{longitude of center, default is 0}
-  \item{grid}{grid angle spacing, default is 30}
+  \item{grid}{grid angle spacing, default is 30. If grid=0, grid is not plotted}
   \item{coast}{draw present day coastlines, default is FALSE}
   \item{title}{string added below the plot}
 }

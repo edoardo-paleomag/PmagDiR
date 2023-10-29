@@ -11,7 +11,7 @@ Map_KVII(grid = 30, center = 0, title = "")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{grid}{angular distance of the grid lines, meridians and parallels, default is 30}
+  \item{grid}{angular distance of the grid lines, meridians and parallels, default is 30. If grid=0, grid is not plotted}
   \item{center}{Central meridian, default is Greenwhich}
   \item{title}{Optional title of the map}
 }

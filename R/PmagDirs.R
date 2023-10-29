@@ -1234,7 +1234,7 @@ matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name
 Map_KVII <- function(grid=30, center=0, title="") {
   library(rlist)
   if(center>180 | center<(-180)) stop("Please set center between -180° and 180°",call. = F)
-  if(grid==0 | grid>90) stop("Please set the grid between 1° and 90°",call. = F)
+  if(grid>90) stop("Please set the grid between 1° and 90°. If grid=0, grid is not plotted",call. = F)
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -1299,37 +1299,42 @@ Map_KVII <- function(grid=30, center=0, title="") {
   lines(x = c2x(new_cl$lon,new_cl$lat),
         y = c2y(new_cl$lat), col="black")
 
-  #plot_main_parallel
-  #longitude circle
-  lats <- seq(-(90-grid),(90-grid),grid)
-  for(i in lats){
-    lon_lat_p <-  as.data.frame(-180:180)
-    lon_lat_p$lat <- rep(i)
-    lon_lat_p$x <- c2x(lon_lat_p[,1],lon_lat_p[,2])
-    lon_lat_p$y <- c2y(lon_lat_p[,2])
-    lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3, lty=1)
+  #plot grid only if different from 0
+  if(grid!=0){
+    #plot_main_parallel
+    #longitude circle
+    lats <- seq(-(90-grid),(90-grid),grid)
+    for(i in lats){
+      lon_lat_p <-  as.data.frame(-180:180)
+      lon_lat_p$lat <- rep(i)
+      lon_lat_p$x <- c2x(lon_lat_p[,1],lon_lat_p[,2])
+      lon_lat_p$y <- c2y(lon_lat_p[,2])
+      lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3, lty=1)
+    }
+    #plot_main_meridians
+    #fix meridians if center is not greenwich
+    Gr <- (-center)
+    LonLeft <- seq((Gr),-180,-grid)
+    LonRight <- seq(Gr,180,grid)
+    LonRight <- LonRight[-1]
+    #plot meridians left of Greenwich
+    for(i in LonLeft){
+      lat_lon_m <- as.data.frame(seq(-89,89,1))
+      lat_lon_m$lon <- rep(i)
+      lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
+      lat_lon_m$y <- c2y(lat_lon_m[,1])
+      lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+    }
+    #plot meridians right of Greenwich
+    for(i in LonRight){
+      lat_lon_m <- as.data.frame(seq(-89,89,1))
+      lat_lon_m$lon <- rep(i)
+      lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
+      lat_lon_m$y <- c2y(lat_lon_m[,1])
+      lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+    }
   }
-  #plot_main_meridians
-  #fix meridians if center is not greenwich
-  Gr <- (-center)
-  LonLeft <- seq((Gr),-180,-grid)
-  LonRight <- seq(Gr,180,grid)
-  #plot meridians left of Greenwich
-  for(i in LonLeft){
-    lat_lon_m <- as.data.frame(seq(-89,89,1))
-    lat_lon_m$lon <- rep(i)
-    lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
-    lat_lon_m$y <- c2y(lat_lon_m[,1])
-    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
-  }
-  #plot meridians right of Greenwich
-  for(i in LonRight){
-    lat_lon_m <- as.data.frame(seq(-89,89,1))
-    lat_lon_m$lon <- rep(i)
-    lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
-    lat_lon_m$y <- c2y(lat_lon_m[,1])
-    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
-  }
+
 
   #plot black contour
   bord_lr <- c(-180,180)
@@ -2073,31 +2078,34 @@ sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
     cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
     lines(cst$x,cst$y,col="black",lwd=0.75)
   }
+  #if grid==0 does not plot parallels and meridians
+  if(grid!=0){
+    #plot_main_parallel
+    #longitude circle
+    lats <- seq(-(90-grid),(90-grid),grid)
+    for(i in lats){
+      lon_lat_p <-  as.data.frame(0:360)
+      lon_lat_p$lat <- rep(i)
+      lon_lat_p$x <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
+                            c2x(lon_lat_p[,1],lon_lat_p[,2]))
+      lon_lat_p$y <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
+                            c2y(lon_lat_p[,1],lon_lat_p[,2]))
+      lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3)
+    }
 
-  #plot_main_parallel
-  #longitude circle
-  lats <- seq(-(90-grid),(90-grid),grid)
-  for(i in lats){
-    lon_lat_p <-  as.data.frame(0:360)
-    lon_lat_p$lat <- rep(i)
-    lon_lat_p$x <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
-                          c2x(lon_lat_p[,1],lon_lat_p[,2]))
-    lon_lat_p$y <- ifelse(cut(lon_lat_p[,1],lon_lat_p[,2])<0,NA,
-                          c2y(lon_lat_p[,1],lon_lat_p[,2]))
-    lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3)
+    #plot_main_meridians
+    lons <- seq(grid,360,grid)
+    for(i in lons){
+      lat_lon_m <- as.data.frame(seq(-89,89,1))
+      lat_lon_m$lon <- rep(i)
+      lat_lon_m$x <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
+                            c2x(lat_lon_m[,2],lat_lon_m[,1]))
+      lat_lon_m$y <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
+                            c2y(lat_lon_m[,2],lat_lon_m[,1]))
+      lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3)
+    }
   }
 
-  #plot_main_meridians
-  lons <- seq(grid,360,grid)
-  for(i in lons){
-    lat_lon_m <- as.data.frame(seq(-89,89,1))
-    lat_lon_m$lon <- rep(i)
-    lat_lon_m$x <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
-                          c2x(lat_lon_m[,2],lat_lon_m[,1]))
-    lat_lon_m$y <- ifelse(cut(lat_lon_m[,2],lat_lon_m[,1])<0,NA,
-                          c2y(lat_lon_m[,2],lat_lon_m[,1]))
-    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3)
-  }
   #plot black frame around globe
   a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
   a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
