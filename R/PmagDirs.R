@@ -1000,6 +1000,150 @@ flip_DI <- function(DI,export=FALSE,name="flipped_dirs"){
   return(dat_fl)
 }
 
+#function that plots points on a KavrayskiyVII geographic map
+Geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE){
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy in KavrayskiyVII projection
+  c2x <- function(lon,lat) {((3*d2r(lon))/2)*(sqrt((1/3)-((d2r(lat)/pi)^2)))}
+  c2y <- function(lat) {d2r(lat)}
+
+  #functions spherical (lon=x, lat=y) to Cartesian
+  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
+  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
+  s2cz <- function(y) {sin(d2r(y))}
+
+  #function that draw circle around point
+  circle <- function(longitude,latitude,A,fill=FALSE){
+    #empty new circle file
+    circle <- as.data.frame(matrix(ncol=2,nrow=0))
+    #loop that create A95 and rotate it around new coordinate (dec, inc)
+    for (i in seq(0,360,1)){
+      #temporary circle point
+      circleP <- as.data.frame(matrix(ncol=2,nrow=1))
+      S_lon <- longitude
+      S_lat <- latitude
+      A <- A
+
+      #trigonometric parameters for rotation
+      sbd <- -sin(d2r(S_lon))
+      cbd <- cos(d2r(S_lon))
+      sbi <- sin(d2r(90-S_lat))
+      cbi <- cos(d2r(90-S_lat))
+
+      # cartesian coordinates of the confidence circle
+      x <- s2cx(i,(90-A))
+      y <- s2cy(i,(90-A))
+      z <- s2cz(90-A)
+
+      #new rotated coordinate
+      xn <- x*(sbd^2+cbd^2*cbi)+
+        y*(cbd*sbd*(1-cbi))+
+        z*sbi*cbd
+      yn <- x*cbd*sbd*(1-cbi)+
+        y*(cbd^2+sbd*sbd*cbi)-
+        z*sbd*sbi
+      zn <- -(x*cbd*sbi-
+                y*sbi*sbd-
+                z*cbi)
+      #converted to spherical
+      newlon <- r2d(atan2(yn,xn))
+      newlon <- ifelse(newlon>180,newlon-360,newlon)
+      newlon <- ifelse(newlon<(-180),newlon+360,newlon)
+      newlat <- r2d(asin(zn))
+      circleP[1,1:2] <- c(newlon,newlat)
+      circle <- rbind(circle,circleP)
+    }
+    colnames(circle) <- c("lon","lat")
+
+    #next is to divide circles into two polygons if crosses the end of map
+    circle1 <- as.data.frame(matrix(nrow = 0,ncol = 2))
+    colnames(circle1) <- c("lon","lat")
+    #creates the breaking line
+    breaker <- as.data.frame(t(c(NA,NA)))
+    colnames(breaker) <- c("lon","lat")
+    #when two points are on the different side of the map, based on 355° distance, it put break in between
+    for(l in 2:nrow(circle)){
+      if(abs(circle[l-1,1]-circle[l,1])>355){
+        provv1 <- circle[l-1,]
+        provv2 <- circle[l,]
+        circle1 <- rbind(circle1,provv1,breaker,provv2)
+      }else{circle1 <- rbind(circle1,circle[l-1,],circle[l,])}
+    }
+
+    circle1$x <- c2x(circle1$lon,circle1$lat)
+    circle1$y <- c2y(circle1$lat)
+    filling <- which(is.na(circle1))
+    if(length(filling!=0)){
+      lines(circle1$x,circle1$y, lwd=0.8)
+    }
+    else if(fill_A==FALSE) {lines(circle1$x,circle1$y, lwd=0.8)}
+    else {polygon(circle1$x,circle1$y, lwd=0.8,col=rgb(1,0.9,0,0.25))}
+  }
+
+  #plot map
+  Map_KVII(grid=grid,center=center)
+
+  #plot points from file
+  if(S_file==TRUE){
+    cat("Select file in .csv format")
+    dat <- read.csv(file.choose())
+    for(i in 1:nrow(dat)){
+      S_lon <- dat[i,1]-center
+      S_lon <- ifelse(S_lon<0,S_lon+360,S_lon)
+      S_lon <- ifelse(S_lon>180,S_lon-360,S_lon)
+      S_lat <- dat[i,2]
+      if(A95==TRUE){
+        circ <- dat[i,3]
+        circle(S_lon,S_lat,circ,fill_A)
+      }
+      #select symbol
+      if(symbol=="c") pch <- 21
+      if(symbol=="s") pch <- 22
+      if(symbol=="d") pch <- 23
+      if(symbol=="t") pch <- 24
+
+      site_x <- c2x(S_lon,S_lat)
+      site_y <- c2y(S_lat)
+      points(x=site_x,y=site_y,pch=pch, col="black",bg=col)
+    }
+  }
+  if(S_file==FALSE){
+    repeat{
+      #plot point
+      S_lon <- as.numeric(readline("Longitude -or press enter to exit-: "))
+      if(is.na(S_lon)==TRUE) break
+      S_lon <- S_lon-center
+      S_lon <- ifelse(S_lon>180,
+                      S_lon-360,S_lon)
+      S_lon <- ifelse(S_lon<(-180),S_lon+360,S_lon)
+      S_lat <- as.numeric(readline("Latitude: "))
+      circ <- as.numeric(readline("Semi-angle of circle -press enter if no confidence angle is required-: "))
+      if(is.na(circ)==FALSE){circle(S_lon,S_lat,circ,fill_A)}
+      symbol <- readline("Symbol -press enter for circle-: ")
+      #select symbol
+      if(symbol=="") sym <- 21
+      if(symbol=="c") sym <- 21
+      if(symbol=="s") sym <- 22
+      if(symbol=="d") sym <- 23
+      if(symbol=="t") sym <- 24
+
+      site_x <- c2x(S_lon,S_lat)
+      site_y <- c2y(S_lat)
+      color <- readline("Color -press enter for red-:")
+      if(color=="") color <- "red"
+      points(x=site_x,y=site_y,pch=sym, col="black",bg=color)
+    }
+  }
+  if(export==TRUE){
+    save_pdf(name="Map.pdf")
+    cat("
+Figure saved as Map.pdf
+")
+  }
+}
+
 #function that take data Dec_Inc and return the average Inc, E, and E declination
 inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   d2r <- function(x) {x*(pi/180)}
@@ -1079,6 +1223,126 @@ matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name
   #export matrix if requested
   if(export==TRUE){write.csv(round(M,digits=5),paste(name,".csv"),row.names = TRUE)}
   return(round(M, digits=5))
+}
+
+#function that plots KavrayskiyVII geographic projection
+Map_KVII <- function(grid=30, center=0, title="") {
+  library(rlist)
+  if(center>180 | center<(-180)) stop("Please set center between -180° and 180°",call. = F)
+  if(grid==0 | grid>90) stop("Please set the grid between 1° and 90°",call. = F)
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {((3*d2r(lon))/2)*(sqrt((1/3)-((d2r(lat)/pi)^2)))}
+  c2y <- function(lat) {d2r(lat)}
+
+  #fix frame
+  plot(NA, xlim=c(-2.6,2.6), ylim=c(-1.5,1.5), asp=1,
+       xlab=title, xaxt="n",ylab="", yaxt="n", axes=FALSE)
+  #import coastline from PmagDirs
+  cl <- world_coastline
+  # set the coastline offset if longitude is not 0
+  if(center!=0){
+    #create the coastline-breaks file (breaks separating the single continental lines)
+    sep <- as.data.frame(1)
+    colnames(sep) <- "index"
+    #finds all breaks in the coastline file and index them
+    list <- as.data.frame(which(is.na(cl[,1]),arr.ind = TRUE))
+    colnames(list) <- "index"
+    sep <- rbind(sep, list)
+    rm(list)
+    #create empty list of all continents coastline
+    conts <- list()
+    #function that isolate coastlines and append to list
+    for(i in 2:nrow(sep)){
+      contour <- cl[sep[i-1,1]:sep[i,1],]
+      contour <- na.omit(contour)
+      conts <- list.append(conts,contour)
+    }
+    new_cl <- as.data.frame(matrix(nrow = 0,ncol = 2))
+    colnames(new_cl) <- c("lon","lat")
+    #for every coastline it changes the longitude depending on the new center and it fix it (-180<l<+180)
+    for(i in 1:length(conts)){
+      clc <- conts[[i]]
+      clc$lon <- clc$lon-center
+      clc$lon <- ifelse(clc$lon<(-180),clc$lon+360,clc$lon)
+      clc$lon <- ifelse(clc$lon>180,clc$lon-360,clc$lon)
+      #creates a new dataframe for single coastlines with breaks
+      clc1 <- as.data.frame(matrix(nrow = 0,ncol = 2))
+      colnames(clc1) <- c("lon","lat")
+      #creates the breaking line
+      breaker <- as.data.frame(t(c(NA,NA)))
+      colnames(breaker) <- c("lon","lat")
+      #when two points are on the different side of the map, based on 350° distance, it put break in between
+      for(l in 2:nrow(clc)){
+        if(abs(clc[l-1,1]-clc[l,1])>350){
+          provv1 <- clc[l-1,]
+          provv2 <- clc[l,]
+          clc1 <- rbind(clc1,provv1,breaker,provv2)
+        }else{clc1 <- rbind(clc1,clc[l-1,],clc[l,])}
+      }
+      #puts break after the new continent line
+      clc1 <- rbind(clc1,breaker)
+      #appends all new continent lines
+      new_cl <- rbind(new_cl,clc1)
+    }
+  }
+  #set coastline if longitude is greenwich
+  if(center==0){new_cl <- cl}
+  lines(x = c2x(new_cl$lon,new_cl$lat),
+        y = c2y(new_cl$lat), col="black")
+
+  #plot_main_parallel
+  #longitude circle
+  lats <- seq(-(90-grid),(90-grid),grid)
+  for(i in lats){
+    lon_lat_p <-  as.data.frame(-180:180)
+    lon_lat_p$lat <- rep(i)
+    lon_lat_p$x <- c2x(lon_lat_p[,1],lon_lat_p[,2])
+    lon_lat_p$y <- c2y(lon_lat_p[,2])
+    lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3, lty=1)
+  }
+  #plot_main_meridians
+  #fix meridians if center is not greenwich
+  Gr <- (-center)
+  LonLeft <- seq((Gr),-180,-grid)
+  LonRight <- seq(Gr,180,grid)
+  #plot meridians left of Greenwich
+  for(i in LonLeft){
+    lat_lon_m <- as.data.frame(seq(-89,89,1))
+    lat_lon_m$lon <- rep(i)
+    lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
+    lat_lon_m$y <- c2y(lat_lon_m[,1])
+    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+  }
+  #plot meridians right of Greenwich
+  for(i in LonRight){
+    lat_lon_m <- as.data.frame(seq(-89,89,1))
+    lat_lon_m$lon <- rep(i)
+    lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
+    lat_lon_m$y <- c2y(lat_lon_m[,1])
+    lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+  }
+
+  #plot black contour
+  bord_lr <- c(-180,180)
+  for(i in bord_lr){
+    lr <- as.data.frame(seq(-90,90,1))
+    lr$lon <- i
+    lr$x <- c2x(lr[,2],lr[,1])
+    lr$y <- c2y(lr[,1])
+    lines(lr$x,lr$y,col="black")
+  }
+  bord_ud <- c(-90,90)
+  for(i in bord_ud){
+    ud <-  as.data.frame(-180:180)
+    ud$lat <- rep(i)
+    ud$x <- c2x(ud[,1],ud[,2])
+    ud$y <- c2y(ud[,2])
+    lines(ud$x,ud$y,col="black")
+  }
 }
 
 #calculate PCA-derived direction and MAD from demagnetization steps
