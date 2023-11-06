@@ -1457,7 +1457,11 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
   #restore screen
   par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
-  if (on_plot==FALSE) {equalarea()}
+  if (on_plot==FALSE) {
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    equalarea()
+    }
   UD <- ifelse(inc>0,"D","U")
   inc <- abs(inc)
   X <- a2cx(inc,dec)
@@ -1529,7 +1533,11 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   #restore screen
   par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
-  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+  if (on_plot==FALSE) {
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+    }
 
   X <- c2x(lon,lat)
   Y <- c2y(lon,lat)
@@ -1569,7 +1577,11 @@ plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="
 
 #plot only apparent polar wander path
 plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE){
-  if (on_plot==FALSE) sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+  if (on_plot==FALSE) {
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+  }
 
   #plot APWP
   #functions converting degree and radians
@@ -1650,7 +1662,8 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
   xD <- a2cx(data_D$inc,data_D$dec)
   yD <- a2cy(data_D$inc,data_D$dec)
   if(on_plot==FALSE){
-
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
     equalarea(title=title)
   }
   if(symbol=="c") {pch <- 21}
@@ -1780,7 +1793,11 @@ plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_
     lon0 <- PPole[1,1]
     lat0 <- PPole[1,2]
   }
-  if(on_plot==FALSE){sph_ortho(lat=lat0,long=lon0,grid=grid,coast=coast, title=title)}
+  if(on_plot==FALSE){
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    sph_ortho(lat=lat0,long=lon0,grid=grid,coast=coast, title=title)
+    }
 
   coord <- as.data.frame(lon0)
   coord$lat0 <- lat0
