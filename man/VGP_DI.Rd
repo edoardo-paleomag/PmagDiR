@@ -17,6 +17,7 @@ VGP_DI(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs")
   \item{export}{if TRUE, results are exported as .csv files, default is TRUE}
   \item{type}{type of value saved: "VGPs"= VGP with reversals,  "VGPsN" = VGP in a common mode (default),   "VGPsR" = VGP rotated with the mean value (Paleomagnetic Pole) rotated onto the North Pole}
   \item{name}{name of the exported .csv files, default is "VGPs"}
+  \item{Prnt}{if TRUE(default) prints result in the consolle}
 }
 \details{
 }
@@ -25,6 +26,7 @@ VGP_DI(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs")
   \item{"name"_single_mode.csv}{virtual geomagnetic poles in a common mode}
   \item{"rotated"_rotated.csv}{virtual geomagnetic poles rotated with the mean value (Paleomagnetic Pole) rotated onto the North Pole}
   \item{"name"_average_pole.csv}{paleomagnetic pole and Fisher (1953 parameters)}
+
 }
 \references{
 Fisher, R., Proc. R. Soc. London A217, 295–305 (1953).

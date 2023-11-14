@@ -20,7 +20,7 @@ fisher_plot(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",
   \item{text}{if TRUE print fisher results in bottom right corner, default is FALSE}
   \item{export}{if TRUE the results are automatically exported as csv file. Default is TRUE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
-  \item{name}{name of the exported files. Defualt is "Fisher_mean"}
+  \item{name}{name of the exported files. Default is "Fisher_mean"}
 }
 \details{
 the function is optimized to be used in conjunction with the plot_DI function, plotting the average direction and the confidence cone on a plotted dataset. It can produce separate plots by setting on_plot=FALSE. The color, if changed, must be written withing quotes (e.g., "green").

@@ -401,6 +401,44 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=F
          return(DI))
 }
 
+#convert VGPs and site latitude and longitude in directions
+DI_from_VGP <- function(VGPs, lat, long, export=FALSE,name="Directions") {
+  #degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  VGPs <- na.omit(VGPs)
+  directions <- as.data.frame(matrix(nrow = 0,ncol = 2))
+  for (i in 1:nrow(VGPs)){
+    plong <- VGPs[i,1] %% 360
+    plat <- VGPs[i,2]
+    long <- long %% 360
+    signdec <- 1
+    Dphi <- abs(plong - long)
+    if (Dphi != 0) signdec <- (plong - long) / Dphi
+    if (lat == 90) lat <- 89.99
+    thetaS <- d2r(90 - lat)
+    thetaP <- d2r(90 - plat)
+    Dphi <- d2r(Dphi)
+    cosp <- cos(thetaS) * cos(thetaP) + sin(thetaS) * sin(thetaP) * cos(Dphi)
+    thetaM <- acos(cosp)
+    cosd <- (cos(thetaP) - cos(thetaM) * cos(thetaS)) / (sin(thetaM) * sin(thetaS))
+    C <- abs(1 - cosd^2)
+    dec <- ifelse(C != 0,-atan(cosd / sqrt(abs(C))) + (pi / 2),dec <- acos(cosd))
+    if (-pi < signdec * Dphi && signdec < 0) dec <- 2 * pi - dec
+    if (signdec * Dphi > pi) dec <- 2 * pi - dec
+    dec <- r2d(dec) %% 360
+    inc <- r2d(atan2(2 * cos(thetaM), sin(thetaM)))
+    DecInc <- as.data.frame(t(c(dec,inc)))
+    directions <- rbind(directions,DecInc)
+  }
+  colnames(directions) <- c("Dec","Inc")
+  #export csv with directions if requested
+  if(export==TRUE) {
+    write.csv(round(directions,digits = 2),paste(name,".csv"),row.names = FALSE)
+  }
+  return(directions)
+}
+
 #function that calculate E_I couples of data and plot bootstrapped statistics
 EI_boot <- function(DI,nb=1000,conf=95,export=TRUE, name="EI_boot_plot") {
   data <- DI
@@ -538,6 +576,160 @@ Graph saved as", paste(name,".pdf"),"
     write.csv(results,file=paste(name,".csv"),row.names = FALSE)
     save_pdf(name=paste(name,".pdf"))
   }
+}
+
+#function that calculated DeltaDec and DeltaInc
+ellips_DI <- function(DI,lat,long,export=FALSE){
+  #degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #cut NA rows
+  DI <- na.omit(DI)
+  #calculate average dir and paleolat in radians
+  aver_DI <- fisher(DI)
+  aver_inc <- aver_DI[1,2]
+  lat_r <- atan((tan(d2r(aver_inc)))/2)
+  #calculate vgps
+  poles <- VGP_DI(DI,in_file=FALSE,lat=lat,long=long,export=F,type="VGPs",Prnt=FALSE)
+  #calculate A95
+  PPole <- fisher(poles)
+  A95 <- PPole[1,3]
+  #calculated ∂Dec and ∂Inc
+  D_dec <- r2d(asin((sin(d2r(A95)))/cos(lat_r)))
+  D_inc <- r2d((2*d2r(A95))/(1+(3*(sin(lat_r))^2)))
+  result <- as.data.frame(matrix(nrow = 1,ncol=4))
+  colnames(result) <- c("dec","inc","delta_dec","delta_inc")
+  result[1,1] <- aver_DI[1,1]
+  result[1,2] <- aver_DI[1,2]
+  result[1,3] <- D_dec
+  result[1,4] <- D_inc
+  result$N <- nrow(DI)
+  #esport results if requested
+  if(export==TRUE){
+    write.csv(round(result,digits = 2),"confidence_ellipse.csv",row.names = FALSE)
+    cat("Confidence ellipse:
+")
+    print(result)
+  }
+  return(result)
+}
+
+#plot bimodal elliptical confidence (calculated from A95 inversion) from dec_inc  and print results on console
+ellips_plot <- function(DI,lat,long, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse"){
+  #degrees to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #functions converting inc(x) and dec(y) into equal area
+  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
+  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+  data <- DI
+  #cut lines with empty cells
+  data <- na.omit(data)
+  data <- data[,1:2]
+  colnames(data) <- c("dec", "inc")
+  #directions in Cartesian coordinates
+  data$x <- cos(d2r(data$dec))*cos(d2r(data$inc))
+  data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
+  data$z <- sin(d2r(data$inc))
+  #averaged Cartesian coordinates
+  x_av <- mean(data$x)
+  y_av <- mean(data$y)
+  z_av <- mean(data$z)
+  #elements of the distribution matrix
+  T_elements <- c(sum((data$x)*(data$x)),sum(data$x*data$y),sum(data$x*data$z),
+                  sum(data$y*data$x),sum(data$y*data$y),sum(data$y*data$z),
+                  sum(data$z*data$x),sum(data$z*data$y),sum(data$z*data$z))
+  #distribution matrix
+  T <- matrix(T_elements,nrow=3, byrow=TRUE)
+  #calculate and copy eigenvalues and vectors
+  T_e <- eigen(T,symmetric = TRUE)
+  T_vec <- T_e$vectors
+  T_val <- T_e$values
+  #calculate dec inc of max variance
+  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- r2d(atan2(T_vec[2,1],T_vec[1,1]))
+  V1dec <- V1dec%%360
+  #next  calculates difference between dec_inc and average
+  data$Dec_aver <- rep(V1dec)
+  data$Inc_aver <- rep(V1inc)
+  data$delta <- abs(data$dec-data$Dec_aver)
+  data$diff <- r2d(acos((sin(d2r(data$inc))*sin(d2r(data$Inc_aver)))+
+                          (cos(d2r(data$inc))*cos(d2r(data$Inc_aver))*cos(d2r(data$delta)))))
+  #Isolate modes
+  if(any(data$diff<=90)){
+    mode1 <- as.data.frame(data$dec[data$diff<=90])
+    mode1$inc <- data$inc[data$diff<=90]
+    colnames(mode1) <- c("dec","inc")
+  }
+  if(any(data$diff>90)){
+    mode2 <- as.data.frame(data$dec[data$diff>90])
+    mode2$inc <- data$inc[data$diff>90]
+    colnames(mode2) <- c("dec","inc")
+  }
+  #calculate ellipses
+  if(exists("mode1")==TRUE) {ellips_M1 <- ellips_DI(mode1, lat=lat, long=long)}
+  if(exists("mode2")==TRUE) {ellips_M2 <- ellips_DI(mode2, lat=lat, long=long)}
+
+  if(plot==TRUE){
+    if(on_plot==FALSE){
+      par(fig=c(0,1,0,1), new= FALSE)
+      plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+           xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+      equalarea()
+    }
+    if(exists("mode1")==TRUE){generate_ellips(ellips_M1[1,1],ellips_M1[1,2],ellips_M1[1,3],ellips_M1[1,4],
+                                              on_plot = TRUE,symbol=symbol, col_d = col_d,
+                                              col_u=col_u,col_l=col_l)}
+    if(exists("mode2")==TRUE){generate_ellips(ellips_M2[1,1],ellips_M2[1,2],ellips_M2[1,3],ellips_M2[1,4],
+                                              on_plot = TRUE,symbol=symbol, col_d = col_d,
+                                              col_u=col_u,col_l=col_l)}
+  }
+  data_M12 <- common_DI(data)
+  ellips_M12 <- ellips_DI(data_M12,lat=lat, long=long)
+  #plot text if true
+  par(fig=c(0,1,0,1), new=TRUE)
+  #plot text with results
+  N <- ellips_M12[1,5]
+  Dec <- round(ellips_M12[1,1],digits=2)
+  Inc <- round(ellips_M12[1,2],digits=2)
+  Delta_dec <- round(ellips_M12[1,3],digits=2)
+  Delta_inc <- round(ellips_M12[1,4],digits=2)
+
+  if(any(data$diff<=90)) {
+    cat("Ellipse Mode 1:
+")
+    print(round(ellips_M1, digits=2), row.names = FALSE)
+    if(export==TRUE){write.csv(round(ellips_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
+  }
+  if(any(data$diff>90)) {
+    cat("Ellipse Mode 2:
+")
+    print(round(ellips_M2,digits=2), row.names = FALSE)
+    if(export==TRUE){write.csv((round(ellips_M2,digits=2)),paste(name,"_mode_2.csv"), row.names = FALSE)}
+  }
+  if(any(data$diff>90)) {
+    cat("Ellipse common mode:
+")
+    print(round(ellips_M12, digits=2), row.names = FALSE)
+    if(export==TRUE){write.csv((round(ellips_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
+  }
+  if (text==TRUE){
+    text <- paste("N: ",N,"
+Dec: ", Dec,"
+Inc: ", Inc,"
+D_dec: ", Delta_dec,"
+D_inc: ", Delta_inc)
+    plot(NA, xlim=c(0,1), ylim=c(0,1),
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+    text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
+    warning("
+Do not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.
+", call.= F)
+  }
+
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+
 }
 
 #function plotting equal area net
@@ -835,7 +1027,7 @@ ffind <-function(DI, f_inc=0.005) {
   else{return(inc_E_seq)}
 }
 
-#flips plot bimodal fisher from dec_inc, plot false gives only results, on_plot=False create new stereonet
+#plot bimodal fisher from dec_inc and print results on console
 fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -872,7 +1064,7 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   data$diff <- r2d(acos((sin(d2r(data$inc))*sin(d2r(data$Inc_aver)))+
                           (cos(d2r(data$inc))*cos(d2r(data$Inc_aver))*cos(d2r(data$delta)))))
   #Isolate modes
-  if(any(data$dif<=90)){
+  if(any(data$diff<=90)){
     mode1 <- as.data.frame(data$dec[data$diff<=90])
     mode1$inc <- data$inc[data$diff<=90]
     colnames(mode1) <- c("dec","inc")
@@ -885,7 +1077,12 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   if(exists("mode1")==TRUE) {fisher_M1 <- fisher(mode1)}
   if(exists("mode2")==TRUE) {fisher_M2 <- fisher(mode2)}
   if(plot==TRUE){
-    if(on_plot==FALSE){equalarea()}
+    if(on_plot==FALSE){
+      par(fig=c(0,1,0,1), new= FALSE)
+      plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+           xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+      equalarea()
+      }
     if(exists("mode1")==TRUE){plot_a95(fisher_M1[1,1],fisher_M1[1,2],fisher_M1[1,3],
                                        on_plot = TRUE,symbol=symbol, col_d = col_d,
                                        col_u=col_u,col_l=col_l)}
@@ -1149,6 +1346,62 @@ Figure saved as Map.pdf
   }
 }
 
+#function that generate and plot confidence ellipses calculated from A95 back to directions, delta Inc > delta dec
+generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FALSE, save=FALSE, name="confidence_ellipse"){
+  #degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #functions converting inc(x) and dec(y) into equal area
+  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
+  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+  #create circle with dummy bedding only for strain_DI to work
+  circle <- as.data.frame(seq(0,360,2))
+  circle$inc <- rep(90-delta_inc)
+  colnames(circle) <- c("circ_dec","circ_inc")
+  circle$dummy_az <- rep(0)
+  circle$dummy_pl <- rep(0)
+  #calculate parameter for adjusting delta_dec
+  fol <- tan(d2r(delta_inc))/tan(d2r(delta_dec))
+  #create matrix deforming circle
+  M <- matrix_maker(Fol = fol,v1d = D,v1i = 0,v2d = 0,v2i = 90,v3d = ((D-90)%%360),v3i = 0, return_P=F)
+  ell <- strain_DI(DIAP = circle,M = M)
+  ell <- ell[,1:2]
+  #uses bedding correction to place final ellipses in the right position
+  ellipses <- bed_DI(ell,in_file = FALSE,bed_az = D,bed_plunge = 90-I,export = FALSE)
+  colnames(ellipses) <- c("dec","inc")
+  ellipses$x <- a2cx(abs(ellipses$inc),ellipses$dec)
+  ellipses$y <- a2cy(abs(ellipses$inc),ellipses$dec)
+  #restore screen
+  par(fig=c(0,1,0,1))
+  #standalone graph or on existing graph
+  if (on_plot==FALSE) {
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    equalarea()
+  }
+  #check for negative inclination
+  inc <- I
+  dec <- D
+  UD <- ifelse(inc>0,"D","U")
+  inc <- abs(inc)
+  X <- a2cx(inc,dec)
+  Y <- a2cy(inc,dec)
+  if(symbol=="c") {pch <- 21}
+  else if(symbol=="s") {pch <- 22}
+  else if(symbol=="d") {pch <- 23}
+  else if(symbol=="t") {pch <- 24}
+  else{stop("Please select valid symbol. Check help for info.",call. = F)}
+  if(UD=="D"){
+    points(X,Y, pch=pch,cex=1.3, col="black",
+           bg= col_d)
+  }else{
+    points(X,Y, pch=pch,cex=1.3, col="black",
+           bg=col_u)
+  }
+  lines(ellipses$x,ellipses$y,lty=1, col=col_l, lwd=1.8)
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+}
+
 #function that take data Dec_Inc and return the average Inc, E, and E declination
 inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   d2r <- function(x) {x*(pi/180)}
@@ -1202,7 +1455,7 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
 }
 
 #create matrix from fol,lin, and dec inc of vectors
-matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name="matrix"){
+matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name="matrix",return_P=TRUE){
   library(matlib)
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -1223,8 +1476,10 @@ matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name
   A_val <- c(v1,0,0,0,v2,0,0,0,v3)
   A_val <- matrix(A_val,nrow=3,byrow=TRUE)
   M <- A_vec%*%A_val%*%inv(A_vec)
-  cat(paste("P:",P,"
+  if(return_P==TRUE){
+    cat(paste("P:",P,"
 "))
+  }
   #export matrix if requested
   if(export==TRUE){write.csv(round(M,digits=5),paste(name,".csv"),row.names = TRUE)}
   return(round(M, digits=5))
@@ -3174,7 +3429,7 @@ Lat: ", results$Plat,"
 }
 
 #calculate virtual geomagnetic pole(s)
-VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs"){
+VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs",Prnt=TRUE){
   #conversion functions
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -3239,10 +3494,12 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 
 ")
   }
-  cat("Paleomagnetic pole:
+  if(Prnt==TRUE){
+    cat("Paleomagnetic pole:
 
 ")
-  print(round(PmagPole,digits=2),row.names=FALSE)
+    print(round(PmagPole,digits=2),row.names=FALSE)
+  }
 
   if(type=="VGPs"){return(VGPs)}
   if(type=="VGPsN"){return(VGPsN)}

@@ -13,7 +13,6 @@ plot_a95(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FAL
   \item{D}{declination}
   \item{I}{inclination}
   \item{a}{confidence angle}
-  \item{color}{color of the average direction, default is "red")}
   \item{col_d}{color of the average down-pointing direction point, default is "red"}
   \item{col_u}{color of the average up-pointing direction point, default is "white"}
   \item{col_l}{color of the a95 cone of confidence, default is "black"}
@@ -25,7 +24,7 @@ plot_a95(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FAL
 \details{
 }
 \value{
-Function is solely graphical, no values are returned. It is used by PmagDirs::fisher_plot
+Function is graphical, no values are returned. It is used by PmagDirs::fisher_plot
 }
 \references{
 }

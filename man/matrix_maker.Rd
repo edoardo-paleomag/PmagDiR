@@ -21,6 +21,7 @@ matrix_maker(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i,export=FALSE, name="matrix")
   \item{v3i}{inclination of the minimum eigenvector}
   \item{export}{If TRUE, the matrix is automatically exported as .csv file in the working folder. Default is FALSE}
   \item{name}{name of the exported file. Default is "matrix"}
+  \item{return_P}{if TRUE (default) print the degree of anisotropy P in the consolle}
 }
 \details{
 This function create a 3x3 symmetric matrix from empirical or theoretical anisotropy data, that can be used to simulate deviation of paleomagnetic directions. It uses the Matlib Package of Friendly et al. (https://cran.r-project.org/web/packages/matlib/matlib.pdf).
