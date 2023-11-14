@@ -1917,8 +1917,6 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
   xD <- a2cx(data_D$inc,data_D$dec)
   yD <- a2cy(data_D$inc,data_D$dec)
   if(on_plot==FALSE){
-    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
-         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
     equalarea(title=title)
   }
   if(symbol=="c") {pch <- 21}
