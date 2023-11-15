@@ -6,7 +6,7 @@ Plot paleomagnetic pole, confidence, and reference apparent polar wander path
 \description{
 Plot a triplet of longiture, latitude, and confidence angle on a spherical orthographic projection, together with an apparent polar wander path selected within a specific time interval and reference frame by interactive data entry}
 \usage{
-plot_pole_APWP(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE)
+plot_pole_APWP(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP="V23",S_APWP=FALSE)
 }
 \arguments{
   \item{lon}{pole longitude, positive East}
@@ -24,6 +24,7 @@ plot_pole_APWP(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
   \item{name}{name of exported files, default is "A95"}
+  \item{APWP}{select either the APWP of Vaes et al., 2023 (V23; Defult), or of Torsvik et al., 2012 (T12)}
   \item{S_APWP}{plots the reference APWP of choice as South Poles}
 
 }

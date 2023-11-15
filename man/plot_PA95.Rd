@@ -20,6 +20,7 @@ plot_PA95(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="bla
   \item{col_l}{color of the A95 confidence, default is "black"}
   \item{col_A}{filling of the A95 confidence, default is transparent red}
   \item{symbol}{define the points shape: "c"= circle (default), "s"= square, "d"= diamond, "t"=triangle}
+  \item{size}{size of the symbol, default is 1}
   \item{coast}{draw present day coastlines, default is FALSE}
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}

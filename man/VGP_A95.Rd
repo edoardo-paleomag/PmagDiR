@@ -7,7 +7,7 @@ Plot A95 confidence
 Calculate A95 cone of confidence from VGPs and allows comparison with reference apparent polar wander path in main coordinates systems.
 }
 \usage{
-VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3),coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE)
+VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3), coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP="V23", S_APWP=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +23,7 @@ VGP_A95(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A
   \item{on_plot}{if TRUE, results are plotted on existing spherical plot, default is FALSE}
   \item{save}{if TRUE the plot is exported as pdf file in the working directory, default is FALSE}
   \item{name}{name of exported files, default is "A95"}
+  \item{APWP}{select either the APWP of Vaes et al., 2023 (V23; Defult), or of Torsvik et al., 2012 (T12)}
   \item{S_APWP}{plots the reference APWP of choice as South Poles}
 }
 \details{

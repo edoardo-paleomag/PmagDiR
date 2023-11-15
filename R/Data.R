@@ -94,14 +94,14 @@
 #' @source https://www.naturalearthdata.com/downloads/110m-physical-vectors/
 "world_coastline"
 
-#' Global apparent polar wander path
+#' Global apparent polar wander path T12
 #'
-#' Global synthetic apparent polar wander path
+#' Global synthetic apparent polar wander path of Torsvik et al., 2012
 #' (Torsvik,T.H., R. Van der Voo, U. Preeden, C. Mac Niocaill, B. Steinberger, P. V. Doubrovine, D. J. J. van Hinsbergen, M. Domeier, C. Gaina, E. Tohver, J. G. Meert, P. J. a. McCausland, L. R. M. Cocks, Phanerozoic polar wander, palaeogeography and dynamics. Earth-Science Rev. 114, 325–368 (2012).)
 #'
 #'
 #'
-#' @format ## `GAPWP`
+#' @format ## `T12_GAPWP`
 #' A data frame with 33 rows and 16 columns:
 #' \describe{
 #'   \item{Age}{age of the moving window}
@@ -112,5 +112,26 @@
 #' }
 #' @author Edoardo Dallanave
 #' @source <https://www.sciencedirect.com/science/article/abs/pii/S0012825212000797>
-"GAPWP"
+"T12_GAPWP"
+
+#' Global apparent polar wander path V23
+#'
+#' Global synthetic apparent polar wander path of Vaes et al., 2023
+#' (Vaes, B., D.J.J. van Hinsbergen, S.H.A. van de Lagemaat, E. van der Wiel, N. Lom, E. Advokaat, L.M. Boschman, L.C. Gallo, A. Greve, C. Guilmette, A global apparent polar wander path for the last 320 Ma calculated from site-level paleomagnetic data. Earth-Science Rev. 245, 1–35 (2023).)
+#'
+#'
+#'
+#' @format ## `V23_GAPWP`
+#' A data frame with 33 rows and 20 columns:
+#' \describe{
+#'   \item{Age}{age of the moving window}
+#'   \item{lat}{pole latitude}
+#'   \item{long}{pole longitude; the different coordinate reference systems are SAF= south Africa
+#'   NAm= North America; SAm= South America; EU= Stable Europe; In= India; Aus= Australia;
+#'   Ant= Antarctica; Pac= Pacific; Ib= Iberia}
+#'   ...
+#' }
+#' @author Edoardo Dallanave
+#' @source <https://www.sciencedirect.com/science/article/pii/S0012825223002362>
+"V23_GAPWP"
 

@@ -1739,7 +1739,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
 }
 
 #plot A95 on a spherical orthographic plot
-plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95"){
+plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",size=1, coast=FALSE, on_plot=FALSE, save=FALSE, name="A95"){
   library("dplyr", warn.conflicts = FALSE)
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
@@ -1808,30 +1808,30 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   else{stop("Please select valid symbol. Check help (type ?plot_PA95) for info.",call. = F)}
 
   if(CUT>0){
-    points(X,Y, pch=pch,cex=1, col="black",
+    points(X,Y, pch=pch,cex=size, col="black",
            bg= col_f)
   }else{
-    points(X,Y, pch=pch,cex=1, col="black",
+    points(X,Y, pch=pch,cex=size, col="black",
            bg=col_b)
   }
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #plot pole with A95 and Apparent polar wander path
-plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",S_APWP=FALSE){
+plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP="V23", S_APWP=FALSE){
   #plot pole
   plot_PA95(lon=lon, lat = lat,A = A,lon0=lon0, lat0=lat0, grid=grid, col_f = col_f, col_b= col_b, col_l=col_l, col_A = col_A, symbol=symbol, coast=coast, on_plot = on_plot,save=FALSE)
 
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
+    plot_APWP(APWP=APWP, lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #plot only apparent polar wander path
-plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE){
+plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",size=0.6, coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE){
   if (on_plot==FALSE) {
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
@@ -1849,16 +1849,19 @@ plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE,
   #cut is cosin of c, when negative is behind projections, needs to be cut
   cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
   #questions on APW age and frame
-  cat("APWP range from 0 to 320 Ma every 10 Myr.
-")
-  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-  O <- round(as.numeric(readline("Older age: ")),-1)
-  if(is.na(O)==TRUE){O <- 320}
-  if(O>320){O <- 320}
-  if(is.na(Y)==TRUE){Y <- 0}
-  Y <- (Y/10)+1
-  O <- (O/10)+1
-  cat("Frames:
+  if(APWP=="V23"){
+    cat("Frames:
+(1) South Africa
+(2) North America
+(3) South America
+(4) Europe
+(5) India
+(6) Australia
+(7) Antarctica
+(8) Pacific (0 to 80_Ma)
+(9) Iberia (0 to 80 Ma)")
+  } else if (APWP=="T12"){
+    cat("Frames:
 (1) South Africa
 (2) North America
 (3) Europe
@@ -1866,10 +1869,26 @@ plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE,
 (5) Amazonia
 (6) Australia
 (7) East Antarctica")
+  }
   frame <- as.numeric(readline("insert frame (number): "))
   col1 <- (frame*2)+1
   col2 <- (frame*2)+2
-  G <- GAPWP
+  cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+  O <- round(as.numeric(readline("Older age: ")),-1)
+  if(is.na(O)==TRUE){O <- 320}
+  if(O>320){O <- 320}
+  if(is.na(Y)==TRUE){Y <- 0}
+  #if frame is 8 or 9 (only in V23) and age is too old it fixes it
+  if(frame==8 && O>80) O <- 80
+  if(frame==9 && O>80) O <- 80
+  Y <- (Y/10)+1
+  O <- (O/10)+1
+  #select apwp file
+  if(APWP=="V23") G <- V23_GAPWP
+  if(APWP=="T12") G <- T12_GAPWP
+  #flip if necessary
   if(S_APWP==FALSE) {G[,col1:col2] <- flip_DI(G[,col1:col2])}
   par(fig=c(0,1,0,1), new=TRUE)
   plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
@@ -1882,7 +1901,7 @@ plot_APWP <- function(lon0=0,lat0=90,grid=30,col="gray",symbol="c", coast=FALSE,
   lines(lin$lx,lin$ly,cex=1)
   #plot poles APWP
   for (i in Y:O){
-    plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = col,symbol=symbol, col_l = "black",col_A=rgb(1,0.9,0,0.30))
+    plot_PA95(lon = G[i,col1],lat = G[i,col2],A = G[i,2],lon0 = lon0,lat0 = lat0,on_plot = T,col_f = col,symbol=symbol,size=size, col_l = "black",col_A=rgb(1,0.9,0,0.30))
   }
   text1 <- paste(G[Y,1],"Ma")
   text2 <- paste(G[O,1], "Ma")
@@ -3178,7 +3197,7 @@ Graph saved as Unstrained_directions_plot.pdf
 }
 
 # #plot A95 from VGP data and compare with GAPWP
-VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3), coast=FALSE, on_plot=FALSE, save=FALSE, name="A95", S_APWP=FALSE){
+VGP_A95 <- function(VGP,lat=90,long=0,grid=30, auto_cent=TRUE, symbol="c",color="blue",col_A=rgb(1,0,0,0.3), coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP="V23", S_APWP=FALSE){
   library("dplyr", warn.conflicts = FALSE)
 
   #warning for on-plot, to avoid wrong coordinates
@@ -3278,7 +3297,7 @@ A95: ", round(PPole[1,3],digits=2))
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
+    plot_APWP(APWP=APWP, lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
   if(save==TRUE){
     save_pdf(name = paste(name,".pdf"),width = 8,height = 8)
@@ -3287,7 +3306,7 @@ A95: ", round(PPole[1,3],digits=2))
 }
 
 #bootstrap of VGPs
-VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",S_APWP=FALSE){
+VGP_boot <- function(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",APWP="V23", S_APWP=FALSE){
 
   #warning for on-plot, to avoid wrong coordinates
   if(on_plot==TRUE && auto_cent==TRUE) {
@@ -3409,7 +3428,7 @@ Lat: ", results$Plat,"
   #plot APWP if requested during process
   pAPWP <- readline("Plot APWP? (y or n): ")
   if(pAPWP=="y"){
-    plot_APWP(lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
+    plot_APWP(APWP=APWP, lon0 = lon0,lat0 = lat0,grid = grid,on_plot = T,S_APWP = S_APWP)
   }
   #replot pole data on apwp
   par(fig=c(0,1,0,1), new=TRUE)

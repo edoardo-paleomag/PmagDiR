@@ -7,7 +7,7 @@ VGP_boot
 Calculate bootstrapped confidence angle of VGPs distribution and plot pole
 }
 \usage{
-VGP_boot(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",S_APWP=FALSE)
+VGP_boot(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FALSE,symbol="c",color= "blue",hist=TRUE,text=TRUE,save=FALSE, name="VGP_boot",APWP="V23", S_APWP=FALSE)
 }
 \arguments{
   \item{VGP}{virtual geomagnetic pole list, longitude and latitude, single file with two columns}
@@ -24,6 +24,7 @@ VGP_boot(VGP,nb=1000,lat=90,long=0,grid=30,auto_cent=TRUE,on_plot=FALSE,coast=FA
   \item{text}{write text with results on the diagram, default is TRUE}
   \item{save}{sabe figure and results in the working diorectory, default is FALSE}
   \item{name}{name of exported files, default is "VGP_boot"}
+  \item{APWP}{select either the APWP of Vaes et al., 2023 (V23; Defult), or of Torsvik et al., 2012 (T12)}
   \item{S_APWP}{plots the reference APWP of choice as South Poles}
 }
 \details{
