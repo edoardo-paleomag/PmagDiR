@@ -1,5 +1,5 @@
-\name{Geo_point}
-\alias{Geo_point}
+\name{geo_point}
+\alias{geo_point}
 \title{
 Geo localities and poles plot
 }
@@ -7,7 +7,7 @@ Geo localities and poles plot
 Plot a points and poles (with confidence circle) on a map using a KavrayskiyVII projection
 }
 \usage{
-Geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 = FALSE, fill_A = TRUE, export = TRUE, on_plot=FALSE)
+geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 = FALSE, fill_A = TRUE, export = TRUE, on_plot=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

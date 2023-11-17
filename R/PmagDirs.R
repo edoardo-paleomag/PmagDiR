@@ -1198,7 +1198,7 @@ flip_DI <- function(DI,export=FALSE,name="flipped_dirs"){
 }
 
 #function that plots points on a KavrayskiyVII geographic map
-Geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE,on_plot=FALSE){
+geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE,on_plot=FALSE){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
 
@@ -1549,10 +1549,29 @@ Map_KVII <- function(grid=30, center=0, title="") {
       new_cl <- rbind(new_cl,clc1)
     }
   }
+  #plot sea
+  bord_left <- as.data.frame(matrix(ncol = 2, nrow = 181))
+  bord_left[,2] <- -90:90
+  bord_left[,1] <- rep(-180)
+  bord_right <- as.data.frame(matrix(ncol = 2, nrow = 181))
+  bord_right[,2] <- 90:-90
+  bord_right[,1] <- rep(180)
+  bord <- rbind(bord_left,bord_right)
+  bord$x <- c2x(bord[,1], bord[,2])
+  bord$y <- c2y(bord[,2])
+  if(center==0){
+    polygon(bord$x,bord$y, col="light cyan")
+  }
+
   #set coastline if longitude is greenwich
-  if(center==0){new_cl <- cl}
-  lines(x = c2x(new_cl$lon,new_cl$lat),
+  if(center==0){
+    new_cl <- cl
+    polygon(x = c2x(new_cl$lon,new_cl$lat),
+                        y = c2y(new_cl$lat), col="light green")
+    }else{
+      lines(x = c2x(new_cl$lon,new_cl$lat),
         y = c2y(new_cl$lat), col="black")
+    }
 
   #plot grid only if different from 0
   if(grid!=0){
@@ -1589,25 +1608,8 @@ Map_KVII <- function(grid=30, center=0, title="") {
       lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
     }
   }
-
-
-  #plot black contour
-  bord_lr <- c(-180,180)
-  for(i in bord_lr){
-    lr <- as.data.frame(seq(-90,90,1))
-    lr$lon <- i
-    lr$x <- c2x(lr[,2],lr[,1])
-    lr$y <- c2y(lr[,1])
-    lines(lr$x,lr$y,col="black")
-  }
-  bord_ud <- c(-90,90)
-  for(i in bord_ud){
-    ud <-  as.data.frame(-180:180)
-    ud$lat <- rep(i)
-    ud$x <- c2x(ud[,1],ud[,2])
-    ud$y <- c2y(ud[,2])
-    lines(ud$x,ud$y,col="black")
-  }
+  #plot contour
+  polygon(bord$x,bord$y, col=NA)
 }
 
 #calculate PCA-derived direction and MAD from demagnetization steps
