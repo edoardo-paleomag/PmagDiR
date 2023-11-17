@@ -36,6 +36,5 @@ Edoardo Dallanave}
 \seealso{
 }
 \examples{
-##Type Geo_point() in the console and follow instruction.
-
-
+##Type geo_point() in the console and follow instruction.
+}
