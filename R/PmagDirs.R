@@ -1567,7 +1567,7 @@ Map_KVII <- function(grid=30, center=0, title="") {
   if(center==0){
     new_cl <- cl
     polygon(x = c2x(new_cl$lon,new_cl$lat),
-                        y = c2y(new_cl$lat), col="light green")
+                        y = c2y(new_cl$lat), col="light green", border="light green")
     }else{
       lines(x = c2x(new_cl$lon,new_cl$lat),
         y = c2y(new_cl$lat), col="black")
