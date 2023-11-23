@@ -1502,9 +1502,11 @@ Map_KVII <- function(grid=30, center=0, title="") {
   plot(NA, xlim=c(-2.6,2.6), ylim=c(-1.5,1.5), asp=1,
        xlab=title, xaxt="n",ylab="", yaxt="n", axes=FALSE)
   #import coastline from PmagDirs
-  cl <- world_coastline
+  if (abs(center)==180){
+    cl <- world_coastline_180
+  }else{cl <- world_coastline}
   # set the coastline offset if longitude is not 0
-  if(center!=0){
+  if(center!=0 | abs(center)!=180){
     #create the coastline-breaks file (breaks separating the single continental lines)
     sep <- as.data.frame(1)
     colnames(sep) <- "index"
@@ -1559,12 +1561,12 @@ Map_KVII <- function(grid=30, center=0, title="") {
   bord <- rbind(bord_left,bord_right)
   bord$x <- c2x(bord[,1], bord[,2])
   bord$y <- c2y(bord[,2])
-  if(center==0){
-    polygon(bord$x,bord$y, col="light cyan")
+  if(center==0 | abs(center)==180){
+    polygon(bord$x,bord$y, col="light cyan",border = NA)
   }
 
   #set coastline if longitude is greenwich
-  if(center==0){
+  if(center==0 | abs(center)==180){
     new_cl <- cl
     polygon(x = c2x(new_cl$lon,new_cl$lat),
                         y = c2y(new_cl$lat), col="light green", border="light green")
