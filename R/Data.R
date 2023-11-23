@@ -94,6 +94,23 @@
 #' @source https://www.naturalearthdata.com/downloads/110m-physical-vectors/
 "world_coastline"
 
+#' world coastline_180
+#'
+#' Detail= 1:110,000,000
+#'
+#'
+#'
+#' @format ## `world_coastline_180`
+#' A data frame with 5261 rows and 2 columns:
+#' \describe{
+#'   \item{lon}{point longitude adapted for map centerd at 180 degree longitude}
+#'   \item{lat}{point latitude}
+#'   ...
+#' }
+#' @author Edoardo Dallanave
+#' @source https://www.naturalearthdata.com/downloads/110m-physical-vectors/
+"world_coastline_180"
+
 #' Global apparent polar wander path T12
 #'
 #' Global synthetic apparent polar wander path of Torsvik et al., 2012

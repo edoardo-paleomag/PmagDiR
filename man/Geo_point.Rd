@@ -22,6 +22,7 @@ geo_point(S_file = FALSE, symbol = "c", col = "red", center = 0, grid = 30, A95 
   \item{on_plot}{if TRUE the point is added to the existing map, default is FALSE}
 }
 \details{
+The map is coloured only if centered at Greenwich or at 180 degrees longitude
 }
 \value{
 }
