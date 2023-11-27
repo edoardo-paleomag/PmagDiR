@@ -38,6 +38,6 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##generate confidence ellipse for the reference dataset Ardo_PmagDirs
-ellips_DI(common_DI(Ardo_PmagDirs),lat= 46, long=12)
+##generate confidence ellipse for the reference dataset Ardo_PmagDiR
+ellips_DI(common_DI(Ardo_PmagDiR),lat= 46, long=12)
 }

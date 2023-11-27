@@ -48,11 +48,11 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-## Plot bimodal directions with PmagDirs::plot_DI with default options, calculate Fisher statistic and plot it on top.
-plot_DI(Ardo_PmagDirs)
-fisher_plot(Ardo_PmagDirs,export=FALSE)
+## Plot bimodal directions with PmagDiR::plot_DI with default options, calculate Fisher statistic and plot it on top.
+plot_DI(Ardo_PmagDiR)
+fisher_plot(Ardo_PmagDiR,export=FALSE)
 
 ## calculate and plot means and confidence of the same data in a new equal area plot.
-fisher_plot(Ardo_PmagDirs,symbol="d", col_d="purple",col_u="pink", on_plot=FALSE, export=FALSE)
+fisher_plot(Ardo_PmagDiR,symbol="d", col_d="purple",col_u="pink", on_plot=FALSE, export=FALSE)
 
 }

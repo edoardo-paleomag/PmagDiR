@@ -33,10 +33,10 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##perform the reversal test of the Ardo_PmagDir dataset,
+##perform the reversal test of the Ardo_PmagDiR dataset,
 ##with only 100 bootstrapped pseudosamples per mode
 ## (bootstrapping is time demanding).
 
-revtest(Ardo_PmagDir,nb=100)
+revtest(Ardo_PmagDiR,nb=100)
 
 }

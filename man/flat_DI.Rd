@@ -32,8 +32,8 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-#Flattens the direction of the Ardo_PmagDir dataset (f=0.5) and plot the original and the flattened directions in two separate equal area plots, both common down-pointing mode.
-plot_DI(common_DI(Ardo_PmagDirs))
-Ardo_FL = flat_DI(Ardo_PmagDirs,f=0.5)
+#Flattens the direction of the Ardo_PmagDiR dataset (f=0.5) and plot the original and the flattened directions in two separate equal area plots, both common down-pointing mode.
+plot_DI(common_DI(Ardo_PmagDiR))
+Ardo_FL = flat_DI(Ardo_PmagDiR,f=0.5)
 plot_DI(common_DI(Ardo_FL))
 }

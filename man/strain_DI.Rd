@@ -38,7 +38,7 @@ Edoardo Dallanave
 ##create N-S strained directions from the reference Ardo_Geo_PmagDirs distribution and plots both original and synthetically strained directions on the same equal area
 
 M = matrix_maker(Fol=1,Lin=1.8,v1d=0,v1i=0,v2d=90,v2i=0,v3d=0,v3i=90)
-ArdoST = strain_DI(Ardo_Geo_PmagDirs, M)
-plot_DI(Ardo_PmagDirs)
+ArdoST = strain_DI(Ardo_Geo_PmagDiR, M)
+plot_DI(Ardo_PmagDiR)
 plot_DI(bed_DI(ArdoST),on_plot=T,col_d="red",col_u="pink",symbol="d")
 }

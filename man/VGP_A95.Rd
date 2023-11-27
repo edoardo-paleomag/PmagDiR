@@ -49,9 +49,9 @@ Edoardo Dallanave}
 \seealso{
 }
 \examples{
-##calculate VGPs of the reference Ardo_PmagDirs record calculate pole.
+##calculate VGPs of the reference Ardo_PmagDiR record calculate pole.
 
-VGP = VGP_DI(Ardo_PmagDirs,lat=46, long=12, export=FALSE, type="VGPsN")
+VGP = VGP_DI(Ardo_PmagDiR,lat=46, long=12, export=FALSE, type="VGPsN")
 plot_VGP(VGP,auto_cent=TRUE, coast= TRUE)
 VGP_A95(VGP, auto_cent=TRUE,grid=20, coast=TRUE)
 ##follow the instruction in the console

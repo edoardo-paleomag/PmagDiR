@@ -42,7 +42,7 @@ Edoardo Dallanave
 }
 \examples{
 ##convert all Ardo direction into a single mode
-ArdoSM = common_DI(Ardo_PmagDirs)
+ArdoSM = common_DI(Ardo_PmagDiR)
 
 ##Applies the Vandamme cutoff
 ArdoVD = cut_DI(ArdoSM,VD=TRUE,lat=46.04,long=12.14)

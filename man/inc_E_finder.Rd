@@ -38,6 +38,6 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Returns the inclination, Elongation, and declination of elongation (with respect the whole distribution declination) of the Ardo_PmagDir dataset.
-inc_E_finder(Ardo_PmagDirs)
+##Returns the inclination, Elongation, and declination of elongation (with respect the whole distribution declination) of the Ardo_PmagDiR dataset.
+inc_E_finder(Ardo_PmagDiR)
 }

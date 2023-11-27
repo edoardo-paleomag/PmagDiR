@@ -40,8 +40,8 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##calculate and print the distribution parameters of the reference Ardo_PmagDir distribution, with an f negative increment of 0.01, until the value predicted by the tk03.GAD model is approached.
+##calculate and print the distribution parameters of the reference Ardo_PmagDiR distribution, with an f negative increment of 0.01, until the value predicted by the tk03.GAD model is approached.
 
-ffind(Ardo_PmagDir, f_inc=0.01)
+ffind(Ardo_PmagDiR, f_inc=0.01)
 
 }

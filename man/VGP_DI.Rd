@@ -40,8 +40,8 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Calculate paleomagnetic pole for the Ardo_PmagDirs reference directions.
+##Calculate paleomagnetic pole for the Ardo_PmagDiR reference directions.
 
-VGP = VGP_DI(Ardo_PmagDirs,in_file=FALSE,lat=46.04,long=12.15,type="VGPsN",export=FALSE,name="VGPs")
+VGP = VGP_DI(Ardo_PmagDiR,in_file=FALSE,lat=46.04,long=12.15,type="VGPsN",export=FALSE,name="VGPs")
 }
 

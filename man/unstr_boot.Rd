@@ -4,7 +4,7 @@
 Unstrain of bootstrapped pseudosamples
 }
 \description{
-Calculates boostrapped margins of unstrain process performed with the function PmagDirs::unstr_DI
+Calculates boostrapped margins of unstrain process performed with the function PmagDiR::unstr_DI
 }
 \usage{
 unstr_boot(unstr_file,nb= 100,S_vec,Lin,Fol,ns=10,confidence=95,cross=FALSE,EdMAX=FALSE,EdMIN=FALSE,hist=TRUE,save=TRUE,name="Unstrain_bootstrap")
@@ -25,7 +25,7 @@ unstr_boot(unstr_file,nb= 100,S_vec,Lin,Fol,ns=10,confidence=95,cross=FALSE,EdMA
   \item{name}{name of the exported files. Default is Unstrain_bootstrap}
 }
 \details{
-The function is used after monitoring the unstrain path of elongation and inclination during unstrain by using the function PmagDirs::unstr_DI. The boundary conditions of the bootstrapped pseudosamples are the same as the PmagDirs::unstr_DI function. The process is time demanding.
+The function is used after monitoring the unstrain path of elongation and inclination during unstrain by using the function PmagDiR::unstr_DI. The boundary conditions of the bootstrapped pseudosamples are the same as the PmagDiR::unstr_DI function. The process is time demanding.
 }
 \value{
 If save=TRUE (default) the function returns a pdf file with the graph and a csv file with the bootstrap statistic of the unstrain process.

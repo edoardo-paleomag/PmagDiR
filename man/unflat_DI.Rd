@@ -33,8 +33,8 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Unflats and plot the Ard_PmagDir directions applying an f=0.5
-plot_DI(common_DI(Ardo_PmagDirs))
-Ardo_ufl = unflat_DI(Ardo_PmagDirs,f=0.5)
+##Unflats and plot the Ard_PmagDiR directions applying an f=0.5
+plot_DI(common_DI(Ardo_PmagDiR))
+Ardo_ufl = unflat_DI(Ardo_PmagDiR,f=0.5)
 plot_DI(common_DI(Ardo_ufl),col_d="red")
 }

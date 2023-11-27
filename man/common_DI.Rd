@@ -35,13 +35,13 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Plot bimodal Ardo_PmagDir file
-plot_DI(Ardo_PmagDirs)
+##Plot bimodal Ardo_PmagDiR file
+plot_DI(Ardo_PmagDiR)
 
 ##Create file commond_DI and plot file with a second command
-C_DI = common_DI(Ardo_PmagDirs)
+C_DI = common_DI(Ardo_PmagDiR)
 plot_DI(C_DI)
 
 ##Plot data (up-pointing) by nesting common_DI  within plot_DI function (no file is created)
-plot_DI(common_DI(Ardo_PmagDirs, down=FALSE))
+plot_DI(common_DI(Ardo_PmagDiR, down=FALSE))
 }

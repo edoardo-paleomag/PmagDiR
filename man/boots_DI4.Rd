@@ -32,11 +32,11 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Resample and plot the Ardo_Geo_PmagDir dataset after correcting for bedding with PmagDirs::bed_DI
+##Resample and plot the Ardo_Geo_PmagDiR dataset after correcting for bedding with PmagDiR::bed_DI
 
-plot_DI(bed_DI(Ardo_Geo_PmagDirs))
+plot_DI(bed_DI(Ardo_Geo_PmagDiR))
 
-Ardo_res = boots_DI4(Ardo_Geo_PmagDirs)
+Ardo_res = boots_DI4(Ardo_Geo_PmagDiR)
 
 plot_DI(bed_DI(Ardo_res))
 

@@ -4,7 +4,7 @@
 #' Ardo section of the Venetian Southern Alps (Italy)
 #'
 #'
-#' @format ## `Ardo_PmagDirs`
+#' @format ## `Ardo_PmagDiR`
 #' A data frame with 239 rows and 2 columns:
 #' \describe{
 #'   \item{B.Dec}{Paleomagnetic declination}
@@ -13,7 +13,7 @@
 #' }
 #' @author Edoardo Dallanave
 #' @source <https://www.sciencedirect.com/science/article/abs/pii/S0031018212002027>
-"Ardo_PmagDirs"
+"Ardo_PmagDiR"
 
 #' Ardo section geographic directions and bedding tilt
 #'
@@ -21,7 +21,7 @@
 #' Ardo section of the Venetian Southern Alps (Italy)
 #'
 #'
-#' @format ## `Ardo_Geo_PmagDirs`
+#' @format ## `Ardo_Geo_PmagDiR`
 #' A data frame with 239 rows and 4 columns:
 #' \describe{
 #'   \item{G_dec}{Paleomagnetic declination}
@@ -32,7 +32,7 @@
 #' }
 #' @author Edoardo Dallanave
 #' @source <https://www.sciencedirect.com/science/article/abs/pii/S0031018212002027>
-"Ardo_Geo_PmagDirs"
+"Ardo_Geo_PmagDiR"
 
 #' Koumac section geographic paleomagnetic directions and bedding
 #'
@@ -40,7 +40,7 @@
 #' Koumac section of New Caledonia
 #'
 #'
-#' @format ## `km_PmagDirs`
+#' @format ## `km_PmagDiR`
 #' A data frame with 88 rows and 4 columns:
 #' \describe{
 #'   \item{Dec}{Paleomagnetic declination}
@@ -51,7 +51,7 @@
 #' }
 #' @author Edoardo Dallanave
 #' @source <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2019GC008699>
-"km_PmagDirs"
+"km_PmagDiR"
 
 #' Koumac section anisotropy of magnetic suceptibility
 #'

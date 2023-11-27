@@ -35,12 +35,12 @@ Fisher, R., Proc. R. Soc. London A217, 295–305 (1953).
 Edoardo Dallanave
 }
 \note{
-This function DO NOT take in consideration bimodal distributions. For that, use PmagDirs::fisher_plot.
+This function DO NOT take in consideration bimodal distributions. For that, use PmagDiR::fisher_plot.
 }
 \seealso{
 }
 \examples{
-##Convert the Ardo_PmagDir distribution to a single mode and calculate Fisher parameters
+##Convert the Ardo_PmagDiR distribution to a single mode and calculate Fisher parameters
 
-fisher(common_DI(Ardo_PmagDirs))
+fisher(common_DI(Ardo_PmagDiR))
 }

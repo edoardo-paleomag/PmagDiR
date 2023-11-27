@@ -27,9 +27,9 @@ L. Tauxe, R. Shaar, L. Jonestrask, N. L. Swanson-Hysell, R. Minnett, A. A. P. Ko
 Edoardo Dallanave
 }
 \examples{
-##first calculate and plot VGPs from the Ardo_PmagDirs example file:
+##first calculate and plot VGPs from the Ardo_PmagDiR example file:
 
-vgps = VGP_DI(Ardo_PmagDirs,lat= 46, long=12, type="VGPs")
+vgps = VGP_DI(Ardo_PmagDiR,lat= 46, long=12, type="VGPs")
 plot_VGP(vgps, coast=TRUE, col="dark red")
 
 ##convert vgps into directions and plot them

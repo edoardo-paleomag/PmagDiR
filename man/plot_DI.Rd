@@ -41,12 +41,12 @@ Edoardo Dallanave
 \examples{
 # Plot paleomagnetic direction with default setting.
 
-plot_DI(Ardo_PmagDirs, title="Ardo PmagDirs")
+plot_DI(Ardo_PmagDiR, title="Ardo PmagDiR")
 
 # Plot same directions in single down pointing mode, red color, and title.
-plot_DI(Ardo_PmagDirs,single_mode=TRUE,col_d="red",title="Example", symbol="t")
+plot_DI(Ardo_PmagDiR,single_mode=TRUE,col_d="red",title="Example", symbol="t")
 
 # Plot same directions in single up pointing mode, blue color, on the existing plot.
-plot_DI(bed_DI(km_PmagDirs),single_mode=TRUE,down=TRUE,on_plot=TRUE,symbol="d")
+plot_DI(bed_DI(km_PmagDiR),single_mode=TRUE,down=TRUE,on_plot=TRUE,symbol="d")
 }
 

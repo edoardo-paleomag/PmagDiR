@@ -28,9 +28,9 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##check for bipolarity of the Ardo_PmagDir distribution before and after converting to common mode
-bip_check(Ardo_PmagDirs)
+##check for bipolarity of the Ardo_PmagDiR distribution before and after converting to common mode
+bip_check(Ardo_PmagDiR)
 
-bip_check(common_DI(Ardo_PmagDirs))
+bip_check(common_DI(Ardo_PmagDiR))
 
 }

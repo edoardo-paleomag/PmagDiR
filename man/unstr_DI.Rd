@@ -55,10 +55,10 @@ Edoardo Dallanave
 S = AMS_inv(km_AMS)
 ##Start with unstrain by increasing only lineation, as the original AMS matrix was statistically oblate.
 
-km_unstr = unstr_DI(km_PmagDirs,S,Lin=1.5,Fol=1,n=30,save=FALSE)
+km_unstr = unstr_DI(km_PmagDiR,S,Lin=1.5,Fol=1,n=30,save=FALSE)
 
 ##Elongation curve is not crossed, but declination of Elongation reaches a minimum, which could represent the optimal correction. Repeat the correction imposing break when minimum declination is reached.
 
-km_unstr = unstr_DI(km_PmagDirs,S,Lin=1.5,Fol=1,n=30,EdMIN=TRUE,save=FALSE)
+km_unstr = unstr_DI(km_PmagDiR,S,Lin=1.5,Fol=1,n=30,EdMIN=TRUE,save=FALSE)
 
 }

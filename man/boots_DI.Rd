@@ -35,11 +35,11 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##Resample and plot the Ardo_PmagDir dataset
+##Resample and plot the Ardo_PmagDiR dataset
 
-plot_DI(Ardo_PmagDir)
+plot_DI(Ardo_PmagDiR)
 
-Ardo_res = boots_DI(Ardo_PmagDir)
+Ardo_res = boots_DI(Ardo_PmagDiR)
 
 plot_DI(Ardo_res)
 

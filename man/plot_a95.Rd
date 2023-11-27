@@ -24,7 +24,7 @@ plot_a95(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FAL
 \details{
 }
 \value{
-Function is graphical, no values are returned. It is used by PmagDirs::fisher_plot
+Function is graphical, no values are returned. It is used by PmagDiR::fisher_plot
 }
 \references{
 }

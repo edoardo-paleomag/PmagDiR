@@ -58,7 +58,7 @@ Figure is optimized to be displayed associated with the EI_boot function.
 \seealso{
 }
 \examples{
-##Calculate the unflattening degree of the Ardo_PmagDirs reference, with confidence determined only by 50 bootstrapped pseudosamples to speed the process
+##Calculate the unflattening degree of the Ardo_PmagDiR reference, with confidence determined only by 50 bootstrapped pseudosamples to speed the process
 
-ffind_boot(Ardo_PmagDirs, nb=50,export=FALSE)
+ffind_boot(Ardo_PmagDiR, nb=50,export=FALSE)
 }

@@ -31,9 +31,9 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-#Flip the direction of the Ardo_PmagDir dataset and plot the original and the flipped directions in two separate equal area plots
+#Flip the direction of the Ardo_PmagDiR dataset and plot the original and the flipped directions in two separate equal area plots
 
-ArdoFL = flip_DI(Ardo_PmagDirs)
-plot_DI(Ardo_PmagDirs)
+ArdoFL = flip_DI(Ardo_PmagDiR)
+plot_DI(Ardo_PmagDiR)
 plot_DI(ArdoFL)
 }

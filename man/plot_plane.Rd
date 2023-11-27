@@ -29,7 +29,7 @@ plot_plane(D, I, col_cD = "black", col_cU = "grey", pole = TRUE, col_d = "red", 
 Edoardo Dallanave
 }
 \examples{
-##Plots the reference Ardo_Geo_PmagDirs (in geographic coordinates) and the bedding plane.
-plot_DI(Ardo_Geo_PmagDirs)
+##Plots the reference Ardo_Geo_PmagDiR (in geographic coordinates) and the bedding plane.
+plot_DI(Ardo_Geo_PmagDiR)
 plot_plane(170.1,75.7,col_cD="red",symbol="d",col_d="purple")
 }

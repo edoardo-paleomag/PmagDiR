@@ -1501,7 +1501,7 @@ Map_KVII <- function(grid=30, center=0, title="") {
   #fix frame
   plot(NA, xlim=c(-2.6,2.6), ylim=c(-1.5,1.5), asp=1,
        xlab=title, xaxt="n",ylab="", yaxt="n", axes=FALSE)
-  #import coastline from PmagDirs
+  #import coastline from PmagDiR
   if (abs(center)==180){
     cl <- world_coastline_180
   }else{cl <- world_coastline}

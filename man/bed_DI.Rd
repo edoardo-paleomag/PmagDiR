@@ -32,10 +32,10 @@ Edoardo Dallanave
 }
 \examples{
 ##Plot Ardo stream directions in geographic coordinates (first two columns of the file)
-plot_DI(Ardo_Geo_PmagDir)
+plot_DI(Ardo_Geo_PmagDiR)
 
 ##make new file with corrected directions and plot them in blue; nesting of functions is also allowed (tilt corrected directions file is not created)
 
-ArdoTC = bed_DI(Ardo_Geo_PmagDir, export=FALSE)
+ArdoTC = bed_DI(Ardo_Geo_PmagDiR, export=FALSE)
 plot_DI(ArdoTC,color="blue")
 }

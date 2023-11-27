@@ -26,7 +26,7 @@ generate_ellips(D, I, delta_dec, delta_inc, col_d = "red", col_u = "white", col_
 \details{
 }
 \value{
-Function is graphical, no values are returned. It is used by PmagDirs::ellips_plot
+Function is graphical, no values are returned. It is used by PmagDiR::ellips_plot
 }
 \references{
 }

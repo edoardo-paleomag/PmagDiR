@@ -48,7 +48,7 @@ Low_E_dec and High_E_dec are calculated only if the decliantion of elonagtion is
 \seealso{
 }
 \examples{
-##Calculates the elongation-inclination pair of the Ardo_PmagDirs dataset, with only 100 bootstrapped pseudosamples to speed the process.
+##Calculates the elongation-inclination pair of the Ardo_PmagDiR dataset, with only 100 bootstrapped pseudosamples to speed the process.
 
-EI_boot(Ardo_PmagDirs,nb=100,export=FALSE)
+EI_boot(Ardo_PmagDiR,nb=100,export=FALSE)
 }

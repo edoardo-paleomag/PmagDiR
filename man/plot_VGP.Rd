@@ -40,8 +40,8 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-##calculate VGPs of the reference Ardo_PmagDirs record in a single mode
-ardoVGP = VGP_DI(Ardo_PmagDirs,lat=46,long=12,export=F,type="VGPsN")
+##calculate VGPs of the reference Ardo_PmagDiR record in a single mode
+ardoVGP = VGP_DI(Ardo_PmagDiR,lat=46,long=12,export=F,type="VGPsN")
 ##plot the VGP centering automatically the orthographic projection
 plot_VGP(ardoVGP,grid=20,coast=T,exp=F)
 

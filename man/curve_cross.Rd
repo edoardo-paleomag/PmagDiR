@@ -16,7 +16,7 @@ curve_cross(a,b)
   \item{b}{second series of x-y data points}
 }
 \details{
-This function is used by other functions in the PmagDirs package
+This function is used by other functions in the PmagDiR package
 }
 \value{
 Return a (x,y) file with the crossing point of the two input (empirical) curves
