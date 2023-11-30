@@ -11,7 +11,7 @@ Description: The main functions of the package are:
     >testing and correcting for paleomagnetic inclination shallowing
     >testing and (when possible) correcting for tectonic strain
 Imports: 
-    tidyverse(>= 2.0.0), matlib(>= 0.9.6), dplyr(>= 1.1.0), DescTools(>=0.99.48)
+    tidyverse(>= 2.0.0), matlib(>= 0.9.6), dplyr(>= 1.1.0), DescTools(>= 0.99.48)
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: TRUE
