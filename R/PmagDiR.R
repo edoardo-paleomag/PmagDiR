@@ -728,7 +728,7 @@ Do not attempt to plot other directions or Fisher mean on the same diagram if te
 ", call.= F)
   }
 
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 
 }
 
@@ -1133,7 +1133,7 @@ Do not attempt to plot other directions or Fisher mean on the same diagram if te
 ", call.= F)
   }
 
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #function that return fisher statistic from dec_inc
@@ -1399,7 +1399,7 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
            bg=col_u)
   }
   lines(ellipses$x,ellipses$y,lty=1, col=col_l, lwd=1.8)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #function that take data Dec_Inc and return the average Inc, E, and E declination
@@ -1452,419 +1452,6 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   #export result if requested
   if(export==TRUE){write.csv(round(inc_E,digits = 2),paste(name,".csv"),row.names = FALSE)}
   return(inc_E)
-}
-
-#calculate inclination-only statistic following the maximum likelihood algorithm of Arason+Levi(2010)
-inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE){
-  #numbers in parenthesis are referring to formula in Arason+Levi 2010
-  #import DescTools for drawing ellipses
-  library(DescTools)
-  #functions degree to radians and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-
-  #Bessel ratio function of x
-  Bessel_R <- function(a){
-    #list of polynomial values
-    p <- c(1, 3.5156229, 3.0899424, 1.2067492, 0.2659732, 0.0360768, 0.0045813)
-    q <- c(0.39894228, 0.01328592, 0.00225319, -0.00157565, 0.00916281,
-           -0.02057706, 0.02635537, -0.01647633, 0.00392377)
-    u <- c(0.5, 0.87890594, 0.51498869, 0.15084934, 0.02658733, 0.00301532, 0.00032411)
-    v <- c(0.39894228, -0.03988024, -0.00362018, 0.00163801,-0.01031555,
-           0.02282967, -0.02895312,0.01787654, -0.00420059)
-
-    #value of t for polynomials
-    t <- a/3.75
-
-    #Press(1989) polynomials
-    P <- p[1]+(p[2]*(t^2))+(p[3]*(t^4))+(p[4]*(t^6))+(p[5]*(t^8))+(p[6]*(t^10))+(p[7]*(t^12))
-    Q <- q[1]+(q[2]*(t^(-1)))+(q[3]*(t^(-2)))+(q[4]*(t^(-3)))+(q[5]*(t^(-4)))+(q[6]*(t^(-5)))+
-      (q[7]*(t^(-6)))+(q[8]*(t^(-7)))+(q[9]*(t^(-8)))
-    U <- a*(u[1]+(u[2]*(t^2))+(u[3]*(t^4))+(u[4]*(t^6))+(u[5]*(t^8))+(u[6]*(t^10))+(u[7]*(t^12)))
-    V <- v[1]+(v[2]*(t^(-1)))+(v[3]*(t^(-2)))+(v[4]*(t^(-3)))+(v[5]*(t^(-4)))+(v[6]*(t^(-5)))+
-      (v[7]*(t^(-6)))+(v[8]*(t^(-7)))+(v[9]*(t^(-8)))
-
-    #Bessel-ratio
-    if(a>=0 && a<3.75) R <- U/P
-    if(a>=3.75) R <- V/Q
-    return(R)
-  }
-  Bessel_B <- function(a){
-    #list of polynomial values
-    p <- c(1, 3.5156229, 3.0899424, 1.2067492, 0.2659732, 0.0360768, 0.0045813)
-    q <- c(0.39894228, 0.01328592, 0.00225319, -0.00157565, 0.00916281,
-           -0.02057706, 0.02635537, -0.01647633, 0.00392377)
-    u <- c(0.5, 0.87890594, 0.51498869, 0.15084934, 0.02658733, 0.00301532, 0.00032411)
-    v <- c(0.39894228, -0.03988024, -0.00362018, 0.00163801,-0.01031555,
-           0.02282967, -0.02895312,0.01787654, -0.00420059)
-
-    #value of t for polynomials
-    t <- a/3.75
-
-    #Press(1989) polynomials
-    P <- p[1]+(p[2]*(t^2))+(p[3]*(t^4))+(p[4]*(t^6))+(p[5]*(t^8))+(p[6]*(t^10))+(p[7]*(t^12))
-    Q <- q[1]+(q[2]*(t^(-1)))+(q[3]*(t^(-2)))+(q[4]*(t^(-3)))+(q[5]*(t^(-4)))+(q[6]*(t^(-5)))+
-      (q[7]*(t^(-6)))+(q[8]*(t^(-7)))+(q[9]*(t^(-8)))
-    U <- a*(u[1]+(u[2]*(t^2))+(u[3]*(t^4))+(u[4]*(t^6))+(u[5]*(t^8))+(u[6]*(t^10))+(u[7]*(t^12)))
-    V <- v[1]+(v[2]*(t^(-1)))+(v[3]*(t^(-2)))+(v[4]*(t^(-3)))+(v[5]*(t^(-4)))+(v[6]*(t^(-5)))+
-      (v[7]*(t^(-6)))+(v[8]*(t^(-7)))+(v[9]*(t^(-8)))
-
-    #Bessel_B
-    if(a>=0 && a<3.75) B <- P/exp(a)
-    if(a>=3.75) B <- Q/sqrt(a)
-    return(B)
-  }
-
-  #isolate inclination if file contains also declination
-  if(dec==TRUE) {
-    colnames(DI) <- c("dec","inc")
-    inc <- DI$inc
-  }else{
-    #convert the imported file in a list of numbers
-    inc <- as.list(inc)
-    inc <- inc[[1]]
-  }
-
-  #calculate theta and mean as initial guess of T (17)
-  theta <- 90-inc
-  Rtheta <- d2r(theta)
-  T0 <- d2r(mean(theta))
-
-  #inverse variance of of co_in as initial guess of k (18)
-  #length data vector
-  N <- length(Rtheta)
-
-  #calculate sum of delta
-  DT <- 0
-  for(i in 1:N){
-    d <- (Rtheta[i]-T0)^2
-    DT <- DT+d
-    rm(d)
-  }
-  #includes sum of delta in formula 18
-  K0 <- (DT/(N-1))^(-1)
-
-  #set initial Theta and K before reiteration for h1
-  Ti <- T0
-  Ki <- K0
-  reit <- 0
-  #start reiteration for determining h1
-  repeat{
-    #calculate Theta j of formula (19)
-    #numerator
-    y <- 0
-    for(i in 1:N){
-      yp <- sin(Rtheta[i]*Bessel_R(Ki*sin(Ti)*sin(Rtheta[i])))
-      y<- y+yp
-      rm(yp)
-    }
-    #denominator
-    x <- 0
-    for(i in 1:N){
-      xp <- cos(Rtheta[i])
-      x <- x+xp
-      rm(xp)
-    }
-    #Theta j
-    Tj <- atan2(y,x)
-
-    #calculate kj of formula (20)
-    #calculate part of the equation called sum
-    sum <- 0
-    for(i in 1:N){
-      sump <- (cos(Tj)*cos(Rtheta[i]))+(sin(Tj)*sin(Rtheta[i]*Bessel_R(Ki*sin(Tj)*sin(Rtheta[i]))))
-      sum <- sum+sump
-      rm(sump)
-    }
-    #calculate hyperbolic cotangent approximation (A23-A25)
-    if(Ki>0 && Ki<0.01) cot_h <- (1/Ki)+(Ki/3)-((1/45)*Ki^3)+((2/945)*Ki^5)
-    if(Ki>=0.01 && Ki<= 15) cot_h <- (1+exp(-2*Ki))/(1-exp(-2*Ki))
-    if(Ki>15) cot_h <- 1
-
-    #final kj formula (20) with cot_h and sum
-    Kj <- (cot_h-(sum/N))^(-1)
-
-    #calculate Delta Theta (24)
-    D_T <- abs(r2d(Tj)-r2d(Ti))
-
-    #calculate Delta_Kj/ki (25)
-    D_K <- abs((Kj-Ki)/Kj)
-
-    if(D_T<0.000001 && D_K<0.000001) break
-    Ti <- Tj
-    Ki <- Kj
-    reit <- reit+1
-    if(reit==10000) break
-  }
-
-  #log likelihood function (A26-A29)
-  #part A1 (A36-A38)
-
-  if(Kj>=0 && Kj<0.01 ) A1 <- N*(-log(2)-(log(1-Kj+((Kj^2)*(2/3))-((Kj^3)/3)+((Kj^4)*(2/15))-((Kj^5)*(8/45))))-Kj)
-  if(Kj>=0.01 && Kj <= 15) A1 <- N*(log(Kj)-log(1-exp(-2*Kj))-Kj)
-  if(Kj>15) A1 <- N*(log(Kj)-Kj)
-
-  #part A2 (A42)
-  A2 <- 0
-  for(i in 1:N){
-    A2p <-(Kj*cos(Rtheta[i]-Tj))+log(Bessel_B(Kj*sin(Tj)*sin(Rtheta[i])))
-    A2 <- A2+A2p
-    rm(A2p)
-  }
-
-  #part A3 (A29)
-  A3 <- 0
-  for(i in 1:N){
-    A3p <- log(sin(Rtheta[i]))
-    A3 <- A3+A3p
-    rm(A3p)
-  }
-  #final calculation of log likelihood (A26) h1
-  h1 <- A1+A2+A3
-
-
-  #start reiteration for calculating h2
-  DTh2 <- 0
-  for(i in 1:N){
-    d <- (Rtheta[i]-d2r(0))^2
-    DTh2 <- DT+d
-    rm(d)
-  }
-  #includes sum of delta in formula 18
-  K0h2 <- 1/((1/(N-1))*DTh2)
-
-  Kh2 <- K0h2
-  reit_h2 <- 0
-  repeat{
-    #calculate hyperbolic cotangent approximation (A23-A25)
-    if(Kh2>0 && Kh2<0.01) cot_h2 <- (1/Kh2)+(Kh2/3)-((1/45)*Kh2^3)+((2/945)*Kh2^5)
-    if(Kh2>=0.01 && Kh2<= 15) cot_h2 <- (1+exp(-2*Kh2))/(1-exp(-2*Kh2))
-    if(Kh2>15) cot_h2 <- 1
-
-    sum_h2 <- 0
-    for(i in 1:N){
-      sum_h2p <- cos(Rtheta[i])
-      sum_h2 <- sum_h2+sum_h2p
-      rm(sum_h2p)
-    }
-    Kjh2 <- 1/(cot_h2-(cos(d2r(0))*(1/N)*sum_h2))
-    D_Kjh2 <- abs((Kjh2-Kh2)/Kjh2)
-    if(D_Kjh2<0.000001) break
-    Kh2 <- Kjh2
-    reit_h2 <- reit_h2+1
-    if(reit_h2==10000) break
-  }
-
-  #calculate log-likelihood h2
-  #Part A1h2
-  if(Kjh2==0) A1h2 <- -0.6931*N
-  if(Kjh2>0 && Kjh2<0.01 ) A1h2 <- N*(-log(2)-(log(1-Kjh2+((2*Kjh2^2)/3)-((Kjh2^3)/3)+((2*Kjh2^4)/15)-((8*Kjh2^5)/45)))-Kjh2)
-  if(Kjh2>=0.01 && Kjh2 <= 15) A1h2 <- N*(log(Kjh2)-log(1-exp(-2*Kjh2))-Kjh2)
-  if(Kjh2>15) A1h2 <- N*(log(Kjh2)-Kjh2)
-
-  #part A2h2 (A42)
-  A2h2 <- 0
-  for(i in 1:N){
-    A2h2p <-(Kjh2*cos(Rtheta[i]-d2r(0)))+log(Bessel_B(Kjh2*sin(d2r(0))*sin(Rtheta[i])))
-    A2h2 <- A2h2+A2h2p
-    rm(A2h2p)
-  }
-
-  #part A3h2 (A29)
-  A3h2 <- 0
-  for(i in 1:N){
-    A3h2p <- log(sin(Rtheta[i]))
-    A3h2 <- A3h2+A3h2p
-    rm(A3h2p)
-  }
-  #final calculation of log likelihood (A26) h1
-  h2 <- A1h2+A2h2+A3h2
-
-  #start reiteration for calculating h3
-  DTh3 <- 0
-  for(i in 1:N){
-    d <- (Rtheta[i]-d2r(180))^2
-    DTh3 <- DT+d
-    rm(d)
-  }
-  #includes sum of delta in formula 18
-  K0h3 <- 1/((1/(N-1))*DTh3)
-
-  Kh3 <- K0h3
-  reit_h3 <- 0
-  repeat{
-    #calculate hyperbolic cotangent approximation (A23-A25)
-    if(Kh3>0 && Kh3<0.01) cot_h3 <- (1/Kh3)+(Kh3/3)-((1/45)*Kh3^3)+((2/945)*Kh3^5)
-    if(Kh3>=0.01 && Kh3<= 15) cot_h3 <- (1+exp(-2*Kh3))/(1-exp(-2*Kh3))
-    if(Kh3>15) cot_h3 <- 1
-
-    sum_h3 <- 0
-    for(i in 1:N){
-      sum_h3p <- cos(Rtheta[i])
-      sum_h3 <- sum_h3+sum_h3p
-      rm(sum_h3p)
-    }
-    Kjh3 <- 1/(cot_h3-(cos(d2r(180))*(1/N)*sum_h3))
-    D_Kjh3 <- abs((Kjh3-Kh3)/Kjh3)
-    if(D_Kjh3<0.000001) break
-    Kh3 <- Kjh3
-    reit_h3 <- reit_h3+1
-    if(reit_h3==10000) break
-  }
-
-  #calculate log-likelihood h3
-  #Part A1h3
-  if(Kjh3==0) A1h3 <- -0.6931*N
-  if(Kjh3>0 && Kjh3<0.01 ) A1h3 <- N*(-log(2)-(log(1-Kjh3+((2*Kjh3^2)/3)-((Kjh3^3)/3)+((2*Kjh3^4)/15)-((8*Kjh3^5)/45)))-Kjh3)
-  if(Kjh3>=0.01 && Kjh3 <= 15) A1h3 <- N*(log(Kjh3)-log(1-exp(-2*Kjh3))-Kjh3)
-  if(Kjh3>15) A1h3 <- N*(log(Kjh3)-Kjh3)
-
-  #part A2h3 (A42)
-  A2h3 <- 0
-  for(i in 1:N){
-    A2h3p <-(Kjh3*cos(Rtheta[i]-d2r(180)))+log(Bessel_B(Kjh3*sin(d2r(180))*sin(Rtheta[i])))
-    A2h3 <- A2h3+A2h3p
-    rm(A2h3p)
-  }
-
-  #part A3h2 (A29)
-  A3h3 <- 0
-  for(i in 1:N){
-    A3h3p <- log(sin(Rtheta[i]))
-    A3h3 <- A3h3+A3h3p
-    rm(A3h3p)
-  }
-  #final calculation of log likelihood (A26) h3
-  h3 <- A1h3+A2h3+A3h3
-
-  #calculate log-likelihood h4 by using equation 11
-  sum_h4 <- 0
-  for(i in 1:N){
-    sum_h4p <- log(sin(Rtheta[i]))
-    sum_h4 <- sum_h4+sum_h4p
-    rm(sum_h4p)
-  }
-  h4 <- -N*log(2)+sum_h4
-
-  #the maximum h is the better solution
-  h <- max(c(h1,h2,h3,h4))
-  if(h==h1){
-    aver_inc <- 90-(r2d(Tj))
-    precision <- Kj
-  }
-  if(h==h2){
-    aver_inc <- 90
-    precision <- Kjh2
-  }
-  if(h==h3){
-    aver_inc <- -90
-    precision <- Kjh3
-  }
-  if(h==h4){
-    aver_inc <- 0
-    precision <- 0
-  }
-  result <- as.data.frame(matrix(ncol=5, nrow=1))
-  result[1] <- N
-  result[2] <- round(aver_inc, digits=2)
-  result[3] <- round(precision, digits=2)
-
-  #step number 5
-  #determine ellipse points
-  ell <- DrawEllipse(x = aver_inc,y = precision,radius.x = (0.01),radius.y = (precision*0.001),nv = 16,plot = F)
-  T_ell <- ell[[1]]
-  T_ellR <- d2r(T_ell)
-  K_ell <- ell[[2]]
-  h_ell <- NA
-
-  for (l in 1:length(T_ellR)){
-    #log likelihood function (A26-A29)
-    #part A1 (A36-A38)
-    if(K_ell[l]==0) A1 <- -0.6931*N
-    if(K_ell[l]>0 && K_ell[l]<0.01 ) A1 <- N*(-log(2)-(log(1-K_ell[l]+((2*K_ell[l]^2)/3)-((K_ell[l]^3)/3)+((2*K_ell[l]^4)/15)-((8*K_ell[l]^5)/45)))-K_ell[l])
-    if(K_ell[l]>=0.01 && K_ell[l] <= 15) A1 <- N*(log(K_ell[l])-log(1-exp(-2*K_ell[l]))-K_ell[l])
-    if(K_ell[l]>15) A1 <- N*(log(K_ell[l])-K_ell[l])
-
-    #part A2 (A42)
-    A2 <- 0
-    for(i in 1:N){
-      A2p <-(K_ell[l]*cos(Rtheta[i]-T_ellR[l]))+log(Bessel_B(K_ell[l]*sin(T_ellR[l])*sin(Rtheta[i])))
-      A2 <- A2+A2p
-      rm(A2p)
-    }
-
-    #final calculation of log likelihood (A26); A3 is already calculated
-    h_ellp <- A1+A2+A3
-    h_ell[l] <- h_ellp
-    rm(h_ellp)
-    cond <- (h < h_ell)
-    for (c in 1:length(cond)){
-      if(cond[c]==TRUE) print("FLAG RAISED!!")
-    }
-  }
-  #calculate st deviation and alpha 95
-  ang_dev_st <- r2d(acos(1+((log(1-(0.63*(1-exp(-2*precision)))))/precision)))
-  a95 <- r2d(acos(1-(((N-1)/(N*(precision-1)+1))*((20^(1/(N-1)))-1))))
-  result[4] <- round(ang_dev_st,digits = 2)
-  result[5] <- round(a95, digits = 2)
-  result[6] <- round(90-r2d(T0),digits = 2)
-  colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95","Aritm. mean")
-
-  #print if request
-  if(print==TRUE){
-    cat("Arason-Levi inclination only result:
-
-N:", N,"
-Inclination:", round(aver_inc, digits=2),"
-Precision:",round(precision, digits=2),"
-St.Dev_63:", round(ang_dev_st, digits=2),"
-alpha_95:", round(a95, digits = 2),"
-Aritm. mean:",round(90-r2d(T0),digits = 2),"
-
-")
-  }
-  if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
-  if(return==TRUE) return(result)
-}
-
-#calculate and plot inclination-only statistic following the maximum likelihood algorithm of Arason+Levi(2010)
-inc_plot <- function(DI,dec=TRUE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only"){
-  #functions converting degree and radians
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
-  cat("
-Reiterating, please wait...
-
-")
-
-  #calculate inc_only stats
-  inc_stat <- inc_only(DI = DI,dec = dec, print = print,export=export, name=name)
-  #create circle
-  circle <- as.data.frame(seq(0,360,2))
-  colnames(circle) <- "dec"
-  circle$inc <- rep(inc_stat$Inc)
-  circle$inc_l <- rep(inc_stat$Inc-inc_stat$a95)
-  circle$inc_h <- rep(inc_stat$Inc+inc_stat$a95)
-  circle$x <- a2cx(circle$inc,circle$dec)
-  circle$y <- a2cy(circle$inc,circle$dec)
-  circle$x_l <- a2cx(circle$inc_l,circle$dec)
-  circle$y_l <- a2cy(circle$inc_l,circle$dec)
-  circle$x_h <- a2cx(circle$inc_h,circle$dec)
-  circle$y_h <- a2cy(circle$inc_h,circle$dec)
-
-  if(on_plot==FALSE) equalarea()
-  lines(circle$x_l,circle$y_l,lty=2)
-  lines(circle$x_h,circle$y_h,lty=2)
-  conf1 <- data.frame(cbind(circle$x_l,circle$y_l))
-  conf2 <- data.frame(cbind(circle$x_h, circle$y_h))
-  conf2 <- conf2[nrow(conf2):1,]
-  conf <- rbind(conf1,conf2)
-  polygon(conf, col=rgb(1,0,0,0.30),border=NA)
-  lines(circle$x,circle$y,col=col, lwd=1.5)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
 }
 
 #create matrix from fol,lin, and dec inc of vectors
@@ -2152,7 +1739,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
            bg=col_u)
   }
   lines(circle$x,circle$y,lty=1, col=col_l, lwd=1.8)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #plot A95 on a spherical orthographic plot
@@ -2453,7 +2040,7 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
   }
   points(x=circle_U$x,y=circle_U$y,type="l", col=col_cU,lty=2)
   points(x=circle_D$x,y=circle_D$y,type="l", col=col_cD)
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 6.5,height = 6.5)}
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #plot virtual geomagnetic poles
