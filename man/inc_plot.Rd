@@ -44,8 +44,19 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-## Generate a distribution of random uniform biomdal declination and inclination distribution around 50 and -45 degrees
-dec_inc <- data.frame(matrix(ncol = 2,nrow=100))
+## Generate a distribution of random declination and inclination distribution around 50
+dec_inc <- data.frame(matrix(ncol = 2,nrow=50))
+colnames(dec_inc) <- c("dec","inc")
+dec_inc[1:50,1] <- runif(50,0,360)
+dec_inc[1:50,2] <- rnorm(50,50,10)
+
+## Estimate inclination only statistic
+plot_DI(dec_inc)
+inc_plot(dec_inc,export=F,save=F,bimodal=F)
+
+
+## Generate a distribution of random  biomdal declination and inclination distribution around 50 and -45 degrees
+dec_inc <- data.frame(matrix(ncol = 2,nrow=50))
 colnames(dec_inc) <- c("dec","inc")
 dec_inc[1:50,1] <- runif(50,0,360)
 dec_inc[1:50,2] <- rnorm(50,50,10)
