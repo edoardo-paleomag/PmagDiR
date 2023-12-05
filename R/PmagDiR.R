@@ -1454,6 +1454,541 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   return(inc_E)
 }
 
+#Arason and Levi(2010) inclination only calculation
+#adepted from the original fortran source code ARALEV available at http://hergilsey.is/arason/paleomag/aralev.txt
+inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE) {
+  #The Arason-Levi MLE Iteration Formula 1
+  AL1 <- function(th, n, the, ak) {
+    dr <- 0.0174532925199433  # Degrees to radians (pi/180)
+    s <- 0
+    c <- 0
+
+    for (i in 1:n) {
+      x <- ak * sin(the * dr) * sin(th[i] * dr)
+      bessel_result <- BESSEL(x)
+      bi1i0 <- bessel_result[3]
+
+      s <- s + sin(th[i] * dr) * bi1i0
+      c <- c + cos(th[i] * dr)
+    }
+
+    AL1 <- atan2(s, c) / dr
+    AL1 <- ifelse(AL1 < 0.000001, 0.000001, AL1)
+    AL1 <- ifelse(AL1 > 179.999999, 179.999999, AL1)
+
+    return(AL1)
+  }
+  #The Arason-Levi MLE Iteration Formula 2
+  AL2 <- function(th, n, the, ak) {
+    dr <- 0.0174532925199433  # Degrees to radians (pi/180)
+    dn <- n
+
+    s <- 0
+    c <- 0
+    for (i in 1:n) {
+      x <- ak * sin(the * dr) * sin(th[i] * dr)
+      # You'll need to replace the call to BESSEL with the equivalent in R
+      # For example, you can use the 'besselJ' function from the 'pracma' package.
+      Btemp <- BESSEL(x)
+      bi1i0 <- Btemp[3]
+
+      s <- s + sin(th[i] * dr) * bi1i0
+      c <- c + cos(th[i] * dr)
+    }
+
+    x <- dn * (1 / tanh(ak)) - cos(the * dr) * c - sin(the * dr) * s
+    AL2 <- 1e10
+
+    if (x / dn > 1e-10) {
+      AL2 <- dn / x
+    }
+
+    if (AL2 < 1e-06) {
+      AL2 <- 1e-06
+    }
+
+    return(AL2)
+  }
+  #Evaluation of the Hyperbolic Bessel functions I0(x), I1(x) and their ratio I1(x)/I0(x).
+  BESSEL <- function(x) {
+    p <- c(1.0, 3.5156229, 3.0899424, 1.2067492, 0.2659732, 0.360768e-1, 0.45813e-2)
+    q <- c(0.39894228, 0.1328592e-1, 0.225319e-2, -0.157565e-2, 0.916281e-2, -0.2057706e-1, 0.2635537e-1, -0.1647633e-1, 0.392377e-2)
+    u <- c(0.5, 0.87890594, 0.51498869, 0.15084934, 0.2658733e-1, 0.301532e-2, 0.32411e-3)
+    v <- c(0.39894228, -0.3988024e-1, -0.362018e-2, 0.163801e-2, -0.1031555e-1, 0.2282967e-1, -0.2895312e-1, 0.1787654e-1, -0.420059e-2)
+
+    if (abs(x) < 3.75) {
+      t <- (x / 3.75)^2
+      b0 <- p[1] + t * (p[2] + t * (p[3] + t * (p[4] + t * (p[5] + t * (p[6] + t * p[7])))))
+      b1 <- x * (u[1] + t * (u[2] + t * (u[3] + t * (u[4] + t * (u[5] + t * (u[6] + t * u[7]))))))
+      bi0e <- b0 / exp(abs(x))
+      bi1e <- b1 / exp(abs(x))
+      bi1i0 <- b1 / b0
+    } else {
+      t <- 3.75 / abs(x)
+      b0 <- q[1] + t * (q[2] + t * (q[3] + t * (q[4] + t * (q[5] + t * (q[6] + t * (q[7] + t * (q[8] + t * q[9])))))))
+      b1 <- v[1] + t * (v[2] + t * (v[3] + t * (v[4] + t * (v[5] + t * (v[6] + t * (v[7] + t * (v[8] + t * v[9])))))))
+      if (x < 0) b1 <- -b1
+      bi0e <- b0 / sqrt(abs(x))
+      bi1e <- b1 / sqrt(abs(x))
+      bi1i0 <- b1 / b0
+    }
+
+    return(c(bi0e, bi1e, bi1i0))
+  }
+  #Evaluation of the Hyperbolic Cotangens function coth(x)
+  COTH <- function(x) {
+    if (x == 0) {
+      return(0)
+    }
+
+    t <- abs(x)
+
+    if (t < 0.001) {
+      return(1 / t + t / 3 - t^3 / 45 + 2 * t^5 / 945)
+    } else if (t <= 15) {
+      ep <- exp(t)
+      em <- exp(-t)
+      return((ep + em) / (ep - em))
+    } else {
+      return(1)
+    }
+
+    if (x < 0) {
+      return(-COTH)
+    }
+  }
+  #Evaluation of the Log-Likelihood function for inclination-only data.
+  XLIK <- function(th, n, the, ak) {
+    dr <- 0.0174532925199433         # Degrees to radians (pi/180)
+    pi <- 180 * dr
+    dn <- n
+
+    # Illegal use
+    if (n < 1) {
+      cat("ERROR: Data missing in XLIK\n")
+      return(-1e10)
+    }
+
+    if (n > 10000) {
+      cat("ERROR: Too small dimension in XLIK\n")
+      return(-1e10)
+    }
+
+    # Uncomment the following lines if you want to check the range of ak
+    # if (ak < 0) {
+    #   cat("ERROR: Out of range in XLIK\n")
+    #   return(-1e10)
+    # }
+
+    # A1(k) = N ln(k) - N ln(sinh k) - N ln(2)
+    a1 <- 0
+
+    if (ak >= 0 && ak < 0.01) {
+      q <- -ak * (1 - ak * (2 / 3 - ak * (1 / 3 - ak * (2 / 15 - ak * (8 / 45)))))
+      a1 <- dn * (-log(2) - log(1 + q) - ak)
+    } else if (ak >= 0.01 && ak <= 15) {
+      a1 <- dn * (log(ak) - log(1 - exp(-2 * ak)) - ak)
+    } else {
+      a1 <- dn * (log(ak) - ak)
+    }
+
+    # A2(k,t,ti) = Sum(k cos t cos ti) + Sum(ln(BessIo(k sin t sin ti)))
+    a2 <- 0
+
+    for (i in 1:n) {
+      x <- ak * sin(the * dr) * sin(th[i] * dr)
+      bi0e <- BESSEL(x)[[1]]
+      bi1e <- BESSEL(x)[[2]]
+      bi1i0 <- BESSEL(x)[[3]]
+      a2 <- a2 + ak * cos((th[i] - the) * dr) + log(bi0e)
+    }
+
+    # A3(ti) = Sum( ln(sin(ti)) ), Note: 0.000001 < ti < 179.999999
+    a3 <- 0
+
+    for (i in 1:n) {
+      x <- th[i]
+      if (x < 1e-6) x <- 1e-6
+      if (x > 179.999999) x <- 179.999999
+      a3 <- a3 + log(sin(x * dr))
+    }
+
+    # The log-likelihood function
+    XLIK <- a1 + a2 + a3
+
+    return(XLIK)
+  }
+  #Calculation of the arithmetic mean of inclination-only data
+  armean <- function(xinc, n) {
+    dr <- 0.01745329252         # Degrees to radians (pi/180)
+    t63max <- 105.070062145     # 63 % of a sphere.
+    a95max <- 154.158067237     # 95 % of a sphere.
+    dn <- n
+
+    s <- sum(xinc)
+    s2 <- sum(xinc^2)
+
+    ainc <- s / dn
+
+    sd <- 0
+    ak <- -1
+
+    if (n > 1) {
+      sd <- sqrt((s2 - s^2 / dn) / (dn - 1))
+      ak <- (dn - 1) / ((s2 - s^2 / dn) * dr^2)
+    }
+
+    nf <- dn - 1
+
+    tval_63 <- qt(0.63, df = nf)
+    t63 <- tval_63 * sd
+
+    tval_95 <- qt(0.95, df = nf)
+    a95 <- tval_95 * sd / sqrt(dn)
+
+    result <- as.data.frame(matrix(ncol=5, nrow=1))
+    result[1] <- n
+    result[2] <- round(ainc, digits=2)
+    result[3] <- round(ak, digits=2)
+    result[4] <- round(t63,digits = 2)
+    result[5] <- round(a95, digits = 2)
+    colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95")
+
+
+    return(result)
+  }
+
+  #isolate inclination if file contains also declination
+  if(dec==TRUE) {
+    colnames(DI) <- c("dec","inc")
+    xinc <- DI$inc
+  }else{
+    #convert the imported file in a list of numbers
+    inc <- as.list(inc)
+    xinc <- inc[[1]]
+  }
+
+  # main routine
+  # Degrees to radians (pi/180)
+  dr <- 0.0174532925199433
+  # 63 % of a sphere
+  t63max <- 105.070062145
+  # 95 % of a sphere
+  a95max <- 154.158067237
+
+  n <- length(xinc)
+  th <- numeric(n)
+  dn <- n
+  ierr <- 1
+
+  if (n == 1) {
+    stop("Only one observed inclination\n", call.=F)
+  }
+
+  if (n > 10000) {
+    stop("Too many directions, max=10000\n", call.=F)
+  }
+
+  if(length(unique(xinc))==1){
+    stop("Directions are all identical\n", call.=F)
+  }
+  if (any(xinc>90) | any(xinc<(-90))) {
+    stop("Inclination must be between -90 and 90\n", call.=F)
+  }
+
+  for (i in 1:n) {
+    th[i] <- 90 - xinc[i]
+  }
+
+  s <- sum(th)
+  s2 <- sum(th^2)
+  c <- sum(cos(th * dr)) / dn
+
+  rt <- s / dn
+  x <- (s2 - s^2 / dn) * dr^2
+  rk <- ifelse(x / (dn - 1) > 1e-10, (dn - 1) / x, 1e10)
+  rt1 <- rt
+  rk1 <- rk
+  rt <- rt1
+  rk <- rk1
+  ie1 <- 0
+
+  the1 <- rt
+  akap1 <- rk
+  for (j in 1:10000) {
+    rt <- AL1(th, n, rt, rk)
+    rk <- AL2(th, n, rt, rk)
+    dt <- abs(rt - the1)
+    dk <- abs((rk - akap1) / rk)
+    if (j > 10 && dt < 1e-6 && dk < 1e-6) break
+    the1 <- rt
+    akap1 <- rk
+  }
+
+  #ie1 <- 0
+  the1 <- rt
+  akap1 <- rk
+  xl1 <- XLIK(th, n, rt, rk)
+
+  rt <- 0
+  rk <- rk1
+  akap2 <- rk
+  ie2 <- 0
+  for (j in 1:10000) {
+    x <- COTH(rk) - c
+    if (x > 1e-10) {
+      rk <- 1 / x
+    } else {
+      rk <- 1e10
+    }
+    dk <- abs((rk - akap2) / rk)
+    if (j > 4 && dk < 1e-6) break
+    if (rk < 1e-6) break
+    akap2 <- rk
+  }
+
+  ie2 <- 1
+  the2 <- 0
+  akap2 <- rk
+  xl2 <- XLIK(th, n, rt, rk)
+
+  rt <- 180
+  rk <- rk1
+  akap3 <- rk
+  ie3 <- 0
+  for (j in 1:10000) {
+    x <- COTH(rk) + c
+    if (x > 1e-10) {
+      rk <- 1 / x
+    } else {
+      rk <- 1e10
+    }
+    dk <- abs((rk - akap3) / rk)
+    if (j > 4 && dk < 1e-6) break
+    if (rk < 1e-6) break
+    akap3 <- rk
+  }
+
+  ie3 <- 1
+  the3 <- 180
+  akap3 <- rk
+  xl3 <- XLIK(th, n, rt, rk)
+
+  rt <- 90
+  rk <- 0
+  the4 <- rt
+  akap4 <- rk
+  xl4 <- XLIK(th, n, rt, rk)
+
+  isol <- 1
+  ierr <- ie1
+  if (xl2 > xl1) {
+    the1 <- the2
+    akap1 <- akap2
+    xl1 <- xl2
+    isol <- 2
+    ierr <- 1
+  }
+
+  if (xl3 > xl1) {
+    the1 <- the3
+    akap1 <- akap3
+    xl1 <- xl3
+    isol <- 3
+    ierr <- 1
+  }
+
+  if (xl4 > xl1) {
+    the1 <- the4
+    akap1 <- akap4
+    xl1 <- xl4
+    isol <- 4
+    ierr <- 0
+  }
+
+  ainc <- 90 - the1
+  ak <- akap1
+  if (ierr != 0) {
+    cat("Convergence problems\n")
+  }
+
+  for (i in 1:16) {
+    x <- i
+    rt <- the1 + 0.01 * cos(22.5 * x * dr)
+    if (rt < 0 || rt > 180) break
+    rk <- akap1 * (1 + 0.001 * sin(22.5 * x * dr))
+    xl <- XLIK(th, n, rt, rk)
+    if (xl > xl1) {
+      ierr <- ierr + 2
+      cat("Robustness failure\n")
+    }
+  }
+
+  if (akap1 >= 20) {
+    co <- 1 + log(1 - 0.63) / akap1
+  } else if (akap1 > 0.1 && akap1 < 20) {
+    co <- 1 + log(1 - 0.63 * (1 - exp(-2 * akap1))) / akap1
+  } else if (akap1 <= 0.1) {
+    co <- -0.26 + 0.4662 * akap1
+  }
+
+  t63 <- 90 - (90*sign(co))
+  if (abs(co) < 1) {
+    t63 <- 90 - atan(co / sqrt(1 - co^2)) / dr
+  }
+  if (t63 > t63max) {
+    t63 <- t63max
+  }
+
+  co <- 1 - (dn - 1) * (20^(1 / (dn - 1)) - 1) / (dn * (akap1 - 1) + 1)
+  a95 <- 90 - (90*sign(co))
+  if (abs(co) < 1) {
+    a95 <- 90 - atan(co / sqrt(1 - co^2)) / dr
+  }
+  if (a95 > a95max) {
+    a95 <- a95max
+  }
+
+  ari_mean <- armean(xinc,n)
+
+  #compile result file
+  result <- as.data.frame(matrix(ncol=5, nrow=1))
+  result[1] <- n
+  result[2] <- round(ainc, digits=2)
+  result[3] <- round(ak, digits=2)
+  result[4] <- round(t63,digits = 2)
+  result[5] <- round(a95, digits = 2)
+  result[6] <- round(ari_mean[1,2],digits = 2)
+  colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95","Aritm. mean")
+
+  #print if request
+  if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
+
+  if(print==TRUE){
+    cat("Arason-Levi inclination only result:
+
+N:", result[1,1],"
+Inclination:", result[1,2],"
+Precision:",result[1,3],"
+St.Dev_63:", result[1,4],"
+alpha_95:", result[1,5],"
+Aritm. mean:",result[1,6],"
+
+")
+  }
+
+
+  if(return==TRUE) {return(result)}
+}
+
+#plot equal area of Arason and Levi(2010) inclination only calculation
+inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only"){
+  #import dplyr for filter_ALL
+  library(dplyr)
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #functions converting inc(x) and dec(y) into equal area
+  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
+  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+
+  #splits modes
+  if(bimodal==TRUE){
+    dirs <- DI
+    ifelse(dec==TRUE, colnames(dirs) <- c("dec","inc"), colnames(dirs) <- "inc")
+    dirs_D <- filter_all(dirs, all_vars(inc>0))
+    dirs_U <- filter_all(dirs, all_vars(inc<=0))
+    #down_pointing
+    inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"))
+    #up_pointing
+    inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"))
+    #all_down_pointing
+    dirs$inc <- abs(dirs$inc)
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"))
+  }else{
+    dirs <- DI
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"))
+  }
+
+  if(bimodal==TRUE){
+    #create circles
+    circle_D <- as.data.frame(seq(0,90,1))
+    colnames(circle_D) <- "dec"
+    circle_D$inc <- rep(inc_stat_D$Inc)
+    circle_D$inc_l <- rep(inc_stat_D$Inc-inc_stat_D$a95)
+    circle_D$inc_h <- rep(inc_stat_D$Inc+inc_stat_D$a95)
+    circle_D$x <- a2cx(circle_D$inc,circle_D$dec)
+    circle_D$y <- a2cy(circle_D$inc,circle_D$dec)
+    circle_D$x_l <- a2cx(circle_D$inc_l,circle_D$dec)
+    circle_D$y_l <- a2cy(circle_D$inc_l,circle_D$dec)
+    circle_D$x_h <- a2cx(circle_D$inc_h,circle_D$dec)
+    circle_D$y_h <- a2cy(circle_D$inc_h,circle_D$dec)
+
+    circle_U <- as.data.frame(seq(270,360,1))
+    colnames(circle_U) <- "dec"
+    circle_U$inc <- rep(abs(inc_stat_U$Inc))
+    circle_U$inc_l <- rep(abs(inc_stat_U$Inc)-inc_stat_U$a95)
+    circle_U$inc_h <- rep(abs(inc_stat_U$Inc)+inc_stat_U$a95)
+    circle_U$x <- a2cx(circle_U$inc,circle_U$dec)
+    circle_U$y <- a2cy(circle_U$inc,circle_U$dec)
+    circle_U$x_l <- a2cx(circle_U$inc_l,circle_U$dec)
+    circle_U$y_l <- a2cy(circle_U$inc_l,circle_U$dec)
+    circle_U$x_h <- a2cx(circle_U$inc_h,circle_U$dec)
+    circle_U$y_h <- a2cy(circle_U$inc_h,circle_U$dec)
+
+    circle_ALL <- as.data.frame(seq(90,270,1))
+    colnames(circle_ALL) <- "dec"
+  }else{
+    circle_ALL <- as.data.frame(seq(0,360,1))
+    colnames(circle_ALL) <- "dec"
+  }
+  #complete circle with all even if not bimodal
+  circle_ALL$inc <- rep(abs(inc_stat_ALL$Inc))
+  circle_ALL$inc_l <- rep(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95)
+  circle_ALL$inc_h <- rep(abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95)
+  circle_ALL$x <- a2cx(circle_ALL$inc,circle_ALL$dec)
+  circle_ALL$y <- a2cy(circle_ALL$inc,circle_ALL$dec)
+  circle_ALL$x_l <- a2cx(circle_ALL$inc_l,circle_ALL$dec)
+  circle_ALL$y_l <- a2cy(circle_ALL$inc_l,circle_ALL$dec)
+  circle_ALL$x_h <- a2cx(circle_ALL$inc_h,circle_ALL$dec)
+  circle_ALL$y_h <- a2cy(circle_ALL$inc_h,circle_ALL$dec)
+
+  #plot_circles
+  if(on_plot==FALSE) equalarea()
+  if(bimodal==TRUE){
+    #Down
+    lines(circle_D$x_l,circle_D$y_l,lty=2)
+    lines(circle_D$x_h,circle_D$y_h,lty=2)
+    conf1_D <- data.frame(cbind(circle_D$x_l,circle_D$y_l))
+    conf2_D <- data.frame(cbind(circle_D$x_h, circle_D$y_h))
+    conf2_D <- conf2_D[nrow(conf2_D):1,]
+    conf_D <- rbind(conf1_D,conf2_D)
+    polygon(conf_D, col=rgb(0,0,1,0.30),border=NA)
+    lines(circle_D$x,circle_D$y,col=col, lwd=1.5)
+
+    #Up
+    lines(circle_U$x_l,circle_U$y_l,lty=2)
+    lines(circle_U$x_h,circle_U$y_h,lty=2)
+    conf1_U <- data.frame(cbind(circle_U$x_l,circle_U$y_l))
+    conf2_U <- data.frame(cbind(circle_U$x_h, circle_U$y_h))
+    conf2_U <- conf2_U[nrow(conf2_U):1,]
+    conf_U <- rbind(conf1_U,conf2_U)
+    polygon(conf_U, col=rgb(0,1,0,0.30),border=NA)
+    lines(circle_U$x,circle_U$y,col=col, lwd=1.5 )
+  }
+  #ALL
+  lines(circle_ALL$x_l,circle_ALL$y_l,lty=2)
+  lines(circle_ALL$x_h,circle_ALL$y_h,lty=2)
+  conf1_ALL <- data.frame(cbind(circle_ALL$x_l,circle_ALL$y_l))
+  conf2_ALL <- data.frame(cbind(circle_ALL$x_h, circle_ALL$y_h))
+  conf2_ALL <- conf2_ALL[nrow(conf2_ALL):1,]
+  conf_ALL <- rbind(conf1_ALL,conf2_ALL)
+  polygon(conf_ALL, col=rgb(1,0,0,0.30),border=NA)
+  lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
+
+  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
 #create matrix from fol,lin, and dec inc of vectors
 matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name="matrix",return_P=TRUE){
   library(matlib)

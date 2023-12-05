@@ -7,12 +7,13 @@ calculate and plot mean of inclination-only data
 This script uses the inc_only function for estimating average and 0.95 confidence of paleomagnetic directions with unoriented declination and plot result on an equal-area diagram
 }
 \usage{
-inc_plot(DI, dec = TRUE, on_plot = TRUE, col = "black", print = TRUE, export = TRUE, save = TRUE, name = "Inc_only")
+inc_plot(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
   \item{dec}{if TRUE (default) directions are provided with declination, if FALSE data consist of only one column with inclination}
+  \item{bimodal}{if TRUE calculate Arason & Levi(2010) statistic for up- and down-pointing directions, if FALSE (default) for the whole dataset}
   \item{on_plot}{if TRUE (default) plots result on existin equal area diagram}
   \item{col}{color of the average line, default is black}
   \item{print}{if TRUE (default) results are printed in the R console}
@@ -43,15 +44,17 @@ Edoardo Dallanave
 \seealso{
 }
 \examples{
-## Generate a distribution of random uniform declination and inclination normal distribution around 50 degrees
-dec_inc <- data.frame(matrix(ncol = 2,nrow=50))
+## Generate a distribution of random uniform biomdal declination and inclination distribution around 50 and -45 degrees
+dec_inc <- data.frame(matrix(ncol = 2,nrow=100))
 colnames(dec_inc) <- c("dec","inc")
-dec_inc$dec <- runif(50,0,360)
-dec_inc$inc <- rnorm(50,50,10)
+dec_inc[1:50,1] <- runif(50,0,360)
+dec_inc[1:50,2] <- rnorm(50,50,10)
+dec_inc[51:100,1] <- runif(50,0,360)
+dec_inc[51:100,2] <- rnorm(50,-45,8)
+
 
 ## Estimate inclination only statistic
 plot_DI(dec_inc)
-inc_plot(dec_inc,export=F,save=F)
+inc_plot(dec_inc,export=F,save=F,bimodal=T)
 
-## reiteration takes a few seconds
 }

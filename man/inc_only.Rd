@@ -34,6 +34,8 @@ Arason, P., & Levi, S. (2010). Maximum likelihood solution for inclination-only 
 Edoardo Dallanave
 }
 \note{
+The R code was adapted from the original ARALEV Fortran source code available at:
+{http://hergilsey.is/arason/paleomag/aralev.txt}
 }
 \seealso{
 }
@@ -47,6 +49,5 @@ dec_inc$inc <- rnorm(50,50,10)
 ## Estimate inclination only statistic
 inc_only(dec_inc,export=F, return=F)
 
-## reiteration takes a few seconds
 
 }
