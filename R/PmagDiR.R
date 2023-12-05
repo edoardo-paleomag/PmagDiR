@@ -1899,10 +1899,13 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
     dirs_D <- filter_all(dirs, all_vars(inc>0))
     dirs_U <- filter_all(dirs, all_vars(inc<=0))
     #down_pointing
+    if(print==TRUE){cat("Down-pointing\n")}
     inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"))
     #up_pointing
+    if(print==TRUE){cat("Up-pointing\n")}
     inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"))
     #all_down_pointing
+    if(print==TRUE){cat("All data\n")}
     dirs$inc <- abs(dirs$inc)
     inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"))
   }else{
