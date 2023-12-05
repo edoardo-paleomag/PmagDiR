@@ -1659,6 +1659,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
   }
 
   #isolate inclination if file contains also declination
+  DI <- na.omit(DI)
   if(dec==TRUE) {
     colnames(DI) <- c("dec","inc")
     xinc <- DI$inc
@@ -1908,6 +1909,7 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
   #functions converting inc(x) and dec(y) into equal area
   a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
   a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+  DI <- na.omit(DI)
 
   #splits modes
   if(bimodal==TRUE){
