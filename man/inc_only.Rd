@@ -7,7 +7,7 @@ Calculate mean of inclination-only data
 This script uses the maximum likelihood solution of Arason and Levi (2010) for estimating average and 0.95 confidence of paleomagnetic directions with unoriented declination
 }
 \usage{
-inc_only(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE)
+inc_only(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE, Arith_stat=FALSE)
 }
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
@@ -16,6 +16,8 @@ inc_only(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRU
   \item{export}{if TRUE (default) result file is saved as csv within the working directory}
   \item{name}{name of the exported result file}
   \item{return}{if TRUE (default) return the result to be used in the R environment}
+  \item{Arith_stat}{if TRUE (default id FALSE) returns only arithmetic mean and error}
+
 }
 \details{
 }

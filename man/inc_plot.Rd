@@ -20,6 +20,8 @@ inc_plot(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=
   \item{export}{if TRUE (default) result file is saved as csv within the working directory}
   \item{save}{if TRUE (default) equal area is saved as pdf within the working directory}
   \item{name}{name of the exported result file}
+  \item{Arith_stat}{if TRUE (default id FALSE) returns only arithmetic mean and error}
+
 }
 \details{
 }

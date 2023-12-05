@@ -1456,7 +1456,7 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
 
 #Arason and Levi(2010) inclination only calculation
 #adepted from the original fortran source code ARALEV available at http://hergilsey.is/arason/paleomag/aralev.txt
-inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE) {
+inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE, Arith_stat=FALSE) {
   #The Arason-Levi MLE Iteration Formula 1
   AL1 <- function(th, n, the, ak) {
     dr <- 0.0174532925199433  # Degrees to radians (pi/180)
@@ -1619,11 +1619,11 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     return(XLIK)
   }
   #Calculation of the arithmetic mean of inclination-only data
-  armean <- function(xinc, n) {
+  armean <- function(xinc) {
     dr <- 0.01745329252         # Degrees to radians (pi/180)
     t63max <- 105.070062145     # 63 % of a sphere.
     a95max <- 154.158067237     # 95 % of a sphere.
-    dn <- n
+    dn <- length(xinc)
 
     s <- sum(xinc)
     s2 <- sum(xinc^2)
@@ -1633,7 +1633,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     sd <- 0
     ak <- -1
 
-    if (n > 1) {
+    if (dn > 1) {
       sd <- sqrt((s2 - s^2 / dn) / (dn - 1))
       ak <- (dn - 1) / ((s2 - s^2 / dn) * dr^2)
     }
@@ -1647,7 +1647,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     a95 <- tval_95 * sd / sqrt(dn)
 
     result <- as.data.frame(matrix(ncol=5, nrow=1))
-    result[1] <- n
+    result[1] <- dn
     result[2] <- round(ainc, digits=2)
     result[3] <- round(ak, digits=2)
     result[4] <- round(t63,digits = 2)
@@ -1667,205 +1667,223 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     inc <- as.list(inc)
     xinc <- inc[[1]]
   }
+  #generate only arithmetic statistic if requested
+  if(Arith_stat==TRUE){
+    result <- armean(xinc)
+    #print if request
+    if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
 
-  # main routine
-  # Degrees to radians (pi/180)
-  dr <- 0.0174532925199433
-  # 63 % of a sphere
-  t63max <- 105.070062145
-  # 95 % of a sphere
-  a95max <- 154.158067237
+    if(print==TRUE){
+      cat("Arithmetic average inclination result:
 
-  n <- length(xinc)
-  th <- numeric(n)
-  dn <- n
-  ierr <- 1
+N:", result[1,1],"
+Inclination:", result[1,2],"
+Precision:",result[1,3],"
+St.Dev_63:", result[1,4],"
+alpha_95:", result[1,5],"
 
-  if (n == 1) {
-    stop("Only one observed inclination\n", call.=F)
-  }
+")
+    }
+    if(return==TRUE) {return(result)}
+  }else{
+    # main routine
+    # Degrees to radians (pi/180)
+    dr <- 0.0174532925199433
+    # 63 % of a sphere
+    t63max <- 105.070062145
+    # 95 % of a sphere
+    a95max <- 154.158067237
 
-  if (n > 10000) {
-    stop("Too many directions, max=10000\n", call.=F)
-  }
+    n <- length(xinc)
+    th <- numeric(n)
+    dn <- n
+    ierr <- 1
 
-  if(length(unique(xinc))==1){
-    stop("Directions are all identical\n", call.=F)
-  }
-  if (any(xinc>90) | any(xinc<(-90))) {
-    stop("Inclination must be between -90 and 90\n", call.=F)
-  }
+    if (n == 1) {
+      stop("Only one observed inclination\n", call.=F)
+    }
 
-  for (i in 1:n) {
-    th[i] <- 90 - xinc[i]
-  }
+    if (n > 10000) {
+      stop("Too many directions, max=10000\n", call.=F)
+    }
 
-  s <- sum(th)
-  s2 <- sum(th^2)
-  c <- sum(cos(th * dr)) / dn
+    if(length(unique(xinc))==1){
+      stop("Directions are all identical\n", call.=F)
+    }
+    if (any(xinc>90) | any(xinc<(-90))) {
+      stop("Inclination must be between -90 and 90\n", call.=F)
+    }
 
-  rt <- s / dn
-  x <- (s2 - s^2 / dn) * dr^2
-  rk <- ifelse(x / (dn - 1) > 1e-10, (dn - 1) / x, 1e10)
-  rt1 <- rt
-  rk1 <- rk
-  rt <- rt1
-  rk <- rk1
-  ie1 <- 0
+    for (i in 1:n) {
+      th[i] <- 90 - xinc[i]
+    }
 
-  the1 <- rt
-  akap1 <- rk
-  for (j in 1:10000) {
-    rt <- AL1(th, n, rt, rk)
-    rk <- AL2(th, n, rt, rk)
-    dt <- abs(rt - the1)
-    dk <- abs((rk - akap1) / rk)
-    if (j > 10 && dt < 1e-6 && dk < 1e-6) break
+    s <- sum(th)
+    s2 <- sum(th^2)
+    c <- sum(cos(th * dr)) / dn
+
+    rt <- s / dn
+    x <- (s2 - s^2 / dn) * dr^2
+    rk <- ifelse(x / (dn - 1) > 1e-10, (dn - 1) / x, 1e10)
+    rt1 <- rt
+    rk1 <- rk
+    rt <- rt1
+    rk <- rk1
+    ie1 <- 0
+
     the1 <- rt
     akap1 <- rk
-  }
-
-  #ie1 <- 0
-  the1 <- rt
-  akap1 <- rk
-  xl1 <- XLIK(th, n, rt, rk)
-
-  rt <- 0
-  rk <- rk1
-  akap2 <- rk
-  ie2 <- 0
-  for (j in 1:10000) {
-    x <- COTH(rk) - c
-    if (x > 1e-10) {
-      rk <- 1 / x
-    } else {
-      rk <- 1e10
+    for (j in 1:10000) {
+      rt <- AL1(th, n, rt, rk)
+      rk <- AL2(th, n, rt, rk)
+      dt <- abs(rt - the1)
+      dk <- abs((rk - akap1) / rk)
+      if (j > 10 && dt < 1e-6 && dk < 1e-6) break
+      the1 <- rt
+      akap1 <- rk
     }
-    dk <- abs((rk - akap2) / rk)
-    if (j > 4 && dk < 1e-6) break
-    if (rk < 1e-6) break
+
+    #ie1 <- 0
+    the1 <- rt
+    akap1 <- rk
+    xl1 <- XLIK(th, n, rt, rk)
+
+    rt <- 0
+    rk <- rk1
     akap2 <- rk
-  }
-
-  ie2 <- 1
-  the2 <- 0
-  akap2 <- rk
-  xl2 <- XLIK(th, n, rt, rk)
-
-  rt <- 180
-  rk <- rk1
-  akap3 <- rk
-  ie3 <- 0
-  for (j in 1:10000) {
-    x <- COTH(rk) + c
-    if (x > 1e-10) {
-      rk <- 1 / x
-    } else {
-      rk <- 1e10
+    ie2 <- 0
+    for (j in 1:10000) {
+      x <- COTH(rk) - c
+      if (x > 1e-10) {
+        rk <- 1 / x
+      } else {
+        rk <- 1e10
+      }
+      dk <- abs((rk - akap2) / rk)
+      if (j > 4 && dk < 1e-6) break
+      if (rk < 1e-6) break
+      akap2 <- rk
     }
-    dk <- abs((rk - akap3) / rk)
-    if (j > 4 && dk < 1e-6) break
-    if (rk < 1e-6) break
+
+    ie2 <- 1
+    the2 <- 0
+    akap2 <- rk
+    xl2 <- XLIK(th, n, rt, rk)
+
+    rt <- 180
+    rk <- rk1
     akap3 <- rk
-  }
-
-  ie3 <- 1
-  the3 <- 180
-  akap3 <- rk
-  xl3 <- XLIK(th, n, rt, rk)
-
-  rt <- 90
-  rk <- 0
-  the4 <- rt
-  akap4 <- rk
-  xl4 <- XLIK(th, n, rt, rk)
-
-  isol <- 1
-  ierr <- ie1
-  if (xl2 > xl1) {
-    the1 <- the2
-    akap1 <- akap2
-    xl1 <- xl2
-    isol <- 2
-    ierr <- 1
-  }
-
-  if (xl3 > xl1) {
-    the1 <- the3
-    akap1 <- akap3
-    xl1 <- xl3
-    isol <- 3
-    ierr <- 1
-  }
-
-  if (xl4 > xl1) {
-    the1 <- the4
-    akap1 <- akap4
-    xl1 <- xl4
-    isol <- 4
-    ierr <- 0
-  }
-
-  ainc <- 90 - the1
-  ak <- akap1
-  if (ierr != 0) {
-    cat("Convergence problems\n")
-  }
-
-  for (i in 1:16) {
-    x <- i
-    rt <- the1 + 0.01 * cos(22.5 * x * dr)
-    if (rt < 0 || rt > 180) break
-    rk <- akap1 * (1 + 0.001 * sin(22.5 * x * dr))
-    xl <- XLIK(th, n, rt, rk)
-    if (xl > xl1) {
-      ierr <- ierr + 2
-      cat("Robustness failure\n")
+    ie3 <- 0
+    for (j in 1:10000) {
+      x <- COTH(rk) + c
+      if (x > 1e-10) {
+        rk <- 1 / x
+      } else {
+        rk <- 1e10
+      }
+      dk <- abs((rk - akap3) / rk)
+      if (j > 4 && dk < 1e-6) break
+      if (rk < 1e-6) break
+      akap3 <- rk
     }
-  }
 
-  if (akap1 >= 20) {
-    co <- 1 + log(1 - 0.63) / akap1
-  } else if (akap1 > 0.1 && akap1 < 20) {
-    co <- 1 + log(1 - 0.63 * (1 - exp(-2 * akap1))) / akap1
-  } else if (akap1 <= 0.1) {
-    co <- -0.26 + 0.4662 * akap1
-  }
+    ie3 <- 1
+    the3 <- 180
+    akap3 <- rk
+    xl3 <- XLIK(th, n, rt, rk)
 
-  t63 <- 90 - (90*sign(co))
-  if (abs(co) < 1) {
-    t63 <- 90 - atan(co / sqrt(1 - co^2)) / dr
-  }
-  if (t63 > t63max) {
-    t63 <- t63max
-  }
+    rt <- 90
+    rk <- 0
+    the4 <- rt
+    akap4 <- rk
+    xl4 <- XLIK(th, n, rt, rk)
 
-  co <- 1 - (dn - 1) * (20^(1 / (dn - 1)) - 1) / (dn * (akap1 - 1) + 1)
-  a95 <- 90 - (90*sign(co))
-  if (abs(co) < 1) {
-    a95 <- 90 - atan(co / sqrt(1 - co^2)) / dr
-  }
-  if (a95 > a95max) {
-    a95 <- a95max
-  }
+    isol <- 1
+    ierr <- ie1
+    if (xl2 > xl1) {
+      the1 <- the2
+      akap1 <- akap2
+      xl1 <- xl2
+      isol <- 2
+      ierr <- 1
+    }
 
-  ari_mean <- armean(xinc,n)
+    if (xl3 > xl1) {
+      the1 <- the3
+      akap1 <- akap3
+      xl1 <- xl3
+      isol <- 3
+      ierr <- 1
+    }
 
-  #compile result file
-  result <- as.data.frame(matrix(ncol=5, nrow=1))
-  result[1] <- n
-  result[2] <- round(ainc, digits=2)
-  result[3] <- round(ak, digits=2)
-  result[4] <- round(t63,digits = 2)
-  result[5] <- round(a95, digits = 2)
-  result[6] <- round(ari_mean[1,2],digits = 2)
-  colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95","Aritm. mean")
+    if (xl4 > xl1) {
+      the1 <- the4
+      akap1 <- akap4
+      xl1 <- xl4
+      isol <- 4
+      ierr <- 0
+    }
 
-  #print if request
-  if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
+    ainc <- 90 - the1
+    ak <- akap1
+    if (ierr != 0) {
+      cat("Convergence problems\n")
+    }
 
-  if(print==TRUE){
-    cat("Arason-Levi inclination only result:
+    for (i in 1:16) {
+      x <- i
+      rt <- the1 + 0.01 * cos(22.5 * x * dr)
+      if (rt < 0 || rt > 180) break
+      rk <- akap1 * (1 + 0.001 * sin(22.5 * x * dr))
+      xl <- XLIK(th, n, rt, rk)
+      if (xl > xl1) {
+        ierr <- ierr + 2
+        cat("Robustness failure\n")
+      }
+    }
+
+    if (akap1 >= 20) {
+      co <- 1 + log(1 - 0.63) / akap1
+    } else if (akap1 > 0.1 && akap1 < 20) {
+      co <- 1 + log(1 - 0.63 * (1 - exp(-2 * akap1))) / akap1
+    } else if (akap1 <= 0.1) {
+      co <- -0.26 + 0.4662 * akap1
+    }
+
+    t63 <- 90 - (90*sign(co))
+    if (abs(co) < 1) {
+      t63 <- 90 - atan(co / sqrt(1 - co^2)) / dr
+    }
+    if (t63 > t63max) {
+      t63 <- t63max
+    }
+
+    co <- 1 - (dn - 1) * (20^(1 / (dn - 1)) - 1) / (dn * (akap1 - 1) + 1)
+    a95 <- 90 - (90*sign(co))
+    if (abs(co) < 1) {
+      a95 <- 90 - atan(co / sqrt(1 - co^2)) / dr
+    }
+    if (a95 > a95max) {
+      a95 <- a95max
+    }
+
+    ari_mean <- armean(xinc)
+
+    #compile result file
+    result <- as.data.frame(matrix(ncol=5, nrow=1))
+    result[1] <- n
+    result[2] <- round(ainc, digits=2)
+    result[3] <- round(ak, digits=2)
+    result[4] <- round(t63,digits = 2)
+    result[5] <- round(a95, digits = 2)
+    result[6] <- round(ari_mean[1,2],digits = 2)
+    colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95","Aritm. mean")
+
+    #print if request
+    if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
+
+    if(print==TRUE){
+      cat("Arason-Levi inclination only result:
 
 N:", result[1,1],"
 Inclination:", result[1,2],"
@@ -1875,14 +1893,13 @@ alpha_95:", result[1,5],"
 Aritm. mean:",result[1,6],"
 
 ")
+    }
   }
-
-
   if(return==TRUE) {return(result)}
 }
 
 #plot equal area of Arason and Levi(2010) inclination only calculation
-inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only"){
+inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", Arith_stat=FALSE){
   #import dplyr for filter_ALL
   library(dplyr)
   #functions converting degree and radians
@@ -1900,17 +1917,17 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
     dirs_U <- filter_all(dirs, all_vars(inc<=0))
     #down_pointing
     if(print==TRUE){cat("Down-pointing\n")}
-    inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"))
+    inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"), Arith_stat=Arith_stat)
     #up_pointing
     if(print==TRUE){cat("Up-pointing\n")}
-    inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"))
+    inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"), Arith_stat=Arith_stat)
     #all_down_pointing
     if(print==TRUE){cat("All data\n")}
     dirs$inc <- abs(dirs$inc)
-    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"))
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), Arith_stat=Arith_stat)
   }else{
     dirs <- DI
-    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"))
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), Arith_stat=Arith_stat)
   }
 
   if(bimodal==TRUE){
