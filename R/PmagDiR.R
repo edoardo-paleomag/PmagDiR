@@ -1900,7 +1900,7 @@ Aritm. mean:",result[1,6],"
 }
 
 #plot equal area of Arason and Levi(2010) inclination only calculation
-inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", Arith_stat=FALSE){
+inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", Arith_stat=FALSE){
   #import dplyr for filter_ALL
   library(dplyr)
   #functions converting degree and radians
@@ -1910,7 +1910,7 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
   a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
   a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
   DI <- na.omit(DI)
-
+  if(bip_check(DI)==TRUE && bimodal==FALSE){cat("\nDirections are likely bimodal\n\n")}
   #splits modes
   if(bimodal==TRUE){
     dirs <- DI
@@ -1931,86 +1931,139 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
     dirs <- DI
     inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), Arith_stat=Arith_stat)
   }
+  #plot if requested
+  if(plot==TRUE){
+    if(bimodal==TRUE){
+      #create circles
+      circle_D <- as.data.frame(seq(0,90,1))
+      colnames(circle_D) <- "dec"
+      circle_D$inc <- rep(inc_stat_D$Inc)
+      #create a column with horizontal inclination for doubling the confidence area if crosses 0 inc
+      if(inc_stat_D$Inc-inc_stat_D$a95 < 0){
+        circle_D$x_hrz <- a2cx(0,circle_D$dec)
+        circle_D$y_hrz <- a2cy(0,circle_D$dec)
+      }
+      circle_D$inc_l <- rep(abs(inc_stat_D$Inc-inc_stat_D$a95))
+      circle_D$inc_h <- rep(inc_stat_D$Inc+inc_stat_D$a95)
+      circle_D$x <- a2cx(circle_D$inc,circle_D$dec)
+      circle_D$y <- a2cy(circle_D$inc,circle_D$dec)
+      circle_D$x_l <- a2cx(circle_D$inc_l,circle_D$dec)
+      circle_D$y_l <- a2cy(circle_D$inc_l,circle_D$dec)
+      circle_D$x_h <- a2cx(circle_D$inc_h,circle_D$dec)
+      circle_D$y_h <- a2cy(circle_D$inc_h,circle_D$dec)
 
-  if(bimodal==TRUE){
-    #create circles
-    circle_D <- as.data.frame(seq(0,90,1))
-    colnames(circle_D) <- "dec"
-    circle_D$inc <- rep(inc_stat_D$Inc)
-    circle_D$inc_l <- rep(inc_stat_D$Inc-inc_stat_D$a95)
-    circle_D$inc_h <- rep(inc_stat_D$Inc+inc_stat_D$a95)
-    circle_D$x <- a2cx(circle_D$inc,circle_D$dec)
-    circle_D$y <- a2cy(circle_D$inc,circle_D$dec)
-    circle_D$x_l <- a2cx(circle_D$inc_l,circle_D$dec)
-    circle_D$y_l <- a2cy(circle_D$inc_l,circle_D$dec)
-    circle_D$x_h <- a2cx(circle_D$inc_h,circle_D$dec)
-    circle_D$y_h <- a2cy(circle_D$inc_h,circle_D$dec)
+      circle_U <- as.data.frame(seq(270,360,1))
+      colnames(circle_U) <- "dec"
+      circle_U$inc <- rep(abs(inc_stat_U$Inc))
+      #create a column with horizontal inclination for doubling the confidence area if crosses 0 inc
+      if(abs(inc_stat_U$Inc)-inc_stat_U$a95 < 0){
+        circle_U$x_hrz <- a2cx(0,circle_U$dec)
+        circle_U$y_hrz <- a2cy(0,circle_U$dec)
+      }
+      circle_U$inc_l <- rep(abs(abs(inc_stat_U$Inc)-inc_stat_U$a95))
+      circle_U$inc_h <- rep(abs(inc_stat_U$Inc)+inc_stat_U$a95)
+      circle_U$x <- a2cx(circle_U$inc,circle_U$dec)
+      circle_U$y <- a2cy(circle_U$inc,circle_U$dec)
+      circle_U$x_l <- a2cx(circle_U$inc_l,circle_U$dec)
+      circle_U$y_l <- a2cy(circle_U$inc_l,circle_U$dec)
+      circle_U$x_h <- a2cx(circle_U$inc_h,circle_U$dec)
+      circle_U$y_h <- a2cy(circle_U$inc_h,circle_U$dec)
+      circle_ALL <- as.data.frame(seq(90,270,1))
+      colnames(circle_ALL) <- "dec"
+    }else{
+      #if biomdal is false draw a complete ALL circle
+      circle_ALL <- as.data.frame(seq(0,360,1))
+      colnames(circle_ALL) <- "dec"
+    }
+    #complete circle with all even if not bimodal
+    circle_ALL$inc <- rep(abs(inc_stat_ALL$Inc))
+    #create a column with horizontal inclination for doubling the confidence area if crosses 0 inc
+    if(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95 < 0){
+      circle_ALL$x_hrz <- a2cx(0,circle_ALL$dec)
+      circle_ALL$y_hrz <- a2cy(0,circle_ALL$dec)
+    }
+    circle_ALL$inc_l <- rep(abs(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95))
+    circle_ALL$inc_h <- rep(abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95)
+    circle_ALL$x <- a2cx(circle_ALL$inc,circle_ALL$dec)
+    circle_ALL$y <- a2cy(circle_ALL$inc,circle_ALL$dec)
+    circle_ALL$x_l <- a2cx(circle_ALL$inc_l,circle_ALL$dec)
+    circle_ALL$y_l <- a2cy(circle_ALL$inc_l,circle_ALL$dec)
+    circle_ALL$x_h <- a2cx(circle_ALL$inc_h,circle_ALL$dec)
+    circle_ALL$y_h <- a2cy(circle_ALL$inc_h,circle_ALL$dec)
 
-    circle_U <- as.data.frame(seq(270,360,1))
-    colnames(circle_U) <- "dec"
-    circle_U$inc <- rep(abs(inc_stat_U$Inc))
-    circle_U$inc_l <- rep(abs(inc_stat_U$Inc)-inc_stat_U$a95)
-    circle_U$inc_h <- rep(abs(inc_stat_U$Inc)+inc_stat_U$a95)
-    circle_U$x <- a2cx(circle_U$inc,circle_U$dec)
-    circle_U$y <- a2cy(circle_U$inc,circle_U$dec)
-    circle_U$x_l <- a2cx(circle_U$inc_l,circle_U$dec)
-    circle_U$y_l <- a2cy(circle_U$inc_l,circle_U$dec)
-    circle_U$x_h <- a2cx(circle_U$inc_h,circle_U$dec)
-    circle_U$y_h <- a2cy(circle_U$inc_h,circle_U$dec)
+    #plot_circles
+    if(on_plot==FALSE) equalarea()
+    if(bimodal==TRUE){
+      #Down
+      lines(circle_D$x_l,circle_D$y_l,lty=2)
+      lines(circle_D$x_h,circle_D$y_h,lty=2)
+      #splits the confidence area in two if crosses zero inclination
+      if(inc_stat_D$Inc-inc_stat_D$a95 < 0){
+        conf1_D <- data.frame(cbind(circle_D$x_l,circle_D$y_l))
+        confh_D <- data.frame(cbind(circle_D$x_hrz,circle_D$y_hrz))
+        confh_D <- confh_D[nrow(confh_D):1,]
+        first_D_area <- rbind(conf1_D,confh_D)
+        polygon(first_D_area, col=rgb(0,0,1,0.30),border=NA)
+        conf2_D <- data.frame(cbind(circle_D$x_h, circle_D$y_h))
+        second_D_area <- rbind(conf2_D,confh_D)
+        polygon(second_D_area, col=rgb(0,0,1,0.30),border=NA)
 
-    circle_ALL <- as.data.frame(seq(90,270,1))
-    colnames(circle_ALL) <- "dec"
-  }else{
-    circle_ALL <- as.data.frame(seq(0,360,1))
-    colnames(circle_ALL) <- "dec"
+      }else{
+        conf1_D <- data.frame(cbind(circle_D$x_l,circle_D$y_l))
+        conf2_D <- data.frame(cbind(circle_D$x_h, circle_D$y_h))
+        conf2_D <- conf2_D[nrow(conf2_D):1,]
+        conf_D <- rbind(conf1_D,conf2_D)
+        polygon(conf_D, col=rgb(0,0,1,0.30),border=NA)
+      }
+      lines(circle_D$x,circle_D$y,col=col, lwd=1.5)
+
+      #Up
+      lines(circle_U$x_l,circle_U$y_l,lty=2)
+      lines(circle_U$x_h,circle_U$y_h,lty=2)
+      #splits the confidence area in two if crosses zero inclination
+      if(abs(inc_stat_U$Inc)-inc_stat_U$a95 < 0){
+        conf1_U <- data.frame(cbind(circle_U$x_l,circle_U$y_l))
+        confh_U <- data.frame(cbind(circle_U$x_hrz,circle_U$y_hrz))
+        confh_U <- confh_U[nrow(confh_U):1,]
+        first_U_area <- rbind(conf1_U,confh_U)
+        polygon(first_U_area, col=rgb(0,0,1,0.30),border=NA)
+        conf2_U <- data.frame(cbind(circle_U$x_h, circle_U$y_h))
+        second_U_area <- rbind(conf2_U,confh_U)
+        polygon(second_U_area, col=rgb(0,0,1,0.30),border=NA)
+      }else{
+        conf1_U <- data.frame(cbind(circle_U$x_l,circle_U$y_l))
+        conf2_U <- data.frame(cbind(circle_U$x_h, circle_U$y_h))
+        conf2_U <- conf2_U[nrow(conf2_U):1,]
+        conf_U <- rbind(conf1_U,conf2_U)
+        polygon(conf_U, col=rgb(0,1,1,0.30),border=NA)
+      }
+      lines(circle_U$x,circle_U$y,col=col, lwd=1.5 )
+    }
+    #ALL
+    lines(circle_ALL$x_l,circle_ALL$y_l,lty=2)
+    lines(circle_ALL$x_h,circle_ALL$y_h,lty=2)
+    if(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95 < 0){
+      conf1_ALL <- data.frame(cbind(circle_ALL$x_l,circle_ALL$y_l))
+      confh_ALL <- data.frame(cbind(circle_ALL$x_hrz,circle_ALL$y_hrz))
+      confh_ALL <- confh_ALL[nrow(confh_ALL):1,]
+      first_ALL_area <- rbind(conf1_ALL,confh_ALL)
+      polygon(first_ALL_area, col=rgb(0,0,1,0.30),border=NA)
+      conf2_ALL <- data.frame(cbind(circle_ALL$x_h, circle_ALL$y_h))
+      second_ALL_area <- rbind(conf2_ALL,confh_ALL)
+      polygon(second_ALL_area, col=rgb(0,0,1,0.30),border=NA)
+
+    }else{
+      conf1_ALL <- data.frame(cbind(circle_ALL$x_l,circle_ALL$y_l))
+      conf2_ALL <- data.frame(cbind(circle_ALL$x_h, circle_ALL$y_h))
+      conf2_ALL <- conf2_ALL[nrow(conf2_ALL):1,]
+      conf_ALL <- rbind(conf1_ALL,conf2_ALL)
+      infill <- ifelse(inc_stat_ALL$Inc<0,rgb(0,1,1,0.30),rgb(0,0,1,0.30))
+      if(bimodal==TRUE){infill <- rgb(1,0,0,0.30)}
+      polygon(conf_ALL, col=infill,border=NA)
+    }
+    lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
+    if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
   }
-  #complete circle with all even if not bimodal
-  circle_ALL$inc <- rep(abs(inc_stat_ALL$Inc))
-  circle_ALL$inc_l <- rep(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95)
-  circle_ALL$inc_h <- rep(abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95)
-  circle_ALL$x <- a2cx(circle_ALL$inc,circle_ALL$dec)
-  circle_ALL$y <- a2cy(circle_ALL$inc,circle_ALL$dec)
-  circle_ALL$x_l <- a2cx(circle_ALL$inc_l,circle_ALL$dec)
-  circle_ALL$y_l <- a2cy(circle_ALL$inc_l,circle_ALL$dec)
-  circle_ALL$x_h <- a2cx(circle_ALL$inc_h,circle_ALL$dec)
-  circle_ALL$y_h <- a2cy(circle_ALL$inc_h,circle_ALL$dec)
-
-  #plot_circles
-  if(on_plot==FALSE) equalarea()
-  if(bimodal==TRUE){
-    #Down
-    lines(circle_D$x_l,circle_D$y_l,lty=2)
-    lines(circle_D$x_h,circle_D$y_h,lty=2)
-    conf1_D <- data.frame(cbind(circle_D$x_l,circle_D$y_l))
-    conf2_D <- data.frame(cbind(circle_D$x_h, circle_D$y_h))
-    conf2_D <- conf2_D[nrow(conf2_D):1,]
-    conf_D <- rbind(conf1_D,conf2_D)
-    polygon(conf_D, col=rgb(0,0,1,0.30),border=NA)
-    lines(circle_D$x,circle_D$y,col=col, lwd=1.5)
-
-    #Up
-    lines(circle_U$x_l,circle_U$y_l,lty=2)
-    lines(circle_U$x_h,circle_U$y_h,lty=2)
-    conf1_U <- data.frame(cbind(circle_U$x_l,circle_U$y_l))
-    conf2_U <- data.frame(cbind(circle_U$x_h, circle_U$y_h))
-    conf2_U <- conf2_U[nrow(conf2_U):1,]
-    conf_U <- rbind(conf1_U,conf2_U)
-    polygon(conf_U, col=rgb(0,1,1,0.30),border=NA)
-    lines(circle_U$x,circle_U$y,col=col, lwd=1.5 )
-  }
-  #ALL
-  lines(circle_ALL$x_l,circle_ALL$y_l,lty=2)
-  lines(circle_ALL$x_h,circle_ALL$y_h,lty=2)
-  conf1_ALL <- data.frame(cbind(circle_ALL$x_l,circle_ALL$y_l))
-  conf2_ALL <- data.frame(cbind(circle_ALL$x_h, circle_ALL$y_h))
-  conf2_ALL <- conf2_ALL[nrow(conf2_ALL):1,]
-  conf_ALL <- rbind(conf1_ALL,conf2_ALL)
-  infill <- ifelse(inc_stat_ALL$Inc<0,rgb(0,1,1,0.30),rgb(0,0,1,0.30))
-  if(bimodal==TRUE){infill <- rgb(1,0,0,0.30)}
-  polygon(conf_ALL, col=infill,border=NA)
-  lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
-
-  if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
 #create matrix from fol,lin, and dec inc of vectors
