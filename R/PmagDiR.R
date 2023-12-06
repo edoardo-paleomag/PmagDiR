@@ -1995,7 +1995,7 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
     conf2_U <- data.frame(cbind(circle_U$x_h, circle_U$y_h))
     conf2_U <- conf2_U[nrow(conf2_U):1,]
     conf_U <- rbind(conf1_U,conf2_U)
-    polygon(conf_U, col=rgb(0,1,0,0.30),border=NA)
+    polygon(conf_U, col=rgb(0,1,1,0.30),border=NA)
     lines(circle_U$x,circle_U$y,col=col, lwd=1.5 )
   }
   #ALL
@@ -2005,7 +2005,9 @@ inc_plot <- function(DI,dec=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=
   conf2_ALL <- data.frame(cbind(circle_ALL$x_h, circle_ALL$y_h))
   conf2_ALL <- conf2_ALL[nrow(conf2_ALL):1,]
   conf_ALL <- rbind(conf1_ALL,conf2_ALL)
-  polygon(conf_ALL, col=rgb(1,0,0,0.30),border=NA)
+  infill <- ifelse(inc_stat_ALL$Inc<0,rgb(0,1,1,0.30),rgb(0,0,1,0.30))
+  if(bimodal==TRUE){infill <- rgb(1,0,0,0.30)}
+  polygon(conf_ALL, col=infill,border=NA)
   lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
