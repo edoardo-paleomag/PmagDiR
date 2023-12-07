@@ -4119,8 +4119,9 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   #rotate VGPs to North pole
   VGPsR <- bed_DI(DI = VGPs,in_file = F,bed_az = ifelse((PmagPole[1,1]+180)>360,PmagPole[1,1]-180,PmagPole[1,1]),
                   bed_plunge = 90-PmagPole$lat)
-  colnames(VGPsR) <- c("Plong_R","Plat_R")
   if(data[1,3]<0 && PmagPole$lat<0) VGPsR <- flip_DI(VGPsR)
+  colnames(VGPsR) <- c("Plong_R","Plat_R")
+
 
   if(export==TRUE){
     write.csv(round(PmagPole,digits=2),file=paste(name,"_average_pole.csv"),row.names = F)
