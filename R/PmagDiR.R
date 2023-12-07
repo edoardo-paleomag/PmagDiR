@@ -1660,6 +1660,8 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
 
   #isolate inclination if file contains also declination
   DI <- na.omit(DI)
+  if(dec==TRUE) {DI <- DI[,1:2]
+  }else if(dec==F) {DI <- DI[,1]}
   if(dec==TRUE) {
     colnames(DI) <- c("dec","inc")
     xinc <- DI$inc
@@ -1913,6 +1915,9 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
   if(bip_check(DI)==TRUE && bimodal==FALSE){cat("\nDirections are likely bimodal\n\n")}
   #splits modes
   if(bimodal==TRUE){
+    DI <- na.omit(DI)
+    if(dec==TRUE) {DI <- DI[,1:2]
+    }else if(dec==F) {DI <- DI[,1]}
     dirs <- DI
     ifelse(dec==TRUE, colnames(dirs) <- c("dec","inc"), colnames(dirs) <- "inc")
     dirs_D <- filter_all(dirs, all_vars(inc>0))
