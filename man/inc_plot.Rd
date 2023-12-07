@@ -7,7 +7,7 @@ calculate and plot mean of inclination-only data
 This script uses the inc_only function for estimating average and 0.95 confidence of paleomagnetic directions with unoriented declination and plot result on an equal-area diagram
 }
 \usage{
-inc_plot(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", Arith_stat=FALSE)
+inc_plot(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", arith_stat=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,7 +21,7 @@ inc_plot(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TR
   \item{export}{if TRUE (default) result file is saved as csv within the working directory}
   \item{save}{if TRUE (default) equal area is saved as pdf within the working directory}
   \item{name}{name of the exported result file}
-  \item{Arith_stat}{if TRUE (default id FALSE) returns only arithmetic mean and error}
+  \item{arith_stat}{if TRUE (default id FALSE) returns only arithmetic mean and error}
 
 }
 \details{

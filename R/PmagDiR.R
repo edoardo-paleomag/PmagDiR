@@ -1456,7 +1456,7 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
 
 #Arason and Levi(2010) inclination only calculation
 #adepted from the original fortran source code ARALEV available at http://hergilsey.is/arason/paleomag/aralev.txt
-inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE, Arith_stat=FALSE) {
+inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only",return=TRUE, arith_stat=FALSE) {
   #The Arason-Levi MLE Iteration Formula 1
   AL1 <- function(th, n, the, ak) {
     dr <- 0.0174532925199433  # Degrees to radians (pi/180)
@@ -1465,7 +1465,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
 
     for (i in 1:n) {
       x <- ak * sin(the * dr) * sin(th[i] * dr)
-      bessel_result <- BESSEL(x)
+      bessel_result <- bessel(x)
       bi1i0 <- bessel_result[3]
 
       s <- s + sin(th[i] * dr) * bi1i0
@@ -1487,9 +1487,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     c <- 0
     for (i in 1:n) {
       x <- ak * sin(the * dr) * sin(th[i] * dr)
-      # You'll need to replace the call to BESSEL with the equivalent in R
-      # For example, you can use the 'besselJ' function from the 'pracma' package.
-      Btemp <- BESSEL(x)
+      Btemp <- bessel(x)
       bi1i0 <- Btemp[3]
 
       s <- s + sin(th[i] * dr) * bi1i0
@@ -1510,7 +1508,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     return(AL2)
   }
   #Evaluation of the Hyperbolic Bessel functions I0(x), I1(x) and their ratio I1(x)/I0(x).
-  BESSEL <- function(x) {
+  bessel <- function(x) {
     p <- c(1.0, 3.5156229, 3.0899424, 1.2067492, 0.2659732, 0.360768e-1, 0.45813e-2)
     q <- c(0.39894228, 0.1328592e-1, 0.225319e-2, -0.157565e-2, 0.916281e-2, -0.2057706e-1, 0.2635537e-1, -0.1647633e-1, 0.392377e-2)
     u <- c(0.5, 0.87890594, 0.51498869, 0.15084934, 0.2658733e-1, 0.301532e-2, 0.32411e-3)
@@ -1536,7 +1534,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     return(c(bi0e, bi1e, bi1i0))
   }
   #Evaluation of the Hyperbolic Cotangens function coth(x)
-  COTH <- function(x) {
+  coth <- function(x) {
     if (x == 0) {
       return(0)
     }
@@ -1554,29 +1552,29 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     }
 
     if (x < 0) {
-      return(-COTH)
+      return(-coth)
     }
   }
   #Evaluation of the Log-Likelihood function for inclination-only data.
-  XLIK <- function(th, n, the, ak) {
+  xlik <- function(th, n, the, ak) {
     dr <- 0.0174532925199433         # Degrees to radians (pi/180)
     pi <- 180 * dr
     dn <- n
 
     # Illegal use
     if (n < 1) {
-      cat("ERROR: Data missing in XLIK\n")
+      cat("ERROR: Data missing in xlik\n")
       return(-1e10)
     }
 
     if (n > 10000) {
-      cat("ERROR: Too small dimension in XLIK\n")
+      cat("ERROR: Too small dimension in xlik\n")
       return(-1e10)
     }
 
     # Uncomment the following lines if you want to check the range of ak
     # if (ak < 0) {
-    #   cat("ERROR: Out of range in XLIK\n")
+    #   cat("ERROR: Out of range in xlik\n")
     #   return(-1e10)
     # }
 
@@ -1597,9 +1595,9 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
 
     for (i in 1:n) {
       x <- ak * sin(the * dr) * sin(th[i] * dr)
-      bi0e <- BESSEL(x)[[1]]
-      bi1e <- BESSEL(x)[[2]]
-      bi1i0 <- BESSEL(x)[[3]]
+      bi0e <- bessel(x)[[1]]
+      bi1e <- bessel(x)[[2]]
+      bi1i0 <- bessel(x)[[3]]
       a2 <- a2 + ak * cos((th[i] - the) * dr) + log(bi0e)
     }
 
@@ -1614,9 +1612,9 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     }
 
     # The log-likelihood function
-    XLIK <- a1 + a2 + a3
+    xlik <- a1 + a2 + a3
 
-    return(XLIK)
+    return(xlik)
   }
   #Calculation of the arithmetic mean of inclination-only data
   armean <- function(xinc) {
@@ -1671,7 +1669,7 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     xinc <- inc[[1]]
   }
   #generate only arithmetic statistic if requested
-  if(Arith_stat==TRUE){
+  if(arith_stat==TRUE){
     result <- armean(xinc)
     #print if request
     if(export==TRUE){write.csv(result,paste(name,".csv"), row.names = F)}
@@ -1696,27 +1694,24 @@ alpha_95:", result[1,5],"
     t63max <- 105.070062145
     # 95 % of a sphere
     a95max <- 154.158067237
-
     n <- length(xinc)
     th <- numeric(n)
     dn <- n
     ierr <- 1
-
+    #sdata checking and warnings
     if (n == 1) {
       stop("Only one observed inclination\n", call.=F)
     }
-
     if (n > 10000) {
       stop("Too many directions, max=10000\n", call.=F)
     }
-
     if(length(unique(xinc))==1){
       stop("Directions are all identical\n", call.=F)
     }
     if (any(xinc>90) | any(xinc<(-90))) {
       stop("Inclination must be between -90 and 90\n", call.=F)
     }
-
+    #file with co-incl
     for (i in 1:n) {
       th[i] <- 90 - xinc[i]
     }
@@ -1724,14 +1719,12 @@ alpha_95:", result[1,5],"
     s <- sum(th)
     s2 <- sum(th^2)
     c <- sum(cos(th * dr)) / dn
-
+    # initial theta guess (17)
     rt <- s / dn
     x <- (s2 - s^2 / dn) * dr^2
     rk <- ifelse(x / (dn - 1) > 1e-10, (dn - 1) / x, 1e10)
     rt1 <- rt
     rk1 <- rk
-    rt <- rt1
-    rk <- rk1
     ie1 <- 0
 
     the1 <- rt
@@ -1745,18 +1738,19 @@ alpha_95:", result[1,5],"
       the1 <- rt
       akap1 <- rk
     }
-
+    #likelihood for theta e k
     #ie1 <- 0
     the1 <- rt
     akap1 <- rk
-    xl1 <- XLIK(th, n, rt, rk)
+    xl1 <- xlik(th, n, rt, rk)
 
+    #likelihood for theta=0
     rt <- 0
     rk <- rk1
     akap2 <- rk
     ie2 <- 0
     for (j in 1:10000) {
-      x <- COTH(rk) - c
+      x <- coth(rk) - c
       if (x > 1e-10) {
         rk <- 1 / x
       } else {
@@ -1767,18 +1761,18 @@ alpha_95:", result[1,5],"
       if (rk < 1e-6) break
       akap2 <- rk
     }
-
     ie2 <- 1
     the2 <- 0
     akap2 <- rk
-    xl2 <- XLIK(th, n, rt, rk)
+    xl2 <- xlik(th, n, rt, rk)
 
+    #likelihood for theta=180
     rt <- 180
     rk <- rk1
     akap3 <- rk
     ie3 <- 0
     for (j in 1:10000) {
-      x <- COTH(rk) + c
+      x <- coth(rk) + c
       if (x > 1e-10) {
         rk <- 1 / x
       } else {
@@ -1789,17 +1783,17 @@ alpha_95:", result[1,5],"
       if (rk < 1e-6) break
       akap3 <- rk
     }
-
     ie3 <- 1
     the3 <- 180
     akap3 <- rk
-    xl3 <- XLIK(th, n, rt, rk)
+    xl3 <- xlik(th, n, rt, rk)
 
+    #likelihood for k=0
     rt <- 90
     rk <- 0
     the4 <- rt
     akap4 <- rk
-    xl4 <- XLIK(th, n, rt, rk)
+    xl4 <- xlik(th, n, rt, rk)
 
     isol <- 1
     ierr <- ie1
@@ -1811,6 +1805,7 @@ alpha_95:", result[1,5],"
       ierr <- 1
     }
 
+    #compares solutions
     if (xl3 > xl1) {
       the1 <- the3
       akap1 <- akap3
@@ -1833,12 +1828,13 @@ alpha_95:", result[1,5],"
       cat("Convergence problems\n")
     }
 
+    #Test of robsutness with 16 surrounding points
     for (i in 1:16) {
       x <- i
       rt <- the1 + 0.01 * cos(22.5 * x * dr)
       if (rt < 0 || rt > 180) break
       rk <- akap1 * (1 + 0.001 * sin(22.5 * x * dr))
-      xl <- XLIK(th, n, rt, rk)
+      xl <- xlik(th, n, rt, rk)
       if (xl > xl1) {
         ierr <- ierr + 2
         cat("Robustness failure\n")
@@ -1853,6 +1849,7 @@ alpha_95:", result[1,5],"
       co <- -0.26 + 0.4662 * akap1
     }
 
+    #calculate confidences
     t63 <- 90 - (90*sign(co))
     if (abs(co) < 1) {
       t63 <- 90 - atan(co / sqrt(1 - co^2)) / dr
@@ -1870,6 +1867,7 @@ alpha_95:", result[1,5],"
       a95 <- a95max
     }
 
+    #calculates arith mean
     ari_mean <- armean(xinc)
 
     #compile result file
@@ -1902,7 +1900,7 @@ Aritm. mean:",result[1,6],"
 }
 
 #plot equal area of Arason and Levi(2010) inclination only calculation
-inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", Arith_stat=FALSE){
+inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", arith_stat=FALSE){
   #import dplyr for filter_ALL
   library(dplyr)
   #functions converting degree and radians
@@ -1924,17 +1922,17 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
     dirs_U <- filter_all(dirs, all_vars(inc<=0))
     #down_pointing
     if(print==TRUE){cat("Down-pointing\n")}
-    inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"), Arith_stat=Arith_stat)
+    inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"), arith_stat=arith_stat)
     #up_pointing
     if(print==TRUE){cat("Up-pointing\n")}
-    inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"), Arith_stat=Arith_stat)
+    inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"), arith_stat=arith_stat)
     #all_down_pointing
     if(print==TRUE){cat("All data\n")}
     dirs$inc <- abs(dirs$inc)
-    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), Arith_stat=Arith_stat)
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), arith_stat=arith_stat)
   }else{
     dirs <- DI
-    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), Arith_stat=Arith_stat)
+    inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), arith_stat=arith_stat)
   }
   #plot if requested
   if(plot==TRUE){
@@ -4122,6 +4120,7 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   VGPsR <- bed_DI(DI = VGPs,in_file = F,bed_az = ifelse((PmagPole[1,1]+180)>360,PmagPole[1,1]-180,PmagPole[1,1]),
                   bed_plunge = 90-PmagPole$lat)
   colnames(VGPsR) <- c("Plong_R","Plat_R")
+  if(data[1,3]<0 && PmagPole$lat<0) VGPsR <- flip_DI(VGPsR)
 
   if(export==TRUE){
     write.csv(round(PmagPole,digits=2),file=paste(name,"_average_pole.csv"),row.names = F)
