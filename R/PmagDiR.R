@@ -1028,7 +1028,7 @@ ffind <-function(DI, f_inc=0.005) {
 }
 
 #plot bimodal fisher from dec_inc and print results on console
-fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
+fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean", warn=T) {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   data <- DI
@@ -1128,9 +1128,9 @@ a95%: ", a)
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 
     text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
-    warning("
-Do not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.
-", call.= F)
+    if(warn==TRUE) {
+      warning("\nDo not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.\n", call.= F)
+    }
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
@@ -4070,7 +4070,7 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   #start data table
-  data <- DI
+  data <- DI[,1:2]
   data <- na.omit(data)
   #add lat and long columns if not present in file
   if(in_file==FALSE){
@@ -4116,10 +4116,16 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   #rename columns of PmagPole
   colnames(PmagPole)[1:2] <- c("long","lat")
 
+  #set coordinates for rotation of pole
+  ifelse(PmagPole[1,2]>0,
+         RotAZ <- (PmagPole[1,1]+180)%%360,
+         RotAZ <-  PmagPole[1,1])
+  RotPL <- 90-abs(PmagPole[1,2])
+
   #rotate VGPs to North pole
-  VGPsR <- bed_DI(DI = VGPs,in_file = F,bed_az = ifelse((PmagPole[1,1]+180)>360,PmagPole[1,1]-180,PmagPole[1,1]),
-                  bed_plunge = 90-PmagPole$lat)
-  if(data[1,3]<0 && PmagPole$lat<0) VGPsR <- flip_DI(VGPsR)
+  VGPsR <- bed_DI(DI = VGPs,in_file = F,bed_az = RotAZ,
+                  bed_plunge = RotPL)
+  #if(data[1,3]<0 && PmagPole$lat<0) VGPsR <- flip_DI(VGPsR)
   colnames(VGPsR) <- c("Plong_R","Plat_R")
 
 
@@ -4142,6 +4148,104 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   if(type=="VGPs"){return(VGPs)}
   if(type=="VGPsN"){return(VGPsN)}
   if(type=="VGPsR"){return(VGPsR)}
+}
+
+
+#plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
+#still under development!!
+magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TRUE, E.A.=TRUE){
+  library(plyr, warn.conflicts = F)
+  library(PmagDiR)
+  dat <- na.omit(DIP)
+  colnames(dat) <- c("dec","inc","posit")
+  #calculate VGPs rotated
+  dat[,4:5] <- VGP_DI(dat[,1:2],in_file = F,lat = lat,long = long,export = F,type = "VGPsR",Prnt = F)
+  #associated polarity to VGPs, where normal=1, reversed=0
+  dat$pol <- ifelse(dat$Plat_R>0,1,0)
+  #create reversals empty data frame
+  normals <- data.frame(matrix(ncol = 2,nrow = 0))
+  colnames(normals) <- c("bottom","top")
+  #populate top and bottom of normals table
+  for(i in 2:nrow(dat)){
+    if((dat[i,6]+dat[i-1,6])==1){
+      pos <- (dat[i,3]+dat[i-1,3])/2
+      newline <- data.frame(matrix(ncol = 2,nrow = 0))
+      ifelse(dat[i,6]==1, newline[1,1] <- pos, newline[1,2] <- pos)
+      colnames(newline) <- c("bottom","top")
+      normals <- rbind(normals,newline)
+    }
+  }
+  #fill first or last box of normals when empty
+  if(is.na(normals[1,1])==TRUE) normals[1,1] <- min(dat$posit)
+  if(is.na(normals[nrow(normals),2])==TRUE) normals[nrow(normals),2] <- max(dat$posit)
+  #reduce table to lines with top and bottom
+  for(l in 2:nrow(normals)){
+    if(is.na(normals[l-1,2])==TRUE) {normals[l-1,2] <- normals[l,2]}
+  }
+  #eliminate duplicates
+  normals <- na.omit(normals)
+  ymin <- plyr::round_any(min(dat$posit), 1, f= floor)           #min depth of columns, approximated by 10 meters
+  ymax <- plyr::round_any(max(dat$posit), 1, f=ceiling)          #max depth of columns, approximated by 10 meters
+
+  ############## PLOT ##############
+  #screen splitter matrix
+  dev.new(width = 10,height = 7,noRStudioGD = T)
+  screen <- matrix(c(1,1,2,2,3,3,4),ncol=7,byrow = T)
+  layout(screen)
+  inclim <- round(max(abs(dat$inc)), digits = 0)
+  plot(dat$dec,dat$posit, type="o",
+       pch=21,bg=col,ylab="Position (m)",
+       xaxp= c(0,360,4),
+       ylim=c(ymin,ymax),
+       xlab=NA,
+       main="Declination (°)",
+       panel.first= abline(v=c(seq(0,360,90)),
+                           h=c(seq(round(min(dat$posit), digits = -1),
+                                   round(max(dat$posit), digits=-1),10)),
+                           col="gray", lty="dotted"))
+  plot(dat$inc,dat$posit,type="o",
+       pch=21,bg=col,ylab=NA,xaxp= c(-90,90,6),
+       xlim=c(-90,90),
+       ylim=c(ymin,ymax),
+       xlab=NA,
+       main="Inclination (°)",
+       panel.first= abline(v=c(seq(-90,90,30)),
+                           h=c(seq(round(min(dat$posit), digits = -1),
+                                   round(max(dat$posit), digits=-1),10)),
+                           col="gray", lty="dotted"))
+  plot(dat$Plat_R,dat$posit,type="o",
+       pch=21,bg=col,ylab=NA,xaxp= c(-90,90,4),
+       ylim=c(ymin,ymax),
+       xlab=NA,
+       main="VGP Lat. (°)",
+       panel.first= abline(v=c(seq(-90,90,45)),
+                           h=c(seq(round(min(dat$posit), digits = -1),
+                                   round(max(dat$posit), digits=-1),10)),
+                           col="gray", lty="dotted"))
+
+  #create frame for polarity
+  plot(NA,
+       xlim=c(0,1), xaxt="n",
+       type="n", ylab=NA,
+       xlab="",ylim=c(ymin,ymax),
+       main="Polarity")
+  rect(xleft=0,
+       ybottom=normals$bottom,
+       xright=1,
+       ytop=normals$top,
+       col="black",
+       border=NA)
+  save_pdf(name =paste(name,".pdf"),width = 10,height = 8)
+  if(POLE==TRUE){
+    dev.new(width = 7,height = 7,noRStudioGD = T)
+    VGPsN <- VGP_DI(dat[,1:2],in_file = F,lat = lat,long = long,export = T,Prnt = T)
+    plot_VGP(VGPsN, coast = T, A95 = T,save = T)
+  }
+  if(E.A.==TRUE){
+    dev.new(width = 7,height = 7,noRStudioGD = T)
+    plot_DI(dat[,1:2])
+    fisher_plot(dat[,1:2],save = T, text=T, warn=F)
+  }
 }
 
 
