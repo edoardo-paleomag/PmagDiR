@@ -71,8 +71,25 @@ bed_DI <- function(DI,in_file=TRUE, bed_az,bed_plunge,export=FALSE){
   data <- DI
   data <- na.omit(data)
   #colnames change if BdecInc are in file or not
-  if(in_file==FALSE){colnames(data) <- c("dec","inc")} else
-  {colnames(data) <- c("dec","inc","baz","bplunge")}
+  if(in_file==FALSE){
+    if(ncol(data)==3) {
+      colnames(data) <- c("dec","inc","position")
+      pos_exist=TRUE
+      }
+    if(ncol(data)==2) {
+      colnames(data) <- c("dec","inc")
+      pos_exist=FALSE
+    }
+  } else {
+    if(ncol(data)==5) {
+      colnames(data) <- c("dec","inc","baz","bplunge","position")
+      pos_exist=TRUE
+      }
+    if(ncol(data)==4) {
+      colnames(data) <- c("dec","inc","baz","bplunge")
+      pos_exist=FALSE
+      }
+    }
 
   #sines and cosines if BdecInc are not in file
   if(in_file==FALSE){
@@ -83,7 +100,7 @@ bed_DI <- function(DI,in_file=TRUE, bed_az,bed_plunge,export=FALSE){
   }
 
   newDI <- as.data.frame(matrix(ncol=2,nrow=0))
-  for(i in 1:length(data[,1])){
+  for(i in 1:nrow(data)){
     newDI_p <- as.data.frame(matrix(ncol=2,nrow=1))
     if(in_file==TRUE){
       sbd <- -sin(d2r(data[i,3]))
@@ -109,7 +126,10 @@ bed_DI <- function(DI,in_file=TRUE, bed_az,bed_plunge,export=FALSE){
     newDI_p[1,1:2] <- c(newdec,newinc)
     newDI <- rbind(newDI,newDI_p)
   }
-  colnames(newDI) <- c("TCdec","TCinc")
+  if(pos_exist==TRUE){
+    newDI <- cbind(newDI,data$position)
+    colnames(newDI) <- c("TCdec","TCinc","position")
+  }else{colnames(newDI) <- c("TCdec","TCinc")}
   if(export==TRUE){write.csv(newDI,"tilt_corrected_directions.csv",row.names = FALSE)}
   return(newDI)
 }
@@ -298,6 +318,7 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=F
   if(geo==TRUE){
     DIAP <- DI
     data <- bed_DI((DIAP))
+    data <- data[,1:2]
   }else{data <- DI[,1:2]}
 
   data <- na.omit(data)
@@ -315,7 +336,7 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=F
     if(inc_f==TRUE){
       #calculate f factor of distribution and f=1 if it is not flattened
       I_E_Edec_f <- ffind(data,f_inc = 0.005)
-      f <- ifelse(is.na(I_E_Edec_f[1,4])==TRUE, 1, I_E_Edec_f[length(I_E_Edec_f[,4]),4])
+      f <- ifelse(is.na(I_E_Edec_f[1,4])==TRUE, 1, I_E_Edec_f[nrow(I_E_Edec_f),4])
     }else{f <- 1}
 
     #add column with inc unflattened, plus different parameters
@@ -383,7 +404,7 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=F
       #cut also lines from DIAP file if coordinates are geographic
       if(geo==TRUE){
         DIAP <- DIAP[-VGPcut,]
-      }else{DI <- DI[-VGPcut,1:2]}
+      }else{DI <- DI[-VGPcut,]}
     }
     data  <- data[,1:2]
     if (length(VGPcut)==0) break
@@ -615,7 +636,7 @@ ellips_DI <- function(DI,lat,long,export=FALSE){
 }
 
 #plot bimodal elliptical confidence (calculated from A95 inversion) from dec_inc  and print results on console
-ellips_plot <- function(DI,lat,long, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse"){
+ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse", S_exp=FALSE){
   #degrees to radians and vice versa
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -686,8 +707,6 @@ ellips_plot <- function(DI,lat,long, plot=TRUE, on_plot=TRUE, col_d="red",col_u=
   }
   data_M12 <- common_DI(data)
   ellips_M12 <- ellips_DI(data_M12,lat=lat, long=long)
-  #plot text if true
-  par(fig=c(0,1,0,1), new=TRUE)
   #plot text with results
   N <- ellips_M12[1,5]
   Dec <- round(ellips_M12[1,1],digits=2)
@@ -695,41 +714,51 @@ ellips_plot <- function(DI,lat,long, plot=TRUE, on_plot=TRUE, col_d="red",col_u=
   Delta_dec <- round(ellips_M12[1,3],digits=2)
   Delta_inc <- round(ellips_M12[1,4],digits=2)
 
+  #set file for export in shiny
+  S_result <- as.data.frame(matrix(ncol=5,nrow=3))
+  colnames(S_result) <- c("dec", "inc","∆95 dec","∆95 inc","N")
+  rownames(S_result) <- c("Mode 1","Mode 2", "All")
+
   if(any(data$diff<=90)) {
     cat("Ellipse Mode 1:
 ")
     print(round(ellips_M1, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv(round(ellips_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
+    S_result[1,] <- ellips_M1
   }
   if(any(data$diff>90)) {
     cat("Ellipse Mode 2:
 ")
     print(round(ellips_M2,digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(ellips_M2,digits=2)),paste(name,"_mode_2.csv"), row.names = FALSE)}
+    S_result[2,] <- ellips_M2
   }
   if(any(data$diff>90)) {
     cat("Ellipse common mode:
 ")
     print(round(ellips_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(ellips_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
+    S_result[3,] <- ellips_M12
   }
   if (text==TRUE){
+    #plot text if true
+    par(fig=c(0,1,0,1), new=TRUE)
     text <- paste("N: ",N,"
 Dec: ", Dec,"
 Inc: ", Inc,"
-D_dec: ", Delta_dec,"
-D_inc: ", Delta_inc)
+∆ dec: ", Delta_dec,"
+∆ inc: ", Delta_inc)
     plot(NA, xlim=c(0,1), ylim=c(0,1),
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 
     text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
-    warning("
-Do not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.
-", call.= F)
+    cat("\nDo not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.\n")
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
-
+  S_result <- na.omit(S_result)
+  if(nrow(S_result)==2) S_result <- S_result[1,]
+  if(S_exp==TRUE){return(S_result)}
 }
 
 #function plotting equal area net
@@ -1028,7 +1057,7 @@ ffind <-function(DI, f_inc=0.005) {
 }
 
 #plot bimodal fisher from dec_inc and print results on console
-fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean", warn=T) {
+fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean", S_exp=FALSE) {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   data <- DI
@@ -1092,34 +1121,47 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   }
   data_M12 <- common_DI(data)
   fisher_M12 <- fisher(data_M12)
-  #plot text if true
-  par(fig=c(0,1,0,1), new=TRUE)
   #plot text with results
   Dec <- round(fisher_M12[1,1],digits=2)
   Inc <- round(fisher_M12[1,2],digits=2)
   a <- round(fisher_M12[1,3],digits=2)
   N <- round(fisher_M12[1,4],digits=2)
 
+  #creates table for Shiny
+  S_results <- as.data.frame(matrix(ncol=6, nrow=3))
+  colnames(S_results) <- c("dec", "inc", "a95", "N","R","k")
+
 
   if(any(data$diff<=90)) {
     cat("fisher Mode 1:
 ")
-    print(round(fisher_M1, digits=2), row.names = FALSE)
-    if(export==TRUE){write.csv(round(fisher_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
+print(round(fisher_M1, digits=2), row.names = FALSE)
+if(export==TRUE){write.csv(round(fisher_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
+    S_results[1,] <- fisher_M1
   }
   if(any(data$diff>90)) {
     cat("fisher Mode 2:
 ")
     print(round(fisher_M2,digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M2,digits=2)),paste(name,"_mode_2.csv"), row.names = FALSE)}
+    S_results[2,] <- fisher_M2
   }
-  if(any(data$diff>90)) {
+  if(exists("fisher_M1")==TRUE | exists("fisher_M2")==TRUE) {
     cat("fisher common mode:
 ")
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
+    S_results[3,] <- fisher_M12
   }
+  rownames(S_results) <- c("Mode 1","Mode 2","All")
+  S_results <- S_results[,-5]
+  S_results <- na.omit(S_results)
+  if(nrow(S_results)==2) S_results <- S_results[1,]
+
+  #plot text in figure if requested
   if (text==TRUE){
+    #plot text if true
+    par(fig=c(0,1,0,1), new=TRUE)
     text <- paste("N: ",N,"
 Dec: ", Dec,"
 Inc: ", Inc,"
@@ -1128,12 +1170,11 @@ a95%: ", a)
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 
     text(x=0.79, y=0.02,pos=4,text, cex= 0.85)
-    if(warn==TRUE) {
-      warning("\nDo not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.\n", call.= F)
-    }
+    cat("\nDo not attempt to plot other directions or Fisher mean on the same diagram if text option is set TRUE.\n")
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+  if(S_exp==TRUE){return(S_results)}
 }
 
 #function that return fisher statistic from dec_inc
@@ -2803,7 +2844,7 @@ DISTRIBUTION NOT BIMODAL")
   }
   colnames(mode1B) <- c("x","y","z")
   mode1B$dec <- r2d(atan2(mode1B$y,mode1B$x))
-  mode1B$dec <- ifelse(mode1B$dec<0,mode1B$dec+360,mode1B$dec)
+  mode1B$dec <- ifelse(mode1B$dec%%360)
   mode1B$inc <- r2d(asin(mode1B$z))
   n <- 0
   #simulate pseudosamples of mode 2
