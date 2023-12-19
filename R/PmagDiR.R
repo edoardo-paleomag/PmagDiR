@@ -2844,7 +2844,7 @@ DISTRIBUTION NOT BIMODAL")
   }
   colnames(mode1B) <- c("x","y","z")
   mode1B$dec <- r2d(atan2(mode1B$y,mode1B$x))
-  mode1B$dec <- ifelse(mode1B$dec%%360)
+  mode1B$dec <- mode1B$dec%%360
   mode1B$inc <- r2d(asin(mode1B$z))
   n <- 0
   #simulate pseudosamples of mode 2
