@@ -636,7 +636,7 @@ ellips_DI <- function(DI,lat,long,export=FALSE){
 }
 
 #plot bimodal elliptical confidence (calculated from A95 inversion) from dec_inc  and print results on console
-ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse", S_exp=FALSE){
+ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse"){
   #degrees to radians and vice versa
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -714,31 +714,23 @@ ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",co
   Delta_dec <- round(ellips_M12[1,3],digits=2)
   Delta_inc <- round(ellips_M12[1,4],digits=2)
 
-  #set file for export in shiny
-  S_result <- as.data.frame(matrix(ncol=5,nrow=3))
-  colnames(S_result) <- c("dec", "inc","∆95 dec","∆95 inc","N")
-  rownames(S_result) <- c("Mode 1","Mode 2", "All")
-
   if(any(data$diff<=90)) {
     cat("Ellipse Mode 1:
 ")
     print(round(ellips_M1, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv(round(ellips_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
-    S_result[1,] <- ellips_M1
   }
   if(any(data$diff>90)) {
     cat("Ellipse Mode 2:
 ")
     print(round(ellips_M2,digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(ellips_M2,digits=2)),paste(name,"_mode_2.csv"), row.names = FALSE)}
-    S_result[2,] <- ellips_M2
   }
   if(any(data$diff>90)) {
     cat("Ellipse common mode:
 ")
     print(round(ellips_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(ellips_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
-    S_result[3,] <- ellips_M12
   }
   if (text==TRUE){
     #plot text if true
@@ -756,9 +748,6 @@ Inc: ", Inc,"
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
-  S_result <- na.omit(S_result)
-  if(nrow(S_result)==2) S_result <- S_result[1,]
-  if(S_exp==TRUE){return(S_result)}
 }
 
 #function plotting equal area net
@@ -807,7 +796,7 @@ equalarea <- function(title="") {
 ffind_boot <- function(DI,confidence=95,nb=1000, f_increment=0.01,export=TRUE,return=TRUE, name="Unflattened_dirs") {
   data <- DI[,1:2]
   data <- na.omit(data)
-  N <- length(data[,1])
+  N <- nrow(data)
   colnames(data) <- c("dec", "inc")
   #calculate E-I of real data
   Inc_E_R <- inc_E_finder(data)
@@ -902,7 +891,7 @@ Simulation ends when", nb, "valid pseudosamples are saved.
     points(x=Seq_I_E_B$V1inc, y= Seq_I_E_B$E,
            type= "l", col=rgb(1, 0, 0, 0.15), lwd=1)
     i_E_I <- Seq_I_E_B[1,]
-    f_E_I <- Seq_I_E_B[length(Seq_I_E_B[,1]),]
+    f_E_I <- Seq_I_E_B[nrow(Seq_I_E_B),]
     colnames(i_E_I) <- c("Inc","E","E_dec")
     colnames(f_E_I)<- c("Inc","E","E_dec")
 
@@ -912,11 +901,11 @@ Simulation ends when", nb, "valid pseudosamples are saved.
     init_E_I <- na.omit(init_E_I)
     final_E_I <- na.omit(final_E_I)
     if(((n%%50)==0)==TRUE) {
-      cat(paste(n,"simulations done and",(length(final_E_I[,1])),"pseudosamples saved
+      cat(paste(n,"simulations done and",(nrow(final_E_I)),"pseudosamples saved
 "))
     }
 
-    if(length(final_E_I[,1])==nb) {
+    if(nrow(final_E_I)==nb) {
       cat(paste("Saved",(length(final_E_I[,1])), "pseudosamples after", n,"simulations
 "))
       break
@@ -1030,34 +1019,32 @@ ffind <-function(DI, f_inc=0.005) {
   data <- na.omit(data)
   colnames(data) <- c("dec", "inc")
   inc_E_seq <- as.data.frame(matrix(ncol=4,nrow=0))
-  finc <- f_inc
   f <- 1.00
   #loop that stops only when tk03 line is crossed from below
   repeat {
-    f <- f-finc
+    f <- f-f_inc
     data_unfl <- unflat_DI(data,f)
     inc_E_prov <- inc_E_finder(data_unfl)
     inc_E_prov$V1inc <- abs(inc_E_prov$V1inc)
     inc_E_prov$f <- f
     inc_E_seq <- rbind(inc_E_seq,inc_E_prov)
-    E_lim <- round(tk03(inc_E_prov$V1inc), digits = 2)
-    if(length(inc_E_seq$E)>1){
-      if (round(inc_E_prov$E, digits=2)>=E_lim &
-          inc_E_seq[length(inc_E_seq$E),2]>
-          inc_E_seq[length(inc_E_seq$E)-1,2]) break
+    if(nrow(inc_E_seq)>1){
+      E_lim_low <- round(tk03(inc_E_seq[nrow(inc_E_seq)-1,1]), digits = 6)
+      E_lim_high <- round(tk03(inc_E_seq[nrow(inc_E_seq),1]),digits = 6)
+      if(round(max(inc_E_seq[nrow(inc_E_seq),1],digit=1)>89.5)) break
+      if(inc_E_seq[nrow(inc_E_seq)-1,2]< E_lim_low && inc_E_seq[nrow(inc_E_seq),2]>=E_lim_high) break
     }
   }
   #next return data only when E goes below tk03 line
   Emin <- min(inc_E_seq$E)
   Imin <- inc_E_seq$V1inc[inc_E_seq$E==min(inc_E_seq$E)]
   Eminlim <- tk03(Imin)
-  if(round(max(inc_E_seq$V1inc),digit=1)>89){return(return(as.data.frame(t(c(NA, NA, NA, NA)))))}
-  if(Emin>Eminlim) {return(return(as.data.frame(t(c(NA, NA, NA, NA)))))}
-  else{return(inc_E_seq)}
+  if(round(max(inc_E_seq$V1inc),digit=1)>89.5) {return(as.data.frame(t(c(NA, NA, NA, NA))))}
+  if(Emin>Eminlim) {return(as.data.frame(t(c(NA, NA, NA, NA))))} else {return(inc_E_seq)}
 }
 
 #plot bimodal fisher from dec_inc and print results on console
-fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean", S_exp=FALSE) {
+fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   data <- DI
@@ -1127,36 +1114,24 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   a <- round(fisher_M12[1,3],digits=2)
   N <- round(fisher_M12[1,4],digits=2)
 
-  #creates table for Shiny
-  S_results <- as.data.frame(matrix(ncol=6, nrow=3))
-  colnames(S_results) <- c("dec", "inc", "a95", "N","R","k")
-
-
   if(any(data$diff<=90)) {
     cat("fisher Mode 1:
 ")
 print(round(fisher_M1, digits=2), row.names = FALSE)
 if(export==TRUE){write.csv(round(fisher_M1, digits=2),paste(name,"_mode_1.csv"), row.names = FALSE)}
-    S_results[1,] <- fisher_M1
   }
   if(any(data$diff>90)) {
     cat("fisher Mode 2:
 ")
     print(round(fisher_M2,digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M2,digits=2)),paste(name,"_mode_2.csv"), row.names = FALSE)}
-    S_results[2,] <- fisher_M2
   }
   if(exists("fisher_M1")==TRUE | exists("fisher_M2")==TRUE) {
     cat("fisher common mode:
 ")
     print(round(fisher_M12, digits=2), row.names = FALSE)
     if(export==TRUE){write.csv((round(fisher_M12, digits=2)),paste(name,"_mode_1&2.csv"), row.names = FALSE)}
-    S_results[3,] <- fisher_M12
   }
-  rownames(S_results) <- c("Mode 1","Mode 2","All")
-  S_results <- S_results[,-5]
-  S_results <- na.omit(S_results)
-  if(nrow(S_results)==2) S_results <- S_results[1,]
 
   #plot text in figure if requested
   if (text==TRUE){
@@ -1174,7 +1149,6 @@ a95%: ", a)
   }
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
-  if(S_exp==TRUE){return(S_results)}
 }
 
 #function that return fisher statistic from dec_inc
@@ -1475,7 +1449,7 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
 
   #force V1 to positive
   V1inc <- abs(V1inc)
-  V1dec <- ifelse(V1inc<0,ifelse((V1dec+180)>360,V1dec-180,V1dec+180),V1dec)
+  V1dec <- ifelse(V1inc<0,(V1dec+180)%%360,V1dec)
 
   V2dec <- r2d(atan2(T_vec[2,2],T_vec[1,2]))
   V2dec <- ifelse(V2dec<0,V2dec+360,V2dec)
@@ -2142,7 +2116,7 @@ matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name
 }
 
 #function that plots KavrayskiyVII geographic projection
-Map_KVII <- function(grid=30, center=0, title="") {
+Map_KVII <- function(grid=30, center=0, title="",seaCol="light cyan",landCol="light green",gridCol="gray") {
   library(rlist)
   if(center>180 | center<(-180)) stop("Please set center between -180° and 180°",call. = F)
   if(grid>90) stop("Please set the grid between 1° and 90°. If grid=0, grid is not plotted",call. = F)
@@ -2218,14 +2192,14 @@ Map_KVII <- function(grid=30, center=0, title="") {
   bord$x <- c2x(bord[,1], bord[,2])
   bord$y <- c2y(bord[,2])
   if(center==0 | abs(center)==180){
-    polygon(bord$x,bord$y, col="light cyan",border = NA)
+    polygon(bord$x,bord$y, col=seaCol,border = NA)
   }
 
   #set coastline if longitude is greenwich
   if(center==0 | abs(center)==180){
     new_cl <- cl
     polygon(x = c2x(new_cl$lon,new_cl$lat),
-                        y = c2y(new_cl$lat), col="light green", border="light green")
+                        y = c2y(new_cl$lat), col=landCol, border=landCol)
     }else{
       lines(x = c2x(new_cl$lon,new_cl$lat),
         y = c2y(new_cl$lat), col="black")
@@ -2241,7 +2215,7 @@ Map_KVII <- function(grid=30, center=0, title="") {
       lon_lat_p$lat <- rep(i)
       lon_lat_p$x <- c2x(lon_lat_p[,1],lon_lat_p[,2])
       lon_lat_p$y <- c2y(lon_lat_p[,2])
-      lines(lon_lat_p$x,lon_lat_p$y,col="gray", pch=16, cex=0.3, lty=1)
+      lines(lon_lat_p$x,lon_lat_p$y,col=gridCol, pch=16, cex=0.3, lty=1)
     }
     #plot_main_meridians
     #fix meridians if center is not greenwich
@@ -2255,7 +2229,7 @@ Map_KVII <- function(grid=30, center=0, title="") {
       lat_lon_m$lon <- rep(i)
       lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
       lat_lon_m$y <- c2y(lat_lon_m[,1])
-      lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+      lines(lat_lon_m$x,lat_lon_m$y,col=gridCol, pch=16, cex=0.3, lty=1)
     }
     #plot meridians right of Greenwich
     for(i in LonRight){
@@ -2263,7 +2237,7 @@ Map_KVII <- function(grid=30, center=0, title="") {
       lat_lon_m$lon <- rep(i)
       lat_lon_m$x <- c2x(lat_lon_m[,2],lat_lon_m[,1])
       lat_lon_m$y <- c2y(lat_lon_m[,1])
-      lines(lat_lon_m$x,lat_lon_m$y,col="gray", pch=16, cex=0.3, lty=1)
+      lines(lat_lon_m$x,lat_lon_m$y,col=gridCol, pch=16, cex=0.3, lty=1)
     }
   }
   #plot contour
@@ -2491,7 +2465,7 @@ plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="
 }
 
 #plot only apparent polar wander path
-plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",size=0.6, coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE){
+plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",size=0.6, coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE,Shiny=FALSE,Y=0,O=320,frame=1,Age_size=1){
   if (on_plot==FALSE) {
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
@@ -2509,8 +2483,9 @@ plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",s
   #cut is cosin of c, when negative is behind projections, needs to be cut
   cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
   #questions on APW age and frame
-  if(APWP=="V23"){
-    cat("Frames:
+  if(Shiny==FALSE){
+    if(APWP=="V23"){
+      cat("Frames:
 (1) South Africa
 (2) North America
 (3) South America
@@ -2520,8 +2495,8 @@ plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",s
 (7) Antarctica
 (8) Pacific (0 to 80_Ma)
 (9) Iberia (0 to 80 Ma)")
-  } else if (APWP=="T12"){
-    cat("Frames:
+    } else if (APWP=="T12"){
+      cat("Frames:
 (1) South Africa
 (2) North America
 (3) Europe
@@ -2529,14 +2504,20 @@ plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",s
 (5) Amazonia
 (6) Australia
 (7) East Antarctica")
+    }
+    frame <- as.numeric(readline("insert frame (number): "))
+    cat("APWP range from 0 to 320 Ma every 10 Myr.
+")
+    Y <- round(as.numeric(readline("Insert younger age: ")),-1)
+    O <- round(as.numeric(readline("Older age: ")),-1)
   }
-  frame <- as.numeric(readline("insert frame (number): "))
+  if(Shiny==TRUE){
+    Y=Y
+    O=O
+    frame=frame
+  }
   col1 <- (frame*2)+1
   col2 <- (frame*2)+2
-  cat("APWP range from 0 to 320 Ma every 10 Myr.
-")
-  Y <- round(as.numeric(readline("Insert younger age: ")),-1)
-  O <- round(as.numeric(readline("Older age: ")),-1)
   if(is.na(O)==TRUE){O <- 320}
   if(O>320){O <- 320}
   if(is.na(Y)==TRUE){Y <- 0}
@@ -2565,8 +2546,8 @@ plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",s
   }
   text1 <- paste(G[Y,1],"Ma")
   text2 <- paste(G[O,1], "Ma")
-  text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= 1)
-  text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= 1)
+  text(x=lin[1,1], y=lin[1,2],pos=4,substitute(paste(bold(text1))), cex= Age_size)
+  text(x=lin[length(lin$lx),1], y=lin[length(lin$lx),2],pos=4,substitute(paste(bold(text2))), cex= Age_size)
 
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
@@ -2700,7 +2681,7 @@ plot_plane <- function(D,I, col_cD="black",col_cU="grey", pole=TRUE, col_d="red"
 }
 
 #plot virtual geomagnetic poles
-plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,exp=TRUE,coast=FALSE, title="",save=TRUE,A95=FALSE ,name="VGP"){
+plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_cent=TRUE,exp=TRUE,coast=FALSE, title="",save=TRUE,A95=FALSE,name="VGP"){
   #functions converting degree and radians
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -2923,8 +2904,7 @@ DISTRIBUTION NOT BIMODAL")
   cu1z <- cumulative_curve(B1z)
   cu2z <- cumulative_curve(B2z)
   text1 <- "Equal area projections"
-  text2 <- "Normalized
-  cumulative distributions"
+  text2 <- "Normalized cumulative distributions"
 
   #clean screen to avoid figure over figure
   par(fig=c(0,1,0,1))
@@ -4145,10 +4125,11 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
                                 data$PLong_d)
   data$Pole_latitude <- ifelse(data$p_colat_d<0,-data$Plat_d,data$Plat_d)
   #isolate VGPs with reversals
-  VGPs <- data[,c(16,17)]
+  VGPs <- data[,16:17]
 
   #isolate VGPs all normal
-  VGPsN <- data[,c(15,12)]
+  #VGPsN <- data[,c(15,12)]
+  VGPsN <- common_DI(VGPs)     #fixed 29.12.2023
   colnames(VGPsN) <- c("Plong_N","Plat_N")
 
   #calculate average VGP
@@ -4191,10 +4172,9 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   if(type=="VGPsR"){return(VGPsR)}
 }
 
-
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
 #still under development!!
-magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TRUE, E.A.=TRUE){
+magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarity_plot",POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1){
   library(plyr, warn.conflicts = F)
   library(PmagDiR)
   dat <- na.omit(DIP)
@@ -4230,7 +4210,7 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
 
   ############## PLOT ##############
   #screen splitter matrix
-  dev.new(width = 10,height = 7,noRStudioGD = T)
+  if(plot_ext==TRUE) {dev.new(width = 10,height = 7,noRStudioGD = T)}
   screen <- matrix(c(1,1,2,2,3,3,4),ncol=7,byrow = T)
   layout(screen)
   inclim <- round(max(abs(dat$inc)), digits = 0)
@@ -4240,6 +4220,9 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
        ylim=c(ymin,ymax),
        xlab=NA,
        main="Declination (°)",
+       cex.main=cex.main,
+       cex.lab=cex.lab,
+       cex.axis=cex.axis,
        panel.first= abline(v=c(seq(0,360,90)),
                            h=c(seq(round(min(dat$posit), digits = -1),
                                    round(max(dat$posit), digits=-1),10)),
@@ -4250,6 +4233,8 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
        ylim=c(ymin,ymax),
        xlab=NA,
        main="Inclination (°)",
+       cex.main=cex.main,
+       cex.axis=cex.axis,
        panel.first= abline(v=c(seq(-90,90,30)),
                            h=c(seq(round(min(dat$posit), digits = -1),
                                    round(max(dat$posit), digits=-1),10)),
@@ -4259,6 +4244,8 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
        ylim=c(ymin,ymax),
        xlab=NA,
        main="VGP Lat. (°)",
+       cex.main=cex.main,
+       cex.axis=cex.axis,
        panel.first= abline(v=c(seq(-90,90,45)),
                            h=c(seq(round(min(dat$posit), digits = -1),
                                    round(max(dat$posit), digits=-1),10)),
@@ -4269,7 +4256,9 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
        xlim=c(0,1), xaxt="n",
        type="n", ylab=NA,
        xlab="",ylim=c(ymin,ymax),
-       main="Polarity")
+       main="Polarity",
+       cex.main=cex.main,
+       cex.axis=cex.axis)
   rect(xleft=0,
        ybottom=normals$bottom,
        xright=1,
@@ -4285,7 +4274,7 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red", name="polarity_plot",POLE=TR
   if(E.A.==TRUE){
     dev.new(width = 7,height = 7,noRStudioGD = T)
     plot_DI(dat[,1:2])
-    fisher_plot(dat[,1:2],save = T, text=T, warn=F)
+    fisher_plot(dat[,1:2],save = T, text=T)
   }
 }
 
