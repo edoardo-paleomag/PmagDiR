@@ -191,45 +191,13 @@ bip_check <- function(DI){
 }
 
 #function that generates resampled Data dec_inc
-boots_DI <- function(DI,export=FALSE,name="bootstrapped_dirs") {
+boots_DI <- function(DI) {
   library("tidyverse", warn.conflicts = FALSE)
-  data <- DI[,1:2]
-  data <- na.omit(data)
-  colnames(data) <- c("dec", "inc")
-  #give names to rows
-  data$rowname <- 1:length(data$dec)
-  #bootstrap of rownames
-  n <- sample(data$rowname,size = length(data$rowname), replace=TRUE)
-  #empty resampled data table
-  newdata <- data.frame(matrix(ncol=3,nrow=0))
-  for(i in n) {
-    line <- data[data$rowname==i,1:3]
-    newdata <- rbind(newdata,line)
-  }
-  if(export==TRUE){write.csv(round(newdata[,1:2],digits = 2),paste(name,".csv"),row.names = FALSE)}
-  return(newdata[,1:2])
+  n <- nrow(DI)
+  newDI <- DI[sample(n,n,replace = T),]
+  return(newDI)
 }
 
-#function that generates resampled Data dec_inc
-boots_DI4 <- function(DI4,export=FALSE,name="bootstrapped_dirs") {
-  library("tidyverse", warn.conflicts = FALSE, quietly = TRUE)
-  data <- DI4
-  data <- na.omit(data)
-  colnames(data) <-  c("dec", "inc","baz","binc")
-  #give names to rows
-  data$rowname <- 1:length(data$dec)
-  #bootstrap of rownames
-  n <- sample(data$rowname,size = length(data$rowname), replace=TRUE)
-  #empty resampled data table
-  newdata <- data.frame(matrix(ncol=5,nrow=0))
-  #populate resampled data table
-  for(i in n) {
-    line <- data[data$rowname==i,1:5]
-    newdata <- rbind(newdata,line)
-  }
-  if(export==TRUE){write.csv(round(newdata[,1:4],digits = 2),paste(name,".csv"),row.names = FALSE)}
-  return(newdata[,1:4])
-}
 
 #flips all data toward common polarity
 common_DI <- function(DI,down=TRUE, export=FALSE,name="common_dirs") {
@@ -3191,7 +3159,7 @@ Edec:", Edec_nstr)
     n <- n+1
     Seq_I_E_b <- as.data.frame(matrix(ncol=3,nrow=0))
     E_declin <- as.data.frame(matrix(ncol=1,nrow=0))
-    data <- boots_DI4(dat)
+    data <- boots_DI(dat)
     dirs <- data[,1:2]
     bed <- data[,3:4]
 

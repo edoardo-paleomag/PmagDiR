@@ -8,13 +8,11 @@ Directions pseudosample
 Function that generates a pseudample of a declination-inclination file, allowing resampling with repetition.
 }
 \usage{
-boots_DI(DI,export=FALSE,name="bootstrapped_dirs")
+boots_DI(DI)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{DI}{declination and inclination, single file with two colums}
-  \item{export}{if TRUE data are exported as .csv file in the working directory. Default is FALSE}
-  \item{name}{name of the exported file. Default is "bootstrapped_dirs"}
 
 
 }
