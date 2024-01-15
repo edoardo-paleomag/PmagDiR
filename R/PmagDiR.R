@@ -1,5 +1,5 @@
 #return the eigenvectors of the AMS inverse matrix for later unstrain
-AMS_inv <- function(mat,type="v"){
+AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
   library(matlib)
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -37,6 +37,23 @@ AMS_inv <- function(mat,type="v"){
   AMS_inv <- inv_AMSe$vectors
   AMS_inv_val <- inv_AMSe$values
   AMS_Me <- eigen(AMS_M,symmetric = TRUE)
+  #calculate direction of axese if shiny==true
+  if(Shiny==TRUE){
+    AMS_Mvec <- AMS_Me$vectors
+    V1_inc <- r2d(asin(AMS_Mvec[3,1]/(sqrt((AMS_Mvec[1,1]^2)+(AMS_Mvec[2,1]^2)+(AMS_Mvec[3,1]^2)))))
+    V1_dec <- (r2d(atan2(AMS_Mvec[2,1],AMS_Mvec[1,1])))%%360
+
+    V2_inc <- r2d(asin(AMS_Mvec[3,2]/(sqrt((AMS_Mvec[1,2]^2)+(AMS_Mvec[2,2]^2)+(AMS_Mvec[3,2]^2)))))
+    V2_dec <- (r2d(atan2(AMS_Mvec[2,2],AMS_Mvec[1,2])))%%360
+
+    V3_inc <- r2d(asin(AMS_Mvec[3,3]/(sqrt((AMS_Mvec[1,3]^2)+(AMS_Mvec[2,3]^2)+(AMS_Mvec[3,3]^2)))))
+    V3_dec <- (r2d(atan2(AMS_Mvec[2,3],AMS_Mvec[1,3])))%%360
+    AMS_eigen_tab <- matrix(c(V1_dec,V1_inc,V2_dec,V2_inc,V3_dec,V3_inc),ncol = 3)
+    colnames(AMS_eigen_tab) <- c("V1","V2","V3")
+    rownames(AMS_eigen_tab) <- c("Dec", "Inc")
+
+  }
+
   AMS_Mval <- AMS_Me$values
   #original anisotropy parameter
   L <- AMS_Mval[1]/AMS_Mval[2]
@@ -47,12 +64,14 @@ AMS_inv <- function(mat,type="v"){
   Fi <- AMS_inv_val[2]/AMS_inv_val[3]
   Pi <- AMS_inv_val[1]/AMS_inv_val[3]
 
-  #print anisotropy parameters
-  cat(paste("Anisotropy parameter:
+  if(prnt==TRUE){
+    #print anisotropy parameters
+    cat(paste("Anisotropy parameter:
 L:",round(L,digits = 4),"
 F:", round(F,digits = 4),"
 P:", round(P,digits = 4),"
 "))
+  }
 
   #returns inverted anisotropy directions
   return(AMS_inv)
@@ -278,7 +297,7 @@ curve_cross <- function(a, b) {
 
 #Dynamic VANDAMME or VGP(45) cutoff (EI before the filter)
 #(Physics of the Earth and Planetary Interiors 85;1994)
-cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=FALSE, name="cut_dirs"){
+cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=FALSE, name="cut_dirs",Shiny=F){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
 
@@ -381,9 +400,11 @@ cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=F
   if(export==TRUE){
     if(geo==TRUE){write.csv(round(DIAP,digits = 2),paste(name,".csv"),row.names = FALSE)}else
     {write.csv(round(DI,digits = 2),paste(name,".csv"),row.names = FALSE)}
-    }
-  cat(paste("Number of reiteration: ", n,"
+  }
+  if(Shiny==F){
+    cat(paste("Number of reiteration: ", n,"
 "))
+  }
   #return file
   ifelse(geo==TRUE,
          return(DIAP),
@@ -1883,7 +1904,7 @@ Aritm. mean:",result[1,6],"
 }
 
 #plot equal area of Arason and Levi(2010) inclination only calculation
-inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", arith_stat=FALSE){
+inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="black", print=TRUE,export=TRUE, save=TRUE,name="Inc_only", arith_stat=FALSE,Shiny=FALSE){
   #import dplyr for filter_ALL
   library(dplyr)
   #functions converting degree and radians
@@ -1893,11 +1914,18 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
   a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
   a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
   DI <- na.omit(DI)
-  if(bip_check(DI)==TRUE && bimodal==FALSE){cat("\nDirections are likely bimodal\n\n")}
   #splits modes
+  if(Shiny==TRUE){
+    if(arith_stat==FALSE){
+      inconly_stat <- data.frame(matrix(nrow=0,ncol=6))
+      colnames(inconly_stat) <- c("N","Inc","x","St.D.","a95","Ar. Mean")
+    }else{
+      inconly_stat <- data.frame(matrix(nrow=0,ncol=5))
+      colnames(inconly_stat) <- c("N","Inc","x","St.D.","a95")
+    }
+  }
   if(bimodal==TRUE){
-    DI <- na.omit(DI)
-    if(dec==TRUE) {DI <- DI[,1:2]
+     if(dec==TRUE) {DI <- DI[,1:2]
     }else if(dec==F) {DI <- DI[,1]}
     dirs <- DI
     ifelse(dec==TRUE, colnames(dirs) <- c("dec","inc"), colnames(dirs) <- "inc")
@@ -1906,16 +1934,60 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
     #down_pointing
     if(print==TRUE){cat("Down-pointing\n")}
     inc_stat_D <- inc_only(DI = dirs_D,dec = dec, print = print,export=export, name=paste(name,"_down"), arith_stat=arith_stat)
+    if(Shiny==TRUE){
+      if(arith_stat==FALSE){
+        colnames(inc_stat_D) <- c("N","Inc","x","St.D.","a95","Ar. Mean")
+        rownames(inc_stat_D) <- "Mode 1"
+        inconly_stat <- rbind(inconly_stat,inc_stat_D)
+      }else{
+        colnames(inc_stat_D) <- c("N","Inc","x","St.D.","a95")
+        rownames(inc_stat_D) <- "Mode 1"
+        inconly_stat <- rbind(inconly_stat,inc_stat_D)
+      }
+    }
     #up_pointing
     if(print==TRUE){cat("Up-pointing\n")}
     inc_stat_U <- inc_only(DI = dirs_U,dec = dec, print = print,export=export, name=paste(name,"_up"), arith_stat=arith_stat)
+    if(Shiny==TRUE){
+      if(arith_stat==FALSE){
+        colnames(inc_stat_U) <- c("N","Inc","x","St.D.","a95","Ar. Mean")
+        rownames(inc_stat_U) <- "Mode 2"
+        inconly_stat <- rbind(inconly_stat,inc_stat_U)
+      }else{
+        colnames(inc_stat_U) <- c("N","Inc","x","St.D.","a95")
+        rownames(inc_stat_U) <- "Mode 2"
+        inconly_stat <- rbind(inconly_stat,inc_stat_U)
+      }
+    }
     #all_down_pointing
     if(print==TRUE){cat("All data\n")}
     dirs$inc <- abs(dirs$inc)
     inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), arith_stat=arith_stat)
+    if(Shiny==TRUE){
+      if(arith_stat==FALSE){
+        colnames(inc_stat_ALL) <- c("N","Inc","x","St.D.","a95","Ar. Mean")
+        rownames(inc_stat_ALL) <- "All"
+        inconly_stat <- rbind(inconly_stat,inc_stat_ALL)
+      }else{
+        colnames(inc_stat_ALL) <- c("N","Inc","x","St.D.","a95")
+        rownames(inc_stat_ALL) <- "All"
+        inconly_stat <- rbind(inconly_stat,inc_stat_ALL)
+      }
+    }
   }else{
     dirs <- DI
     inc_stat_ALL <- inc_only(DI = dirs,dec = dec, print = print,export=export, name=paste(name,"_all"), arith_stat=arith_stat)
+    if(Shiny==TRUE){
+      if(arith_stat==FALSE){
+        colnames(inc_stat_ALL) <- c("N","Inc","x","St.D.","a95","Ar. Mean")
+        rownames(inc_stat_ALL) <- "All"
+        inconly_stat <- rbind(inconly_stat,inc_stat_ALL)
+      }else{
+        colnames(inc_stat_ALL) <- c("N","Inc","x","St.D.","a95")
+        rownames(inc_stat_ALL) <- "All"
+        inconly_stat <- rbind(inconly_stat,inc_stat_ALL)
+      }
+    }
   }
   #plot if requested
   if(plot==TRUE){
@@ -2050,6 +2122,7 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
     lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
     if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
   }
+  if(Shiny==TRUE){return(inconly_stat[,1:5])} #cut last column with Arithmetic mean
 }
 
 #create matrix from fol,lin, and dec inc of vectors
@@ -3043,13 +3116,13 @@ strain_DI <- function(DIAP,M,export=FALSE,name="strained_dirs"){
   new_DI <- data.frame(matrix(ncol=2,nrow=0))
   new_bed <- data.frame(matrix(ncol=2,nrow=0))
 
-  for (i in 1:length(data[,1])){
+  for (i in 1:nrow(data)){
     #strain dirs
     dircart <- t(as.matrix(dirs[i,3:5]))
     strain <- M%*%dircart
     NewInc <- r2d(asin(strain[3,1]/(sqrt((strain[1,1]^2)+(strain[2,1]^2)+(strain[3,1]^2)))))
     NewDec <- r2d(atan2(strain[2,1],strain[1,1]))
-    NewDec <- ifelse(NewDec<0,NewDec+360,NewDec)
+    NewDec <- NewDec%%360
 
     new_DI_p <- cbind(as.data.frame(NewDec),as.data.frame(NewInc))
     new_DI <- rbind(new_DI,new_DI_p)
@@ -3059,7 +3132,7 @@ strain_DI <- function(DIAP,M,export=FALSE,name="strained_dirs"){
     b_strain <- M%*%bedcart
     New_pl <- r2d(asin(b_strain[3,1]/(sqrt((b_strain[1,1]^2)+(b_strain[2,1]^2)+(b_strain[3,1]^2)))))
     New_az <- r2d(atan2(b_strain[2,1],b_strain[1,1]))
-    New_az <- ifelse(New_az<0,New_az+360,New_az)
+    New_az <- New_az%%360
 
     new_bed_p <- cbind(as.data.frame(New_az),as.data.frame(New_pl))
     new_bed <- rbind(new_bed,new_bed_p)
@@ -3422,7 +3495,7 @@ unstr_DI <- function(DIAP,S_vec,Lin,Fol,n=1,cross=FALSE,EdMAX=FALSE,EdMIN=FALSE,
   inc_e_dec <- as.data.frame(matrix(ncol=3,nrow = 1))
   BdecInc <- bed_DI(data[,1:4])
   inc_e_dec[1,1:3] <- as.data.frame(inc_E_finder(BdecInc))
-  inc_e_dec[1,3] <- abs(inc_e_dec[1,3])              ###corr here
+  inc_e_dec[1,3] <- abs(inc_e_dec[1,3])
   colnames(inc_e_dec) <- c("V1inc","E","DV1V2")
 
   #set parameters of deforming matrix
@@ -3452,19 +3525,19 @@ unstr_DI <- function(DIAP,S_vec,Lin,Fol,n=1,cross=FALSE,EdMAX=FALSE,EdMIN=FALSE,
     S_vec <- S_e$vectors
     S_val <- S_e$values
     new_DI <- data.frame(matrix(ncol=4,nrow=0))
-    for (i in 1:length(data[,1])){
+    for (i in 1:nrow(data)){
       #unstrain dirs
       dircart <- t(as.matrix(dirs[i,3:5]))
       unstr <- S%*%dircart
       NewInc <- r2d(asin(unstr[3,1]/(sqrt((unstr[1,1]^2)+(unstr[2,1]^2)+(unstr[3,1]^2)))))
       NewDec <- r2d(atan2(unstr[2,1],unstr[1,1]))
-      NewDec <- ifelse(NewDec<0,NewDec+360,NewDec)
+      NewDec <- NewDec%%360
       #unstrain bedding
       bedcart <- t(as.matrix(bed[1,3:5]))
       bunstr <- S%*%bedcart
       Newbinc <- r2d(asin(bunstr[3,1]/(sqrt((bunstr[1,1]^2)+(bunstr[2,1]^2)+(bunstr[3,1]^2)))))
       Newbaz <- r2d(atan2(bunstr[2,1],bunstr[1,1]))
-      Newbaz <- ifelse(Newbaz<0,Newbaz+360,Newbaz)
+      Newbaz <- Newbaz%%360
 
       new_DI_p <- cbind(as.data.frame(NewDec),as.data.frame(NewInc),
                         as.data.frame(Newbaz),as.data.frame(Newbinc))
@@ -4142,7 +4215,7 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
 #still under development!!
-magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarity_plot",POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1){
+magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarity_plot",POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10, Shiny=FALSE){
   library(plyr, warn.conflicts = F)
   library(PmagDiR)
   dat <- na.omit(DIP)
@@ -4168,13 +4241,15 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
   if(is.na(normals[1,1])==TRUE) normals[1,1] <- min(dat$posit)
   if(is.na(normals[nrow(normals),2])==TRUE) normals[nrow(normals),2] <- max(dat$posit)
   #reduce table to lines with top and bottom
-  for(l in 2:nrow(normals)){
-    if(is.na(normals[l-1,2])==TRUE) {normals[l-1,2] <- normals[l,2]}
+  if(nrow(normals)>1){
+    for(l in 2:nrow(normals)){
+      if(is.na(normals[l-1,2])==TRUE) {normals[l-1,2] <- normals[l,2]}
+    }
   }
   #eliminate duplicates
   normals <- na.omit(normals)
-  ymin <- plyr::round_any(min(dat$posit), 1, f= floor)           #min depth of columns, approximated by 10 meters
-  ymax <- plyr::round_any(max(dat$posit), 1, f=ceiling)          #max depth of columns, approximated by 10 meters
+  ymin <- plyr::round_any(min(dat$posit), 0.5, f= floor)
+  ymax <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
 
   ############## PLOT ##############
   #screen splitter matrix
@@ -4184,6 +4259,7 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
   inclim <- round(max(abs(dat$inc)), digits = 0)
   plot(dat$dec,dat$posit, type="o",
        pch=21,bg=col,ylab="Position (m)",
+       xlim=c(0,360),
        xaxp= c(0,360,4),
        ylim=c(ymin,ymax),
        xlab=NA,
@@ -4193,8 +4269,8 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
        cex.axis=cex.axis,
        panel.first= abline(v=c(seq(0,360,90)),
                            h=c(seq(round(min(dat$posit), digits = -1),
-                                   round(max(dat$posit), digits=-1),10)),
-                           col="gray", lty="dotted"))
+                                   round(max(dat$posit), digits = 0),h_grid)),
+                           col="gray", lty="dotted",lwd=lwd.grid))
   plot(dat$inc,dat$posit,type="o",
        pch=21,bg=col,ylab=NA,xaxp= c(-90,90,6),
        xlim=c(-90,90),
@@ -4205,10 +4281,11 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
        cex.axis=cex.axis,
        panel.first= abline(v=c(seq(-90,90,30)),
                            h=c(seq(round(min(dat$posit), digits = -1),
-                                   round(max(dat$posit), digits=-1),10)),
-                           col="gray", lty="dotted"))
+                                   round(max(dat$posit), digits = 0),h_grid)),
+                           col="gray", lty="dotted",lwd=lwd.grid))
   plot(dat$Plat_R,dat$posit,type="o",
        pch=21,bg=col,ylab=NA,xaxp= c(-90,90,4),
+       xlim=c(-90,90),
        ylim=c(ymin,ymax),
        xlab=NA,
        main="VGP Lat. (°)",
@@ -4216,8 +4293,8 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
        cex.axis=cex.axis,
        panel.first= abline(v=c(seq(-90,90,45)),
                            h=c(seq(round(min(dat$posit), digits = -1),
-                                   round(max(dat$posit), digits=-1),10)),
-                           col="gray", lty="dotted"))
+                                   round(max(dat$posit), digits= 0),h_grid)),
+                           col="gray", lty="dotted",lwd=lwd.grid))
 
   #create frame for polarity
   plot(NA,
@@ -4231,7 +4308,7 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
        ybottom=normals$bottom,
        xright=1,
        ytop=normals$top,
-       col="black",
+       col=ifelse(nrow(normals==1) && any(dat[,6]==1), "black","white"),
        border=NA)
   save_pdf(name =paste(name,".pdf"),width = 10,height = 8)
   if(POLE==TRUE){
@@ -4243,6 +4320,10 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
     dev.new(width = 7,height = 7,noRStudioGD = T)
     plot_DI(dat[,1:2])
     fisher_plot(dat[,1:2],save = T, text=T)
+  }
+  if(Shiny==TRUE){
+    Table_of_normal_polarity_zones <- round(normals,digits=2)
+    return(Table_of_normal_polarity_zones)
   }
 }
 
