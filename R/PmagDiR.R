@@ -73,8 +73,15 @@ P:", round(P,digits = 4),"
 "))
   }
 
-  #returns inverted anisotropy directions
-  return(AMS_inv)
+  #returns inverted anisotropy directions if Shiny is FALSE
+  if(Shiny==FALSE){return(AMS_inv)}
+  #return result list if Shiny is TRUE
+  if(Shiny==TRUE){
+    result <- list()
+    result[[1]] <- AMS_inv
+    result[[2]] <- AMS_eigen_tab
+    return(result)
+  }
 }
 
 #Function that rotate geographic dec_inc pair(DI) into bedding coordinates
@@ -297,7 +304,7 @@ curve_cross <- function(a, b) {
 
 #Dynamic VANDAMME or VGP(45) cutoff (EI before the filter)
 #(Physics of the Earth and Planetary Interiors 85;1994)
-cut_DI <- function(DI,VD=TRUE,lat,long,cutoff=40, geo=FALSE,inc_f=TRUE, export=FALSE, name="cut_dirs",Shiny=F){
+cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, export=FALSE, name="cut_dirs",Shiny=F){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
 
