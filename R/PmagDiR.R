@@ -37,23 +37,6 @@ AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
   AMS_inv <- inv_AMSe$vectors
   AMS_inv_val <- inv_AMSe$values
   AMS_Me <- eigen(AMS_M,symmetric = TRUE)
-  #calculate direction of axese if shiny==true
-  if(Shiny==TRUE){
-    AMS_Mvec <- AMS_Me$vectors
-    V1_inc <- r2d(asin(AMS_Mvec[3,1]/(sqrt((AMS_Mvec[1,1]^2)+(AMS_Mvec[2,1]^2)+(AMS_Mvec[3,1]^2)))))
-    V1_dec <- (r2d(atan2(AMS_Mvec[2,1],AMS_Mvec[1,1])))%%360
-
-    V2_inc <- r2d(asin(AMS_Mvec[3,2]/(sqrt((AMS_Mvec[1,2]^2)+(AMS_Mvec[2,2]^2)+(AMS_Mvec[3,2]^2)))))
-    V2_dec <- (r2d(atan2(AMS_Mvec[2,2],AMS_Mvec[1,2])))%%360
-
-    V3_inc <- r2d(asin(AMS_Mvec[3,3]/(sqrt((AMS_Mvec[1,3]^2)+(AMS_Mvec[2,3]^2)+(AMS_Mvec[3,3]^2)))))
-    V3_dec <- (r2d(atan2(AMS_Mvec[2,3],AMS_Mvec[1,3])))%%360
-    AMS_eigen_tab <- matrix(c(V1_dec,V1_inc,V2_dec,V2_inc,V3_dec,V3_inc),ncol = 3)
-    colnames(AMS_eigen_tab) <- c("V1","V2","V3")
-    rownames(AMS_eigen_tab) <- c("Dec", "Inc")
-
-  }
-
   AMS_Mval <- AMS_Me$values
   #original anisotropy parameter
   L <- AMS_Mval[1]/AMS_Mval[2]
@@ -63,6 +46,21 @@ AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
   Li <- AMS_inv_val[1]/AMS_inv_val[2]
   Fi <- AMS_inv_val[2]/AMS_inv_val[3]
   Pi <- AMS_inv_val[1]/AMS_inv_val[3]
+  #calculate inverted direction of axese if shiny==true
+  if(Shiny==TRUE){
+    V1_inc <- r2d(asin(AMS_inv[3,1]/(sqrt((AMS_inv[1,1]^2)+(AMS_inv[2,1]^2)+(AMS_inv[3,1]^2)))))
+    V1_dec <- (r2d(atan2(AMS_inv[2,1],AMS_inv[1,1])))%%360
+
+    V2_inc <- r2d(asin(AMS_inv[3,2]/(sqrt((AMS_inv[1,2]^2)+(AMS_inv[2,2]^2)+(AMS_inv[3,2]^2)))))
+    V2_dec <- (r2d(atan2(AMS_inv[2,2],AMS_inv[1,2])))%%360
+
+    V3_inc <- r2d(asin(AMS_inv[3,3]/(sqrt((AMS_inv[1,3]^2)+(AMS_inv[2,3]^2)+(AMS_inv[3,3]^2)))))
+    V3_dec <- (r2d(atan2(AMS_inv[2,3],AMS_inv[1,3])))%%360
+    AMS_inv_eigen_tab <- round(matrix(c(V1_dec,V2_dec,V3_dec,Li,Fi,V1_inc,V2_inc,V3_inc),ncol = 5,byrow = T),digits=2)
+    colnames(AMS_inv_eigen_tab) <- c("V1","V2","V3","L_inv","F_inv")
+    rownames(AMS_inv_eigen_tab) <- c("Dec", "Inc")
+    AMS_inv_eigen_tab[2,4:5] <- c("","")
+  }
 
   if(prnt==TRUE){
     #print anisotropy parameters
@@ -79,7 +77,7 @@ P:", round(P,digits = 4),"
   if(Shiny==TRUE){
     result <- list()
     result[[1]] <- AMS_inv
-    result[[2]] <- AMS_eigen_tab
+    result[[2]] <- AMS_inv_eigen_tab
     return(result)
   }
 }
@@ -175,11 +173,6 @@ bip_check <- function(DI){
   data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
   data$z <- sin(d2r(data$inc))
 
-  #averaged Cartesian coordinates
-  x_av <- mean(data$x)
-  y_av <- mean(data$y)
-  z_av <- mean(data$z)
-
   #elements of the distribution matrix
   T_elements <- c(sum((data$x)*(data$x)),sum(data$x*data$y),sum(data$x*data$z),
                   sum(data$y*data$x),sum(data$y*data$y),sum(data$y*data$z),
@@ -196,12 +189,7 @@ bip_check <- function(DI){
   #calculate dec inc of max variance
   V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
   V1dec <- r2d(atan2(T_vec[2,1],T_vec[1,1]))
-  V1dec <- ifelse(V1dec<0,V1dec+360,V1dec)
-
-  # #flip V1 if negative
-  # V1dec <- ifelse(V1inc<0,ifelse((V1dec+180)>360,V1dec-180,V1dec+180),V1dec)
-  # V1inc <- ifelse(V1inc<0,-V1inc,V1inc)
-
+  V1dec <- V1dec%%360
 
   #next  calculates difference between dec_inc and average
   data$Dec_aver <- rep(V1dec)
@@ -4222,7 +4210,7 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
 #still under development!!
-magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarity_plot",POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10, Shiny=FALSE){
+magstrat_DI <- function(DIP,lat=0,long=0,col="red",name="polarity_plot",save=FALSE,plot_ext=TRUE,POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10, Shiny=FALSE){
   library(plyr, warn.conflicts = F)
   library(PmagDiR)
   dat <- na.omit(DIP)
@@ -4317,16 +4305,18 @@ magstrat_DI <- function(DIP,lat=0,long=0,col="red",plot_ext=FALSE, name="polarit
        ytop=normals$top,
        col=ifelse(nrow(normals==1) && any(dat[,6]==1), "black","white"),
        border=NA)
-  save_pdf(name =paste(name,".pdf"),width = 10,height = 8)
+  if(save==TRUE){
+    save_pdf(name =paste(name,".pdf"),width = 10,height = 8)
+  }
   if(POLE==TRUE){
     dev.new(width = 7,height = 7,noRStudioGD = T)
     VGPsN <- VGP_DI(dat[,1:2],in_file = F,lat = lat,long = long,export = T,Prnt = T)
-    plot_VGP(VGPsN, coast = T, A95 = T,save = T)
+    plot_VGP(VGPsN, coast = T, A95 = T,save = save)
   }
   if(E.A.==TRUE){
     dev.new(width = 7,height = 7,noRStudioGD = T)
     plot_DI(dat[,1:2])
-    fisher_plot(dat[,1:2],save = T, text=T)
+    fisher_plot(dat[,1:2],save = save, text=T)
   }
   if(Shiny==TRUE){
     Table_of_normal_polarity_zones <- round(normals,digits=2)
