@@ -1495,11 +1495,9 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
 
     x <- dn * (1 / tanh(ak)) - cos(the * dr) * c - sin(the * dr) * s
     AL2 <- 1e10
-
     if (x / dn > 1e-10) {
       AL2 <- dn / x
     }
-
     if (AL2 < 1e-06) {
       AL2 <- 1e-06
     }
@@ -1651,7 +1649,6 @@ inc_only <- function(DI,dec=TRUE, print=TRUE,export=TRUE, name="Inclination_only
     result[5] <- round(a95, digits = 2)
     colnames(result) <- c("N","Inc","Precision","Angular st.dev(63%)","a95")
 
-
     return(result)
   }
 
@@ -1702,12 +1699,15 @@ alpha_95:", result[1,5],"
       stop("Only one observed inclination\n", call.=F)
     }
     if (n > 10000) {
+      assign("inc_warn","Too many directions", envir = .GlobalEnv)
       stop("Too many directions, max=10000\n", call.=F)
     }
     if(length(unique(xinc))==1){
+      assign("inc_warn","Directions are all identical", envir = .GlobalEnv)
       stop("Directions are all identical\n", call.=F)
     }
     if (any(xinc>90) | any(xinc<(-90))) {
+      assign("inc_warn","Inclination must be between -90 and 90", envir = .GlobalEnv)
       stop("Inclination must be between -90 and 90\n", call.=F)
     }
     #file with co-incl
@@ -1824,10 +1824,11 @@ alpha_95:", result[1,5],"
     ainc <- 90 - the1
     ak <- akap1
     if (ierr != 0) {
+      assign("inc_warn","Convergence problems", envir = .GlobalEnv)
       cat("Convergence problems\n")
     }
 
-    #Test of robsutness with 16 surrounding points
+    #Test of robustness with 16 surrounding points
     for (i in 1:16) {
       x <- i
       rt <- the1 + 0.01 * cos(22.5 * x * dr)
@@ -1836,6 +1837,7 @@ alpha_95:", result[1,5],"
       xl <- xlik(th, n, rt, rk)
       if (xl > xl1) {
         ierr <- ierr + 2
+        assign("inc_warn","Robustness failure", envir = .GlobalEnv)
         cat("Robustness failure\n")
       }
     }
@@ -1997,7 +1999,7 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
         circle_D$y_hrz <- a2cy(0,circle_D$dec)
       }
       circle_D$inc_l <- rep(abs(inc_stat_D$Inc-inc_stat_D$a95))
-      circle_D$inc_h <- rep(inc_stat_D$Inc+inc_stat_D$a95)
+      circle_D$inc_h <- ifelse((inc_stat_D$Inc+inc_stat_D$a95)<90, rep(inc_stat_D$Inc+inc_stat_D$a95),rep(90))
       circle_D$x <- a2cx(circle_D$inc,circle_D$dec)
       circle_D$y <- a2cy(circle_D$inc,circle_D$dec)
       circle_D$x_l <- a2cx(circle_D$inc_l,circle_D$dec)
@@ -2014,7 +2016,7 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
         circle_U$y_hrz <- a2cy(0,circle_U$dec)
       }
       circle_U$inc_l <- rep(abs(abs(inc_stat_U$Inc)-inc_stat_U$a95))
-      circle_U$inc_h <- rep(abs(inc_stat_U$Inc)+inc_stat_U$a95)
+      circle_U$inc_h <- ifelse((abs(inc_stat_U$Inc)+inc_stat_U$a95)<90, rep(abs(inc_stat_U$Inc)+inc_stat_U$a95), rep(90))
       circle_U$x <- a2cx(circle_U$inc,circle_U$dec)
       circle_U$y <- a2cy(circle_U$inc,circle_U$dec)
       circle_U$x_l <- a2cx(circle_U$inc_l,circle_U$dec)
@@ -2036,7 +2038,7 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
       circle_ALL$y_hrz <- a2cy(0,circle_ALL$dec)
     }
     circle_ALL$inc_l <- rep(abs(abs(inc_stat_ALL$Inc)-inc_stat_ALL$a95))
-    circle_ALL$inc_h <- rep(abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95)
+    circle_ALL$inc_h <- ifelse((abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95)<90,rep(abs(inc_stat_ALL$Inc)+inc_stat_ALL$a95),rep(90))
     circle_ALL$x <- a2cx(circle_ALL$inc,circle_ALL$dec)
     circle_ALL$y <- a2cy(circle_ALL$inc,circle_ALL$dec)
     circle_ALL$x_l <- a2cx(circle_ALL$inc_l,circle_ALL$dec)
