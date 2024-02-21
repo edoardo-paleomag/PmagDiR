@@ -4096,7 +4096,7 @@ Simulation ends when", nb, " pseudosamples are saved.
     text <- paste("N: ",results$N,"
 Long: ", results$Plon,"
 Lat: ", results$Plat,"
-95%: ", results$ang_conf)
+B95: ", results$ang_conf)
     plot(NA, xlim=c(0,1), ylim=c(0,1),
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
 

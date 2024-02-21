@@ -37,5 +37,5 @@ plot_DI(Ardo_Geo_PmagDiR)
 ##make new file with corrected directions and plot them in blue; nesting of functions is also allowed (tilt corrected directions file is not created)
 
 ArdoTC = bed_DI(Ardo_Geo_PmagDiR, export=FALSE)
-plot_DI(ArdoTC,color="blue")
+plot_DI(ArdoTC)
 }
