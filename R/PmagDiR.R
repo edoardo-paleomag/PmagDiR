@@ -3014,6 +3014,52 @@ DISTRIBUTION NOT BIMODAL")
   }
 }
 
+#function that rotate Longitude and Latitude around a Euler pole
+rot_DI <- function(Lonlat,P_long=0,P_lat=90,rot=0){
+  #degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #functions spherical (long=x, lat=y) to Cartesian
+  s2c1 <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
+  s2c2 <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
+  s2c3 <- function(y) {sin(d2r(y))}
+
+  #functions converting cartesian to spherical
+  c2sLon <- function(C1,C2) {r2d(atan2(C2,C1))}
+  c2sLat <- function(C1,C2,C3) {r2d(asin(C3/(sqrt((C1^2)+(C2^2)+(C3^2)))))}
+
+  #define cos and sin of rotation for simplicity
+  cosrot <- cos(d2r(rot))
+  sinrot <- sin(d2r(rot))
+  #build rotation matrix
+  R <- matrix(c((s2c1(P_long,P_lat)^2)*(1-cosrot)+cosrot,
+                s2c1(P_long,P_lat)*s2c2(P_long,P_lat)*(1-cosrot)-s2c3(P_lat)*sinrot,
+                s2c1(P_long,P_lat)*s2c3(P_lat)*(1-cosrot)+s2c2(P_long,P_lat)*sinrot,
+                s2c2(P_long,P_lat)*s2c1(P_long,P_lat)*(1-cosrot)+s2c3(P_lat)*sinrot,
+                (s2c2(P_long,P_lat)^2)*(1-cosrot)+cosrot,
+                s2c2(P_long,P_lat)*s2c3(P_lat)*(1-cosrot)-s2c1(P_long,P_lat)*sinrot,
+                s2c3(P_lat)*s2c1(P_long,P_lat)*(1-cosrot)-s2c2(P_long,P_lat)*sinrot,
+                s2c3(P_lat)*s2c2(P_long,P_lat)*(1-cosrot)+s2c1(P_long,P_lat)*sinrot,
+                (s2c3(P_lat)^2)*(1-cosrot)+cosrot),
+              nrow = 3,ncol = 3,byrow = F)
+  #creates result file
+  Lonlat_R <- data.frame(matrix(ncol = 2,nrow = 0))
+  #apply rotation to all data
+  for(i in 1:nrow(Lonlat)){
+    C <- matrix(c(s2c1(Lonlat[i,1],Lonlat[i,2]),
+                  s2c2(Lonlat[i,1],Lonlat[i,2]),
+                  s2c3(Lonlat[i,2])),
+                nrow = 3,ncol = 1)
+    C_rot <- R%*%C
+    Lonlat_R_temp <- data.frame(t(c(c2sLon(C_rot[1,1],C_rot[2,1])%%360,
+                                    c2sLat(C_rot[1,1],C_rot[2,1],C_rot[3,1]))))
+    Lonlat_R <- rbind(Lonlat_R,Lonlat_R_temp)
+  }
+  colnames(Lonlat_R) <- c("Long_R","Lat_R")
+  return(Lonlat_R)
+}
+
 #pdf printing standard size
 save_pdf <- function(name="Figure.pdf",width=11,height=8){
   dev.print(pdf,name,width = width, height = height)
