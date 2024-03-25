@@ -2764,7 +2764,7 @@ plot_VGP <- function(VGP,lat=90,long=0,grid=30, col="black", on_plot=FALSE,auto_
   VGP$y <- c2y(VGP$lon,VGP$lat)
   VGP$cut <- cut(VGP$lon,VGP$lat)
 
-  points(VGP$x,VGP$y,pch=ifelse(VGP$cut>0,16,1),col=col)
+  points(VGP$x,VGP$y,pch=ifelse(VGP$cut>0,21,1),col="black",bg=col)
   if(A95==TRUE){
     plot_PA95(lon = PPole[1,1],lat = PPole[1,2],A = PPole[1,3],lon0 = lon0,lat0 = lat0,on_plot = TRUE,symbol = "d",col_l = "red")
     text <- paste("N: ",PPole[1,4],"
