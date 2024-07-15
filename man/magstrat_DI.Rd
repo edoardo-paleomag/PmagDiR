@@ -14,6 +14,7 @@ magstrat_DI(DIP,lat=0,long=0,col="red",name="polarity_plot",save=TRUE, plot_ext=
   \item{DIP}{declination, inclination, and position in meters, single file with three colums}
   \item{lat}{site latitude}
   \item{long}{site longitude}
+  \item{offset}{set on (e.g.) 90 if declination values flips between 0 and 360}
   \item{col}{color of the data points, default is red}
   \item{name}{name of the saved pdf file}
   \item{save}{if TRUE (default) svae automatically figures in the working directory}
