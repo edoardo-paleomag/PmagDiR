@@ -4296,7 +4296,8 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
 
   #fix declination if offset is not zero
   if(offset!=0){
-    dat$dec <- (dat$dec+(abs(offset)))%%360
+    offset <- abs(offset)
+    dat$dec <- (dat$dec+offset)%%360
     dat$dec <- dat$dec-offset
   }
 
