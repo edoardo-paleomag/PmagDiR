@@ -780,7 +780,8 @@ WebDiR <- function(){
                                            column(4,textInput("extrapolename",label = " Manual pole name",value = "E_pole"))
                                          ),
                                          fluidRow(
-                                           column(12, actionButton("addextrapole",label = "ADD TO EXTERNAL POLES LIST",width = "100%"))
+                                           column(6, actionButton("addextrapole",label = "ADD TO EXTERNAL POLES LIST",width = "100%")),
+                                           column(6, actionButton("delextrapolelist",label = "IGNORE LOADED FILE",width = "100%"))
                                          ),
                                          br(),
                                          fluidRow(
@@ -3460,7 +3461,7 @@ DISTRIBUTION NOT FLATTENED.")
       return(Plot_VGP_result)
     }
 
-    #create reactive value for delete at the end of the session
+    #create reactive value
     Pole <- reactiveValues(FishPole = NULL)
     VGP <- reactiveValues(VGP_list=NULL)
 
@@ -3469,7 +3470,7 @@ DISTRIBUTION NOT FLATTENED.")
       #VGP_plot()
       DI<- fix_DI(input_file())
       if(input$dirs_vgp==1){DIrs <- DI}
-      else if(input$dirs_vgp==2){
+      else if(input$dirs_vgp==2){               #save EI directions as reactive file and use it here!!!
         DIrs <- ffind_boot_S(DI,bootstrap = 1)
         DIrs <- DIrs[[1]]
       }
@@ -3702,7 +3703,7 @@ DISTRIBUTION NOT FLATTENED.")
 
 
       #send color to temporary environment
-      assign("MVGPcolor", MVGPcolor, envir = MVGP_temp)
+      assign("MVGPcolor", MVGPcolor, envir = MVGP_temp)      #eliminate environment and use only reactive values
 
       #choose symbol
       if(input$MVGPsymbol==1) MVGPsymbol <- "c"
@@ -4183,7 +4184,7 @@ DISTRIBUTION NOT FLATTENED.")
       customAPWP <- reactive({
         #avoid warning if file is not loaded
         if (is.null(input$customAPWP)) {
-          return("")
+          return(NULL)
         }
         # actually read the file
         read.csv(file = input$customAPWP$datapath)
@@ -4405,11 +4406,6 @@ DISTRIBUTION NOT FLATTENED.")
 
       #Add external Poles from list
       if(length(ext)){
-        if(length(s)==0){
-          #plot ortho if no internal poles are selected
-          PmagDiR::sph_ortho(lat = centerLat,long = centerLong,
-                             coast = ifelse(input$MVGP_coast==1,TRUE,FALSE))
-        }
         for(i in ext){
           PmagDiR::plot_PA95(lon = Added_poles$list[i,4],
                              lat = Added_poles$list[i,5],
@@ -4419,7 +4415,7 @@ DISTRIBUTION NOT FLATTENED.")
                              lat0 = centerLat,
                              col_f = Added_poles$list[i,2],
                              symbol = Added_poles$list[i,3],
-                             on_plot = T
+                             on_plot = TRUE
           )
           if(input$addextreanames==2){
             polename <- Added_poles$list[i,1]
@@ -4539,16 +4535,6 @@ DISTRIBUTION NOT FLATTENED.")
         }
       )
     }
-
-    #send figure to ui of Multi VGP
-    output$MVGP_plot <- renderPlot({all_poles_plotter()},width = 700, height = 700)
-
-    #send figure to ui of Multi VGP2 equal as above
-    output$MVGP_plot2 <- renderPlot({all_poles_plotter()},width = 700, height = 700)
-
-    #send figure to ui of Multi VGP3 equal as above
-    output$MVGP_plot3 <- renderPlot({all_poles_plotter()},width = 700, height = 700)
-
 
 
     ############################################################
@@ -4725,12 +4711,8 @@ DISTRIBUTION NOT FLATTENED.")
 
 
     ####ADD EXTERNAL POLES PART
-    #initialize extra poles list
-    empty_list <- data.frame(matrix(ncol=6,nrow = 0))
-    colnames(empty_list) <- c("Loc.","Col","Sym","Lon","Lat","A95")
-
     #create reactive tab file
-    Added_poles <- reactiveValues(list=empty_list)
+    Added_poles <- reactiveValues(list=NULL)
 
     #creates reactive value for checking if file is uploaded
     values <- reactiveValues(mvgp = NULL)
@@ -4752,17 +4734,27 @@ DISTRIBUTION NOT FLATTENED.")
     #creates reactive value for checking if file is uploaded
     value <- reactiveValues(extpole = NULL)
     #check for uploaded file
-    #observeEvent(input$extrapolelist,{value$extpole <- "uploaded"})
+    observeEvent(input$extrapolelist,{value$extpole <- "uploaded"})
     #reset upload if requested
-    #observeEvent(input$delextrapolelist,{value$extpole <- "reset"})
+    observeEvent(input$delextrapolelist,{value$extpole <- "reset"})
     #read file if present, reset if requested
     Extra_poles_list <- reactive({
-      temp <- read.csv(file = input$extrapolelist$datapath)
-      return(temp)
+      if(is.null(value$extpole)){
+        return(NULL)
+      }else if(value$extpole == "uploaded"){
+        temp <- read.csv(file = input$extrapolelist$datapath)
+        colnames(temp) <- c("Loc.","Col","Sym","Lon","Lat","A95")
+        return(temp)
+      }else if(value$extpole == "reset"){
+        return(NULL)
+      }
     })
 
     #add manual pole to list if exists
     observeEvent(input$addextrapole,{
+      empty_list <- data.frame(matrix(ncol=6,nrow = 0))
+      colnames(empty_list) <- c("Loc.","Col","Sym","Lon","Lat","A95")
+      Added_poles$list <- empty_list
       #choose color of average
       if(input$extrapolecolor==1) EPcol <- "black"
       if(input$extrapolecolor==2) EPcol <- "blue"
@@ -4794,23 +4786,24 @@ DISTRIBUTION NOT FLATTENED.")
       if(is.na(input$extrapolelong)==F && is.na(input$extrapolelat)==F && is.na(input$extrapoleA95)==F) {
         Added_poles$list <- rbind(Added_poles$list,temp)
       }
-      Added_poles$list <- rbind(Added_poles$list,Extra_poles_list())
-
+      if(!is.null(value$extpole)){Added_poles$list <- rbind(Added_poles$list,Extra_poles_list())}
 
       #eliminates duplicates
       Added_poles$list <- dplyr::distinct(Added_poles$list)
+      if(nrow(Added_poles$list)==0){Added_poles$list <- NULL}
     })
 
     #delete elements from list
     observeEvent(input$deleteextrapole,{
       d <- input$EP_list_rows_selected
       if(length(d)){Added_poles$list <- Added_poles$list[-d,]}
+      if(nrow(Added_poles$list)==0){Added_poles$list <- NULL}
     })
 
     #send to ui the interactive extra pole list
     output$EP_list <- DT::renderDataTable(Added_poles$list, server = F)
 
-    #Calculate Fisher of selected poles, SENT TO UI ABOVE within "all_poles_plotter"
+    #Calculate Fisher of selected poles, SENT TO UI within "all_poles_plotter"
     extfisher <- reactive({
       if(input$extrapolesfisher==2){
         extlist <- data.frame(matrix(ncol=2,nrow=0))
@@ -4856,6 +4849,20 @@ DISTRIBUTION NOT FLATTENED.")
         write.csv(round(Ext_poles_S,digits = 2),file = file,row.names = T)
       }
     )
+
+
+    #############SEND PLOTS TO VGP ANALYSIS FIGURES
+
+    #send figure to ui of Multi VGP
+    output$MVGP_plot <- renderPlot({all_poles_plotter()},width = 700, height = 700)
+
+    #send figure to ui of Multi VGP2 equal as above
+    output$MVGP_plot2 <- renderPlot({all_poles_plotter()},width = 700, height = 700)
+
+    #send figure to ui of Multi VGP3 equal as above
+    output$MVGP_plot3 <- renderPlot({all_poles_plotter()},width = 700, height = 700)
+
+
     ############ END OF VIRTUAL GEOMAGNETIC POLES MODULE
 
     ############ UNSTRAIN MODULE
@@ -5639,7 +5646,6 @@ Edec:", Edec_nstr)
   shinyApp(ui, server)
 
 }
-
 
 
 #service functs
