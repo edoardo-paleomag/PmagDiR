@@ -20,9 +20,9 @@ WebDiR <- function(){
                           sidebarLayout(
                             sidebarPanel(width = 3,
                                          fluidRow(
-                                           column(6,fileInput("All_Zijd",label = "Load demag data")),
+                                           column(6,fileInput("All_Zijd",label = "Load demag data",multiple = T)),
                                            column(6,selectInput("Zijd_f_type",label = "File type",
-                                                                choices = list("WebDiR"=1,"Lamont"=2,"Bremen(.cor)"=3),selected = 1))
+                                                                choices = list("WebDiR"=1,"Lamont"=2,"Bremen(.cor)"=3,"IODP_JR6A_Expanded"=4,"CIT_samples"=5),selected = 1))
                                          ),
                                          fluidRow(
                                            column(6,selectInput("Zijd_Stereo_shift",label = "Diagram",
@@ -796,7 +796,10 @@ WebDiR <- function(){
                                                                 choices= list("black"=1,"blue"=2,"green"=3,"pink"=4,"purple"=5,"brown"=6,"red"=7,"yellow"=8,"cyan"=9,"gray"=10, "white"=11), selected=2)),
                                            column(3,textInput("extreameanname",label = "Name",value = "Ext_F_mean")),
                                          ),
-                                         tableOutput("extpolesfisher"),
+                                         fluidRow(
+                                           column(8,tableOutput("extpolesfisher")),
+                                           column(4,actionButton(inputId = "add_F_2_ext_list",label = "Add Fisher to list",width = "100%"))
+                                         ),
                                          br(),
                                          fluidRow(
                                            column(6,h4("List of external poles")),
@@ -977,6 +980,46 @@ WebDiR <- function(){
         #convert to A/m
         dat_PmagDiR[,3:11] <- (dat_PmagDiR[,3:11])/0.008
         dat_PmagDiR <- unique(dat_PmagDiR)
+        return(dat_PmagDiR)
+      }else if(input$Zijd_f_type==4){
+        dat <- read.csv(input$All_Zijd$datapath)
+        temp_file <- data.frame(matrix(ncol=12,nrow = nrow(dat)))
+        colnames(temp_file) <- c("CSF_A","sample","step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
+        temp_file[,1] <- dat[,9]
+        temp_file[,2] <- paste(dat[,1],paste(dat[,2],dat[,3],sep=""),
+                               paste(dat[,4],dat[,5],sep = ""),
+                               paste(dat[,6],dat[,7],sep = ""),
+                               paste(dat[,8],(dat[,8]+2),sep = "/"),sep="-")
+        temp_file[,3] <- dat[,20]
+        temp_file[,4:6] <- PmagDiR::s2c(DI = dat[,12:11],J = dat[,15])
+        temp_file[,7:9] <- PmagDiR::s2c(DI = dat[,14:13],J = dat[,15])
+        temp_file[,10:12] <- PmagDiR::s2c(DI = dat[,14:13],J = dat[,15])
+        temp_file <- temp_file[order(temp_file[,3]),]
+        temp_file <- temp_file[order(temp_file[,1]),]
+        dat_PmagDiR <- temp_file[,-1]
+        return(dat_PmagDiR)
+      }else if(input$Zijd_f_type==5){
+        dat_PmagDiR <- data.frame(matrix(ncol = 11,nrow = 0))
+        colnames(dat_PmagDiR) <- c("Sample","Step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
+        for(i in 1:length(input$All_Zijd[,1])){
+          #read first row and count columns
+          f_row <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2,nrows = 1)
+          if(ncol(f_row)==12){
+            f_row <- cbind(f_row[1,1],NA,f_row[1,2:12])
+            dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 3)
+            colnames(f_row) <- colnames(dat)
+            dat <- rbind(f_row,dat)
+          }else if(ncol(f_row)==13){dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2)}
+          specimen <- input$All_Zijd[[i, 'name']]
+          temp_file <- data.frame(matrix(ncol = 11,nrow = nrow(dat)))
+          colnames(temp_file) <- c("Sample","Step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
+          temp_file[,1] <- rep(specimen)
+          temp_file[,2] <- dat[,2]
+          temp_file[,3:5] <- PmagDiR::s2c(DI = dat[,9:10],J = dat[,7])
+          temp_file[,6:8] <- PmagDiR::s2c(DI = dat[,3:4],J = dat[,7])
+          temp_file[,9:11] <- PmagDiR::s2c(DI = dat[,5:6],J = dat[,7])
+          dat_PmagDiR <- rbind(dat_PmagDiR,temp_file)
+        }
         return(dat_PmagDiR)
       }
     })
@@ -4447,6 +4490,10 @@ DISTRIBUTION NOT FLATTENED.")
           if(input$extrameancolor==10) extrameancolor <- "gray"
           if(input$extrameancolor==11) extrameancolor <- "white"
 
+          #add color and symbol to reactive file for saving in table
+          extpole$extrameansymbol <- extrameansymbol
+          extpole$extrameancolor <- extrameancolor
+
           #the extfisher reactive function is below!!!
           Ext_P_fisher <- extfisher()
           PmagDiR::plot_PA95(lon = Ext_P_fisher[1,1],
@@ -4732,20 +4779,20 @@ DISTRIBUTION NOT FLATTENED.")
     })
 
     #creates reactive value for checking if file is uploaded
-    value <- reactiveValues(extpole = NULL)
+    extpole <- reactiveValues(listfile = NULL)
     #check for uploaded file
-    observeEvent(input$extrapolelist,{value$extpole <- "uploaded"})
+    observeEvent(input$extrapolelist,{extpole$listfile <- "uploaded"})
     #reset upload if requested
-    observeEvent(input$delextrapolelist,{value$extpole <- "reset"})
+    observeEvent(input$delextrapolelist,{extpole$listfile <- "reset"})
     #read file if present, reset if requested
     Extra_poles_list <- reactive({
-      if(is.null(value$extpole)){
+      if(is.null(extpole$listfile)){
         return(NULL)
-      }else if(value$extpole == "uploaded"){
+      }else if(extpole$listfile == "uploaded"){
         temp <- read.csv(file = input$extrapolelist$datapath)
         colnames(temp) <- c("Loc.","Col","Sym","Lon","Lat","A95")
         return(temp)
-      }else if(value$extpole == "reset"){
+      }else if(extpole$listfile == "reset"){
         return(NULL)
       }
     })
@@ -4786,7 +4833,7 @@ DISTRIBUTION NOT FLATTENED.")
       if(is.na(input$extrapolelong)==F && is.na(input$extrapolelat)==F && is.na(input$extrapoleA95)==F) {
         Added_poles$list <- rbind(Added_poles$list,temp)
       }
-      if(!is.null(value$extpole)){Added_poles$list <- rbind(Added_poles$list,Extra_poles_list())}
+      if(!is.null(extpole$listfile)){Added_poles$list <- rbind(Added_poles$list,Extra_poles_list())}
 
       #eliminates duplicates
       Added_poles$list <- dplyr::distinct(Added_poles$list)
@@ -4804,6 +4851,7 @@ DISTRIBUTION NOT FLATTENED.")
     output$EP_list <- DT::renderDataTable(Added_poles$list, server = F)
 
     #Calculate Fisher of selected poles, SENT TO UI within "all_poles_plotter"
+
     extfisher <- reactive({
       if(input$extrapolesfisher==2){
         extlist <- data.frame(matrix(ncol=2,nrow=0))
@@ -4831,12 +4879,15 @@ DISTRIBUTION NOT FLATTENED.")
           colnames(Fisher) <- c("Long","Lat","A95","N","K")
           rownames(Fisher) <- input$extreameanname
         }else{Fisher <- NULL}
+        extpole$Fisher <- Fisher
         return(Fisher)
       }
     })
     #send fisher to UI
     output$extpolesfisher <- renderTable({
-      extfisher()
+      if(input$extrapolesfisher==2){
+        extpole$Fisher
+      }else{NULL}
     },digits = 1,align = "l", rownames = T)
 
     #send fisher to download
@@ -4849,6 +4900,19 @@ DISTRIBUTION NOT FLATTENED.")
         write.csv(round(Ext_poles_S,digits = 2),file = file,row.names = T)
       }
     )
+
+    #Add external pole list Fisher to external pole list
+    observeEvent(input$add_F_2_ext_list,{
+      if(is.null(extpole$Fisher)==F){
+        temp <- data.frame(matrix(ncol=6,nrow = 1))
+        colnames(temp) <- c("Loc.","Col","Sym","Lon","Lat","A95")
+        temp[1,1] <- input$extreameanname
+        temp[1,2] <- extpole$extrameancolor
+        temp[1,3] <- extpole$extrameansymbol
+        temp[1,4:6] <- round(extpole$Fisher[1,1:3],digits = 2)
+        Added_poles$list <- rbind(Added_poles$list,temp)
+      }
+    })
 
 
     #############SEND PLOTS TO VGP ANALYSIS FIGURES
