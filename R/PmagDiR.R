@@ -1002,14 +1002,15 @@ WebDiR <- function(){
         dat_PmagDiR <- data.frame(matrix(ncol = 11,nrow = 0))
         colnames(dat_PmagDiR) <- c("Sample","Step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
         for(i in 1:length(input$All_Zijd[,1])){
-          #read first row and count columns
+          #read first and row and count columns
           f_row <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2,nrows = 1)
-          if(ncol(f_row)==12){
-            f_row <- cbind(f_row[1,1],NA,f_row[1,2:12])
+          s_row <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 3,nrows = 1)
+          if(ncol(f_row)<ncol(s_row)){
+            f_row <- cbind(f_row[1,1],NA,f_row[1,2:ncol(f_row)])
             dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 3)
             colnames(f_row) <- colnames(dat)
             dat <- rbind(f_row,dat)
-          }else if(ncol(f_row)==13){dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2)}
+          }else if(ncol(f_row)<ncol(s_row)){dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2)}
           specimen <- input$All_Zijd[[i, 'name']]
           temp_file <- data.frame(matrix(ncol = 11,nrow = nrow(dat)))
           colnames(temp_file) <- c("Sample","Step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
