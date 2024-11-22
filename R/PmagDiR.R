@@ -1010,7 +1010,7 @@ WebDiR <- function(){
             dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 3)
             colnames(f_row) <- colnames(dat)
             dat <- rbind(f_row,dat)
-          }else if(ncol(f_row)<ncol(s_row)){dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2)}
+          }else if(ncol(f_row)==ncol(s_row)){dat <- read.table(input$All_Zijd[[i, 'datapath']],header = F,skip = 2)}
           specimen <- input$All_Zijd[[i, 'name']]
           temp_file <- data.frame(matrix(ncol = 11,nrow = nrow(dat)))
           colnames(temp_file) <- c("Sample","Step","Sx","Sy","Sz","Gx","Gy","Gz","Bx","By","Bz")
@@ -5709,7 +5709,6 @@ Edec:", Edec_nstr)
 
   }
   shinyApp(ui, server)
-
 }
 
 
