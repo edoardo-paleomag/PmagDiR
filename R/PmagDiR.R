@@ -1,6 +1,5 @@
 #temporary WebDiR NOT READY, DO NOT USE
 WebDiR <- function(){
-
   library(PmagDiR)
   library(plyr)
   library(dplyr)
@@ -1822,7 +1821,7 @@ WebDiR <- function(){
       zijd_unit()
     })
 
-    #####all saved samples page
+    ##### All saved samples page
 
 
     #import external file and attche it to internal result file if exists
@@ -1960,7 +1959,7 @@ WebDiR <- function(){
         else if(input$EAcoordinates==2){circles <- circles_temp[,4:5]}
         #plot plane is designed for a single circle so it has to be reiterated
         for(i in 1:nrow(circles)){
-          PmagDiR::plot_plane(circles[i,1],circles[i,2],on_plot = TRUE,col_cU = "blue",col_cD = "blue",symbol = "d",col_d = "purple")
+          PmagDiR::plot_plane(circles[i,1],circles[i,2],on_plot = TRUE,col_cU = "blue",col_cD = "blue",symbol = "d",col_d = "yellow")
         }
       }
       if(is.null(specim$GC_directions)==FALSE){PmagDiR::plot_DI(DI = specim$GC_directions,on_plot = T,
@@ -2169,10 +2168,10 @@ WebDiR <- function(){
           if(coord==2 || coord==3){DI <- DIRS[,7:8]}
         }
       }
-      if(cutoff==2){DI <- cut_DI(DI = DI,lat=Slat,long = Slong,geo = geo,Shiny = T)}
-      else if(cutoff==3){DI <- cut_DI(DI = DI,lat=Slat,long = Slong,inc_f = F,geo = geo,Shiny = T)}
-      else if(cutoff==4){DI <- cut_DI(DI = DI,VD=F,cutoff = VGP_fixed ,lat=Slat,long = Slong,geo = geo,Shiny = T)}
-      else if(cutoff==5){DI <- cut_DI(DI = DI,VD=F,cutoff = VGP_fixed ,lat=Slat,long = Slong, inc_f=F,geo = geo,Shiny = T)}
+      if(cutoff==2){DI <- PmagDiR::cut_DI(DI = DI,lat=Slat,long = Slong,geo = geo,Shiny = T)}
+      else if(cutoff==3){DI <- PmagDiR::cut_DI(DI = DI,lat=Slat,long = Slong,inc_f = F,geo = geo,Shiny = T)}
+      else if(cutoff==4){DI <- PmagDiR::cut_DI(DI = DI,VD=F,cutoff = VGP_fixed ,lat=Slat,long = Slong,geo = geo,Shiny = T)}
+      else if(cutoff==5){DI <- PmagDiR::cut_DI(DI = DI,VD=F,cutoff = VGP_fixed ,lat=Slat,long = Slong, inc_f=F,geo = geo,Shiny = T)}
       else if(cutoff==6){DI <- DI[DI[,2]>0,]}
       else if(cutoff==7){DI <- DI[DI[,2]<0,]}
       else if(cutoff==8){
@@ -5188,10 +5187,10 @@ Edec:", Edec_nstr)
           if(input$coord_str==1){
             geo=TRUE
           }else{geo=FALSE}
-          if(input$cutoff_str==2){DI <- cut_DI(DI = DI,lat=Slat,long = Slong,geo = geo,Shiny = T)}
-          else if(input$cutoff_str==3){DI <- cut_DI(DI = DI,lat=Slat,long = Slong,inc_f = F,geo = geo,Shiny = T)}
-          else if(input$cutoff_str==4){DI <- cut_DI(DI = DI,VD=F,cutoff = input$VGP_fixed_str ,lat=Slat,long = Slong,geo = geo,Shiny = T)}
-          else if(input$cutoff==5){DI <- cut_DI(DI = DI,VD=F,cutoff = input$VGP_fixed_str ,lat=Slat,long = Slong, inc_f=F,geo = geo,Shiny = T)}
+          if(input$cutoff_str==2){DI <- PmagDiR::cut_DI(DI = DI,lat=Slat,long = Slong,geo = geo,Shiny = T)}
+          else if(input$cutoff_str==3){DI <- PmagDiR::cut_DI(DI = DI,lat=Slat,long = Slong,inc_f = F,geo = geo,Shiny = T)}
+          else if(input$cutoff_str==4){DI <- PmagDiR::cut_DI(DI = DI,VD=F,cutoff = input$VGP_fixed_str ,lat=Slat,long = Slong,geo = geo,Shiny = T)}
+          else if(input$cutoff==5){DI <- PmagDiR::cut_DI(DI = DI,VD=F,cutoff = input$VGP_fixed_str ,lat=Slat,long = Slong, inc_f=F,geo = geo,Shiny = T)}
           else {DI <- DI}
           return(DI)
         }
@@ -6204,7 +6203,7 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
     }else{f <- 1}
 
     #add column with inc unflattened, plus different parameters
-    unfl_data <- unflat_DI(data,f)
+    unfl_data <- PmagDiR::unflat_DI(data,f)
     data$inc_u <- unfl_data[,2]
     data$dec_r <- d2r(data$dec)
     data$inc_u_r <- d2r(data$inc_u)
@@ -6243,9 +6242,9 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
 
     N <- as.numeric(length(data$dec))
     #calculate paleomagnetic pole
-    Long_aver <- r2d(atan2(Y_aver,X_aver))
-    #corrects for negative declination
-    Long_aver <- ifelse(Long_aver<0,Long_aver+360,Long_aver)
+    Long_aver <- r2d(atan2(Y_aver,X_aver)) %% 360
+    # #corrects for negative declination
+    # Long_aver <- ifelse(Long_aver<0,Long_aver+360,Long_aver)
     Lat_aver <- r2d(asin(Z_aver/B))
     #PPole long
     data$Pole_long <- rep(Long_aver)
@@ -6262,7 +6261,12 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
     }else{
       A <- cutoff
     }
-    VGPcut <- as.numeric(which(data$diff>A), arr.ind = TRUE)
+    #Next is a bit complex because Vandamme cut one dir at the time, not all above A in one go
+    VGPcut_t <- as.numeric(which(data$diff>A), arr.ind = T)
+    if(length(VGPcut_t)!=0){
+      max_2_cut <- max(data[VGPcut_t,ncol(data)])
+      VGPcut <- as.numeric(which(data$diff==max_2_cut,arr.ind = T))
+    }else{VGPcut <- NULL}
     if (length(VGPcut)!=0) {
       data <- data[-VGPcut,]
       #cut also lines from DIAP file if coordinates are geographic
