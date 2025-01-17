@@ -10552,7 +10552,7 @@ If yes, load file (.csv in the form depth, dec, inc): ")
       m5 <- matrix(c(1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7), ncol= 19, byrow= TRUE)
 
       #open new device for plotting figure
-      dev.new(width = 11,height = 9,noRStudioGD = T)
+      dev.new(width = 10,height = 7,noRStudioGD = T)
 
       repeat {                                      #repeat the whole cycle because if the running mean of inclination is not ok, it can be redrawn
         ifelse(decqst == "y", layout(m5), layout(m3))               #split screen
@@ -10866,6 +10866,9 @@ inclination (°)",
         par(mfrow=c(1,1))
         if(qst=="y") subs <- as.numeric(readline("insert the bin size in degrees: "))
         bin <- 90/subs
+        #open new device for plotting figure
+        dev.new(width = 5,height = 5,noRStudioGD = T)
+
         hist(AF.last$inc, plot=TRUE,
              xlim= c(-90, 90),
              xaxp= c(-90, 90, 6),
@@ -10890,6 +10893,9 @@ inclination (°)",
         if (drnt.bk=="n"){AF.last.bk$final.dec <- AF.last.bk$dec}
         final_dec <- AF.last.bk$final.dec
         final_dec <- ifelse(final_dec>270, final_dec-360,final_dec)
+        #open new device for plotting figure
+        dev.new(width = 5,height = 5,noRStudioGD = T)
+
         hist(final_dec, plot=TRUE,
              xlim= c(-90, 270),
              xaxp= c(-90, 270, 4),
