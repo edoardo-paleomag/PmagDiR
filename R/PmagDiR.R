@@ -5974,6 +5974,7 @@ circle_DI <- function(DI){
   #calculate and copy eigenvalues and vectors
   T_e <- eigen(T)
   T_vec <- T_e$vectors
+  T_val <- T_e$values
   #coordinate of V3
   V3inc <- r2d(asin(T_vec[3,3]/(sqrt((T_vec[1,3]^2)+(T_vec[2,3]^2)+(T_vec[3,3]^2)))))
   V3dec <- (r2d(atan2(T_vec[2,3],T_vec[1,3])))%%360
@@ -5981,7 +5982,10 @@ circle_DI <- function(DI){
     V3dec <- V3dec+180
     V3inc <- abs(V3inc)
   }
-  return(c(V3dec,V3inc))
+  #calculate MAD following Kirschvink 1980
+  MAD_C <- r2d(atan(sqrt((T_val[3]/T_val[2])+(T_val[3]/T_val[1]))))
+
+  return(c(V3dec,V3inc,MAD_C))
 }
 
 #flips all data toward common polarity
@@ -6244,7 +6248,6 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
     #calculate paleomagnetic pole
     Long_aver <- r2d(atan2(Y_aver,X_aver)) %% 360
     # #corrects for negative declination
-    # Long_aver <- ifelse(Long_aver<0,Long_aver+360,Long_aver)
     Lat_aver <- r2d(asin(Z_aver/B))
     #PPole long
     data$Pole_long <- rep(Long_aver)
@@ -6261,21 +6264,26 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
     }else{
       A <- cutoff
     }
-    #Next is a bit complex because Vandamme cut one dir at the time, not all above A in one go
+    #Determine index of data to cut
     VGPcut_t <- as.numeric(which(data$diff>A), arr.ind = T)
+    #if there are directions to cut
     if(length(VGPcut_t)!=0){
-      max_2_cut <- max(data[VGPcut_t,ncol(data)])
-      VGPcut <- as.numeric(which(data$diff==max_2_cut,arr.ind = T))
-    }else{VGPcut <- NULL}
-    if (length(VGPcut)!=0) {
+      #vandamme cut one direction at the time (more loops)
+      if(VD==TRUE){
+        max_2_cut <- max(data[VGPcut_t,ncol(data)])
+        VGPcut <- as.numeric(which(data$diff==max_2_cut,arr.ind = T))
+        #otherwise it cuts all that are >A
+      }else{VGPcut <- VGPcut_t}
+      #cut working data file
       data <- data[-VGPcut,]
-      #cut also lines from DIAP file if coordinates are geographic
+      #cut also lines from DI or DIAP file if coordinates are geographic
       if(geo==TRUE){
         DIAP <- DIAP[-VGPcut,]
-      }else{DI <- DI[-VGPcut,]}
-    }
-    data  <- data[,1:2]
-    if (length(VGPcut)==0) break
+        }else{DI <- DI[-VGPcut,]}
+      #eliminate calculation columns
+      data  <- data[,1:2]
+      #if VGPcut_temporary is empty, it ends the loop
+    }else{break}
   }
   #export cut file
   if(export==TRUE){
@@ -6291,6 +6299,47 @@ cut_DI <- function(DI,VD=TRUE,lat=0,long=0,cutoff=40, geo=FALSE,inc_f=TRUE, expo
          return(DIAP),
          return(DI))
 }
+
+#function that apply cutoff to VGP (not starting from directions, used in web version)
+cut_VGP <- function(VGP,VD=TRUE,cutoff=40){
+  #degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #create file to manipulate
+  dat <- VGP
+  colnames(dat) <- c("Long","Lat")
+  N <- nrow(dat)
+  #calculate average
+  Pole <- PmagDiR::fisher(dat)
+  dat$Plong <- rep(Pole[1,1])
+  dat$Plat <- rep(Pole[1,2])
+  #calculate distance pole - VGP
+  dat$delta <- abs(dat$Long-dat$Plong)
+  dat$diff <- r2d(acos((sin(d2r(dat$Lat))*sin(d2r(dat$Plat)))+
+                         (cos(d2r(dat$Lat))*cos(d2r(dat$Plat))*cos(d2r(dat$delta)))))
+  #apply cutoff
+  if(VD==TRUE){
+    #vandamme filtering calculation
+    repeat{
+      ASD <- sqrt(sum(((dat$diff)^2)/(N-1)))
+      A <- (1.8*ASD)+5
+      VGPcut_t <- as.numeric(which(dat$diff>A), arr.ind = TRUE)
+      if(length(VGPcut_t>0)){
+        #find maximum deviated VGP and its index
+        max_2_cut <- max(dat[VGPcut_t,ncol(dat)])
+        VGPcut <- as.numeric(which(dat$diff==max_2_cut,arr.ind = T))
+        dat <- dat[-VGPcut,]
+      }else(break)
+    }
+  }else if(VD==FALSE){
+    A <- cutoff
+    VGPcut <- as.numeric(which(dat$diff>A), arr.ind = TRUE)
+    if(length(VGPcut>0)){dat <- dat[-VGPcut,]}
+  }
+  VGP <- dat[,1:2]
+  return(VGP)
+}
+
 
 #convert VGPs and site latitude and longitude in directions
 DI_from_VGP <- function(VGPs, lat, long, export=FALSE,name="Directions") {
@@ -8410,6 +8459,54 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
+#plot great circle on spherical projection with given pole and camera location
+plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plot=TRUE,col_f="red",col_b="white",coast=F){
+  #service functions
+  #functions converting degree and radians
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #plot empty sph if required
+  if(on_plot==FALSE){PmagDiR::sph_ortho(lat = lat0,long = lon0,coast = coast)}
+
+  #create equatorial circle
+  eq_circle <- data.frame(matrix(ncol=2,nrow = 181))
+  colnames(eq_circle) <- c("lon","lat")
+  eq_circle[1:181,1] <- seq(0,360,2)
+  eq_circle[1:181,2] <- 0
+  #rotate circle to real coordinates
+  r_circle <- PmagDiR::bed_DI(DI = eq_circle,in_file = F,bed_az = (P_long+180)%%360,bed_plunge = (P_lat-90),export = F)
+  colnames(r_circle) <- c("lon","lat")
+  #transform coordinates of circle in x and y file
+  r_circle$x <- c2x(lon = r_circle[,1],lat = r_circle[,2])
+  r_circle$y <- c2y(lon = r_circle[,1],lat = r_circle[,2])
+  r_circle$cut <- cut(lon = r_circle[,1],lat = r_circle[,2])
+  r_circle <- r_circle[,-c(1,2)]
+  l <- 1
+  i <- 1
+  #double loop to that breaks table depending on sign cut, to avoid line accross the globe
+  repeat{
+    repeat{
+      if(sign(r_circle[l+1,3])!=sign(r_circle[l,3]) || l==nrow(r_circle)){
+        if(sign(r_circle[l,3])>=0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", col="blue")}
+        else if(sign(r_circle[l,3])<0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", lty=2,col="blue")}
+        break
+      }
+      l <- l+1
+    }
+    if(l==nrow(r_circle)) break
+    i <- l
+    l <- l+1
+  }
+  if(plot_pole==T){PmagDiR::plot_PA95(lon = P_long,lat = P_lat,A = 0,
+                                      lon0 = lon0,lat0 = lat0,col_f = col_f,col_b = col_b,
+                                      symbol = "s",on_plot = TRUE)}
+}
+
 #plot pole with A95 and Apparent polar wander path
 plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white",col_l="black",col_A=rgb(1,0,0,0.30), symbol="c",coast=FALSE, on_plot=FALSE, save=FALSE, name="A95",APWP="V23", S_APWP=FALSE){
   #plot pole
@@ -10301,6 +10398,510 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
   }
 }
 
+
+#Temporary IODP plotting script, will be deleted soon
+IODP_mag_plot <- function(){
+  library("zoo", warn.conflicts = FALSE)
+  library("plyr")
+  library("dplyr", warn.conflicts = FALSE)
+
+  rm(list = ls()) #clear environment
+
+  ALERT <- readline("IMPORTANT: Works only for data from exp. younger than 362!
+Press Enter and select:(1) srmsection file; (2) Core summary file: ")
+  if(ALERT == ""){
+    srm.data <- read.csv(file.choose())        #import data in csv format
+    core.summ <- read.csv(file.choose())       #import core summary file
+    core.summ <- na.omit(core.summ)
+    srm.data_backup <- srm.data                #copy the file for later use
+
+    #Next two line ask if there is a MTF file to upload
+    decornt <- readline("Do you have MTF data?
+Type y and select file (downloaded from https://web.iodp.tamu.edu/LORE/) or type n: ")
+    drnt.bk <- decornt              #Backup for use in decHist
+    if(decornt=="y") {
+      orient.file <- read.csv(file.choose())               #if orientation is available, it ask for the file
+      loc.dec <- as.numeric(readline("type local declination: "))                  #ask for the local declination
+    }
+
+    #Next ask for a discrete declination file if present
+    dis.dir <- readline("Do you have a discrete directions file? (y or n)
+If yes, load file (.csv in the form depth, dec, inc): ")
+    if(dis.dir == "y") {
+      dscrt.dirs_all_feat <-  read.csv(file.choose())
+      dscrt.dirs <- subset(dscrt.dirs_all_feat,select=c(4,2,3))
+      colnames(dscrt.dirs) <- c("depth", "dec", "inc")
+    }
+
+    #function generating a dataframe, with one table for each AF step
+    new.table <-function(AF){
+      depth <-srm.data$Depth.CSF.A..m.[srm.data$Treatment.Value==AF]
+      cor <- srm.data$Core[srm.data$Treatment.Value==AF]
+      Type <- srm.data$Type[srm.data$Treatment.Value==AF]
+      sect <- srm.data$Sect[srm.data$Treatment.Value==AF]
+      A.W <- srm.data$A.W[srm.data$Treatment.Value==AF]
+      offSet <- srm.data$Offset..cm.[srm.data$Treatment.Value==AF]
+      int <- srm.data$Intensity.background...drift.corrected..A.m.[srm.data$Treatment.Value==AF]
+      dec <- srm.data$Declination.background...drift.corrected..deg.[srm.data$Treatment.Value==AF]
+      inc <- srm.data$Inclination.background...drift.corrected..deg.[srm.data$Treatment.Value==AF]
+      new.data <- as.data.frame(cbind(depth, cor, Type, sect, A.W, offSet, int, dec, inc))
+    }
+
+    #function eliminating a selected number of points on top and bottom of each core, applied to a data page (e.g. AF0)
+    core.TB.filters <- function(x,n.top,n.bot) {
+      new.data <- data.frame(depth=numeric(0), cor=numeric(0),
+                             int=numeric(0), dec= numeric(0), inc=numeric(0))
+      cores.st <- matrix(unique(x$cor))
+      for(i in cores.st) {
+        data.cores <- filter_all(x, all_vars(x$cor == i))
+        data.cores <- data.cores[1:((length(data.cores[,1]))-n.bot),]
+        data.cores <- data.cores[n.top:length(data.cores[,1]),]
+        new.data <- rbind(new.data,data.cores)
+      }
+      return(new.data)
+    }
+
+    #function copying dec correction values
+    MTF.column <- function(x) {
+      return(ifelse(x %in% ornt$core, ornt$dec[ornt$core==x], 0.0))
+    }
+
+    cores <- matrix(core.summ$Core)                          #List of all cores
+    treat <- matrix(sort(unique(srm.data$Treatment.Value)))         #List of all AF steps
+    treat.bk <- treat                                               #copy of AF steps list, for later use
+
+    #Next is a loop that stops only when happy about the stratigraphic plots
+    repeat {
+      srm.data <- srm.data_backup                                         #re-build the original data file (in case some core have been deleted)
+
+      list.of.cores.depth <- subset(core.summ, select=c(4,11,12))
+      list.of.cores.depth <- na.omit(list.of.cores.depth)
+      colnames(list.of.cores.depth) <- c("Core","Top", "Bottom")
+      print(list.of.cores.depth, row.names = FALSE)
+
+      corfilt <- readline(paste("cores range from ", min(cores), " to ", max(cores),     #It state the range of cores and ask if all have to be plotted
+                                ". Do you want to plot them all? (y or n): "))
+      if(corfilt == "n") {
+        upc <- as.numeric(readline("select upper core: "))                 #select a specific cores interval if required, changing the srm.data file
+        lowc <- as.numeric(readline("select lower core: "))
+        srm.data <- filter_all(srm.data, all_vars(srm.data$Core >= upc ))
+        srm.data <- filter_all(srm.data, all_vars(srm.data$Core <= lowc ))
+      } else srm.data <- srm.data_backup                                   #rebuild the original srm.data file with all cores
+
+      treat <- treat.bk                                                    #rebuild the original AF steps file in case some has been eliminated during looping
+      TreatToPrint <- as.data.frame(treat)
+      colnames(TreatToPrint) <- "List of AF Steps"
+      print(TreatToPrint, row.names=FALSE)
+
+      #Next allows to eliminate specific AF steps, because in some cases higher field are applied only on limited cores
+      AFqst <- readline("Do you want to plot a specific step after NRM? (y or n): ")
+      if(AFqst== "y"){
+        AFstp <- as.numeric(readline("select step (NRM= 1, second= 2 and so on): "))
+      }
+      #generate array with a table for any AF steps using the new.table function
+      srm.AF.split <- apply(treat, 1, FUN=new.table)
+
+      ##########Next generate the parameters for the log figures, only for the NRM and the last AF step
+
+      AF0 <- as.data.frame(srm.AF.split[[1]])                   #Table NRM
+      AF0[,1] <- as.numeric(AF0[,1])                            #convert chr in num
+      AF0[,2] <- as.numeric(AF0[,2])
+      AF0[,4] <- as.numeric(AF0[,4])
+      AF0[,6] <- as.numeric(AF0[,6])
+      AF0[,7] <- as.numeric(AF0[,7])
+      AF0[,8] <- as.numeric(AF0[,8])
+      AF0[,9] <- as.numeric(AF0[,9])
+      AF0 <- AF0[order(AF0$depth),]
+
+      last.AF <- ifelse(AFqst== "y",treat[AFstp], treat[length(treat)])    #last AF step
+      last.page <- ifelse(AFqst== "y", AFstp, length(treat))                                #index of the last AF step
+      ymin <- round_any(min(AF0$depth), 10, f= floor)           #min depth of columns, approximated by 10 meters
+      ymax <- round_any(max(AF0$depth), 10, f=ceiling)          #max depth of columns, approximated by 10 meters
+      ysubs <- ((ymax-ymin))/10                                 #Subdivision of depth scale in 10 meters
+      AF.last <- as.data.frame(srm.AF.split[[last.page]])       #Table last AF step
+      AF.last[,1] <- as.numeric(AF.last[,1])                    #convert chr in num
+      AF.last[,2] <- as.numeric(AF.last[,2])
+      AF.last[,4] <- as.numeric(AF.last[,4])
+      AF.last[,6] <- as.numeric(AF.last[,6])
+      AF.last[,7] <- as.numeric(AF.last[,7])
+      AF.last[,8] <- as.numeric(AF.last[,8])
+      AF.last[,9] <- as.numeric(AF.last[,9])
+      AF.last <- AF.last[order(AF.last$depth),]
+
+      #Next eliminates a number of selected point measurement either on top or bottom of each core, if required
+      core.TB <- readline("filtering top and bottom of single cores? (y or n): ")
+
+      if(core.TB =="y"){
+        n.top <- 1+as.numeric(readline("how many points on top?  "))
+        n.bot <- as.numeric(readline("how many point at bottom? "))
+        AF0 <- core.TB.filters(AF0,n.top = n.top, n.bot=n.bot)
+        AF.last <- core.TB.filters(AF.last,n.top = n.top, n.bot=n.bot)
+      }
+
+      NRM <- log10(AF0$int)                                     #NRM intensity on logarithmic scale
+      NRM.last <- log10(AF.last$int)                            #NRM after demag
+      dec.NRM <- as.numeric(AF0$dec)                            #NRM declination
+      dec.last <- as.numeric(AF.last$dec)                       #declination after last AF step
+
+      dscrt.qst <- ifelse(dis.dir=="y", readline("do you want to plot discrete samples directions? (y or n): "), "n")
+
+      decqst <- readline("Do you want to plot Declination? (y or n): ")         #if declination plot is required, it split the figure screen in five, otherwise 3
+
+      m3 <- matrix(c(1,1,2,2,2,3,3,3,4,4,4,5,5), ncol=13, byrow=TRUE)
+
+      m5 <- matrix(c(1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7), ncol= 19, byrow= TRUE)
+
+      repeat {                                      #repeat the whole cycle because if the running mean of inclination is not ok, it can be redrawn
+        ifelse(decqst == "y", layout(m5), layout(m3))               #split screen
+
+        ############# create column with cores name and depth
+        cornames.4.plot <- list.of.cores.depth
+        cornames.4.plot$mean <- (cornames.4.plot[,2]+cornames.4.plot[,3])/2
+        cornames.4.plot$xpos <- 0.5
+
+        plot(0,                         #create frame
+             ylim=c(ymax, ymin),
+             xlim=c(0,1),
+             yaxp= c(ymax, ymin, ysubs),
+             xaxt="n",
+             type="n",
+             main="Core",
+             ylab="Depth (m CSF-A)",
+             xlab="")
+        rect(xleft=0,
+             ybottom=cornames.4.plot$Bottom,
+             xright=1,
+             ytop=cornames.4.plot$Top,
+             col="gray")
+        text(x=cornames.4.plot$xpos,
+             y=cornames.4.plot$mean,
+             labels=cornames.4.plot$Core)
+        ###############################
+
+        plot(x= NRM, y= AF0$depth, type= "p",                     #plot NRM and last AF intensity
+             pch = 16,
+             col="blue",
+             cex= 0.7,
+             xlim=c(min(log10(srm.data$Intensity.background...drift.corrected..A.m.)),
+                    max(log10(srm.data$Intensity.background...drift.corrected..A.m.))),
+             ylim=c(ymax, ymin),
+             main = "NRM
+intensity (log A/m)",
+             xlab= "",
+             ylab= "",
+             yaxp= c(ymax, ymin, ysubs))
+        points(x=NRM.last,
+               y= AF.last$depth,
+               pch = 16,
+               col="cyan",
+               cex= 0.7)
+
+        if(decqst == "y"){                                       #if declination plot is required, it ask for a orientation file
+
+          #################  all that follows add two columns (5, 6) to the pages with the NRM (AF0) and last AF step (AF.last), 5= correction, 6= final dec.
+          #################  in 6 the magnetometer dec is copied if there is no correction applicable
+
+          if(decornt == "n") {       #plot NRM declination if no orientation is given
+            plot(x= AF0$dec,
+                 y= AF0$depth,
+                 type= "p",
+                 pch = 16,
+                 col="blue",
+                 cex= 0.7,
+                 ylim=c(ymax, ymin),
+                 main= "NRM
+declination (°)",
+                 xlab= "",
+                 ylab= "",
+                 xaxp= c(0, 360, 4),
+                 yaxp= c(ymax, ymin, ysubs))
+
+          } else {
+            ornt <- subset(orient.file, select=c(4,14))      #Isolate the declination correction
+            colnames(ornt) <- c("core", "dec")
+
+
+            cor.num_AF0 <- as.matrix(AF0$cor)                     #column with core number
+            cor.num_AF.last <- as.matrix(AF.last$cor)
+
+            new_column_MTF_AF0 <- data.frame(apply(cor.num_AF0, MARGIN = 1, MTF.column))  #generate the column with the dec correction
+            colnames(new_column_MTF_AF0) <- "MTF"
+            new_column_MTF_AF0$IGRF <- loc.dec
+            new_column_MTF_AF0$MTF.IGRF <- new_column_MTF_AF0[,1]+new_column_MTF_AF0[,2]
+            AF0 <- cbind(AF0,new_column_MTF_AF0[,3])
+            colnames(AF0) <- c("depth", "cor","Type","sect","A.W", "offSet","int", "dec","inc","MTF+IGRF")
+            AF0$final.dec <- ifelse((AF0$dec+AF0$`MTF+IGRF`) >= 360,
+                                    (AF0$dec+AF0$`MTF+IGRF`) - 360,
+                                    (AF0$dec+AF0$`MTF+IGRF`))
+            AF0$final.dec <- ifelse(AF0$final.dec<0, AF0$final.dec+360, AF0$final.dec)
+
+            new_column_MTF_AF.last <- data.frame(apply(cor.num_AF.last, MARGIN = 1, MTF.column))
+            colnames(new_column_MTF_AF.last) <- "MTF"
+            new_column_MTF_AF.last$IGRF <- loc.dec
+            new_column_MTF_AF.last$MTF.IGRF <- new_column_MTF_AF.last[,1]+new_column_MTF_AF.last[,2]
+            AF.last <- cbind(AF.last,new_column_MTF_AF.last[,3])
+            colnames(AF.last) <- c("depth", "cor","Type","sect","A.W", "offSet","int", "dec","inc","MTF+IGRF")
+            AF.last$final.dec <- ifelse((AF.last$dec+AF.last$`MTF+IGRF`) >= 360,
+                                        (AF.last$dec+AF.last$`MTF+IGRF`) - 360,
+                                        (AF.last$dec+AF.last$`MTF+IGRF`))
+            AF.last$final.dec <- ifelse(AF.last$final.dec<0, AF.last$final.dec+360,AF.last$final.dec)
+
+
+            ########## end of calculation and columns compilation ##########################
+
+            plot(x= AF0$final.dec,       #Plot NRM corrected declination
+                 y= AF0$depth,
+                 type= "p",
+                 pch = 16,
+                 col="blue",
+                 cex= 0.7,
+                 ylim=c(ymax, ymin),
+                 main= "NRM
+declination (°)",
+                 xlab= "",
+                 ylab= "",
+                 xaxp= c(0, 360, 4),
+                 yaxp= c(ymax, ymin, ysubs))
+          }
+        }
+
+        plot(x= AF0$inc,       #plot NRM inclination
+             y= AF0$depth,
+             type= "p",
+             pch = 16,
+             col="blue",
+             cex= 0.7,
+             ylim=c(ymax, ymin),
+             xlim=c(-90,90),
+             main= "NRM
+inclination (°)",
+             xlab= "",
+             ylab= "",
+             xaxp= c(-90, 90, 4),
+             yaxp= c(ymax, ymin, ysubs))
+        abline(v=0,lwd=1, lty=2)
+
+        if(decqst == "y"){                               #condition when declination plot is requested or not
+
+          if(decornt == "n") {
+            plot(x= AF.last$dec, y= AF.last$depth, type= "p",          #plot dec of last AF without orientation
+                 pch = 16,
+                 col="cyan",
+                 cex= 0.7,
+                 ylim=c(ymax, ymin),
+                 main= paste(last.AF,"mT
+","Declination (°)", sep = ""),
+                 xlab= "",
+                 ylab= "",
+                 xaxp= c(0, 360, 4),
+                 yaxp= c(ymax, ymin, ysubs))
+
+            if(dscrt.qst == "y") points(x=dscrt.dirs$dec, y=dscrt.dirs$depth,     #ask and plot discrete declination
+                                        type= "p",
+                                        pch=21,
+                                        col="black",
+                                        bg="red")
+
+          } else {
+            plot(x= AF.last$final.dec, y= AF.last$depth, type= "p",          #Plot declination with correction
+                 pch = 16,
+                 col="cyan",
+                 cex= 0.7,
+                 ylim=c(ymax, ymin),
+                 main= paste(last.AF,"mT
+","Declination (°)", sep = ""),
+                 xlab= "",
+                 ylab= "",
+                 xaxp= c(0, 360, 4),
+                 yaxp= c(ymax, ymin, ysubs))
+
+            if(dscrt.qst == "y") points(x=dscrt.dirs$dec, y=dscrt.dirs$depth,    #ask and plot discrete declination
+                                        type= "p",
+                                        pch=21,
+                                        col="black",
+                                        bg="red")
+          }
+        }
+        plot(x= AF.last$inc,                 #Plot last AF inclination
+             y= AF.last$depth, type= "p",
+             pch = 16,
+             col= "cyan",
+             cex= 0.7,
+             ylim=c(ymax, ymin),
+             xlim=c(-90,90),
+             main= paste(last.AF,"mT
+","Inclination (°)", sep = ""),
+             xlab= "",
+             ylab= "",
+             xaxp= c(-90, 90, 4),
+             yaxp= c(ymax, ymin, ysubs))
+        abline(v=0,lwd=1, lty=2)
+
+        if(dscrt.qst == "y") points(x=dscrt.dirs$inc, y=dscrt.dirs$depth,    #it adds the discrete samples inclination
+                                    type= "p",
+                                    pch=21,
+                                    col="black",
+                                    bg="red")
+
+
+        ########## Next give the opportunity to add a running mean to inclination data
+
+        rnmean <- readline("plotting also running mean of inclination? (y or n): ")
+
+        if (rnmean== "y") {                          #if running mean is requested, it ask for the number of points to average
+          pt <- as.numeric(readline("number of point you want to use for the running mean: "))
+
+          depth.Inc.last <- subset(AF.last, select=c(1,9))
+          depth.Inc.last <- depth.Inc.last[order(depth.Inc.last$depth),]
+          aver.CSF.A <- rollmean(as.numeric(depth.Inc.last$depth), k= pt)       #moving average of depth
+          aver.inc <- rollmean(as.numeric(depth.Inc.last$inc), k= pt)         #moving average of inc
+
+          points(x= aver.inc, y= aver.CSF.A, type= "l", lwd=1.5, col="black")               #it adds the running mean to the log
+          runmeanqst <- readline("Do you want to change number of averaged points? (y or n): ")
+          if (runmeanqst != "y") break
+        }
+        if (rnmean != "y") break
+      }
+
+      ######### Next plot a polarity indication #####
+
+      DecOrInc <- readline("Do you want to use Dec or Inc for interpreting polarity? (d or i): ")
+      if (DecOrInc == "i") {
+        N.S.EM <- readline("Northern or southern emisphere? (n or s): ")
+        if (rnmean == "y") {
+          pol.run.mean <- readline("Do you want to use running mean of inclination? (y or n): ")
+          if (pol.run.mean =="n") {
+            if (N.S.EM == "n") AF.last$N <- ifelse(AF.last$inc>0,1,0)
+            if (N.S.EM == "s") AF.last$N <- ifelse(AF.last$inc>0,0,1)
+            only.N <- AF.last[,c(1,10)]
+          }
+          if (pol.run.mean =="y"){
+            if (N.S.EM == "n") roll.mean.pol <- ifelse(aver.inc>0,1,0)
+            if (N.S.EM == "s") roll.mean.pol <- ifelse(aver.inc>0,0,1)
+            roll.mean.plot <- as.data.frame(cbind(aver.CSF.A, roll.mean.pol))
+            colnames(roll.mean.plot) <- c("depth", "N")
+            only.N <- roll.mean.plot
+          }
+        }
+        if (rnmean=="n") {
+          if (N.S.EM == "n") AF.last$N <- ifelse(AF.last$inc>0,1,0)
+          if (N.S.EM == "s") AF.last$N <- ifelse(AF.last$inc>0,0,1)
+          only.N <- AF.last[,c(1,10)]
+        }
+      }
+      if (DecOrInc == "d") {
+        l.dec = as.numeric(readline("Set declination reversed lower angle: "))
+        u.dec = as.numeric(readline("Set declination reversed higher angle: "))
+        if (decornt=="n"){AF.last$final.dec <- AF.last$dec}
+        AF.last$N <- ifelse(AF.last$final.dec>l.dec, ifelse(AF.last$final.dec<u.dec,0,1),1)
+        only.N <- AF.last[,c(1,10)]
+      }
+
+      #create reversals empty data frame
+      normals <- data.frame(matrix(ncol = 2,nrow = 0))
+      colnames(normals) <- c("bottom","top")
+      #populate top and bottom of normals table
+      for(i in 2:nrow(only.N)){
+        if((only.N[i,2]+only.N[i-1,2])==1){
+          pos <- (only.N[i,1]+only.N[i-1,1])/2
+          newline <- data.frame(matrix(ncol = 2,nrow = 0))
+          ifelse(only.N[i,2]==1, newline[1,1] <- pos, newline[1,2] <- pos)
+          colnames(newline) <- c("bottom","top")
+          normals <- rbind(normals,newline)
+        }
+      }
+      #fill first or last box of normals when empty
+      if(is.na(normals[1,1])==TRUE) normals[1,1] <- min(only.N[,1])
+      if(is.na(normals[nrow(normals),2])==TRUE) normals[nrow(normals),2] <- max(only.N[,1])
+      #reduce table to lines with top and bottom
+      if(nrow(normals)>1){
+        for(l in 2:nrow(normals)){
+          if(is.na(normals[l-1,2])==TRUE) {normals[l-1,2] <- normals[l,2]}
+        }
+      }
+      #eliminate duplicates
+
+
+      plot(0,                         #create frame
+           ylim=c(ymax, ymin),
+           xlim=c(0,1),
+           yaxp= c(ymax, ymin, ysubs),
+           xaxt="n",
+           type="n",
+           main="polarity",
+           ylab="",
+           xlab="")
+      rect(xleft=0,
+           ybottom=normals$bottom,
+           xright=1,
+           ytop=normals$top,
+           col=ifelse(nrow(normals==1) && any(only.N[,2]==1), "black","white"),
+           border=NA)
+
+      # arrows(x0=0,
+      #        y0=only.N$depth,
+      #        x1=0+(only.N$N),
+      #        y1=only.N$depth,
+      #        code=3,
+      #        length=0,
+      #        lwd=0.5,
+      #        col="black")
+
+      redo <- readline("are you happy? (y or n): ")
+      if (redo=="y") rm(only.N)
+      if(redo=="y") break                                                  #break the loop if happy, or it start from beginning
+    }
+
+    rm(decornt,dis.dir)                                                    #delete initial questions, otherwise they affect next elaborations
+
+    write.csv(AF.last, file="Table_data.csv", row.names = FALSE)
+
+    qst <- readline("want histogram of inc? (y or n): ")                   #ask for histogram of inclination
+
+    if(qst=="y") {
+      repeat {                                                             #loop for hist, it breaks if happy
+        par(mfrow=c(1,1))
+        if(qst=="y") subs <- as.numeric(readline("insert the bin size in degrees: "))
+        bin <- 90/subs
+        hist(AF.last$inc, plot=TRUE,
+             xlim= c(-90, 90),
+             xaxp= c(-90, 90, 6),
+             xlab= "Inclination (°)",
+             ylab= paste("N. of directions (Total= ",length(AF.last$inc), ")"),
+             main=paste(max(treat),"mT
+","Inclination", sep = ""),
+             col= "red",
+             breaks= bin)
+        redoh <-readline("are you happy? (y or n): ")
+        if(redoh=="y") break                                              #breaks the loop if happy
+      }
+
+    }
+    qstd <- readline("want histogram of Dec? (y or n): ")
+    if(qstd=="y") {
+      repeat {                                                             #loop for hist, it breaks if happy
+        AF.last.bk <- AF.last
+        par(mfrow=c(1,1))
+        subs <- as.numeric(readline("insert the bin size in degrees: "))
+        bin <- 360/subs
+        if (drnt.bk=="n"){AF.last.bk$final.dec <- AF.last.bk$dec}
+        final_dec <- AF.last.bk$final.dec
+        final_dec <- ifelse(final_dec>270, final_dec-360,final_dec)
+        hist(final_dec, plot=TRUE,
+             xlim= c(-90, 270),
+             xaxp= c(-90, 270, 4),
+             xlab= "Declination (°)",
+             ylab= paste("N. of directions (Total= ",length(AF.last.bk$final.dec), ")"),
+             main=paste(max(treat),"mT
+","Declination", sep = ""),
+             col= "blue",
+             breaks= bin)
+        redohd <-readline("are you happy? (y or n): ")
+        if(redohd=="y") break                                              #breaks the loop if happy
+      }
+    }
+  }
+}
 
 
 
