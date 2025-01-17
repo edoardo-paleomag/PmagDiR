@@ -10551,6 +10551,9 @@ If yes, load file (.csv in the form depth, dec, inc): ")
 
       m5 <- matrix(c(1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7), ncol= 19, byrow= TRUE)
 
+      #open new device for plotting figure
+      dev.new(width = 11,height = 9,noRStudioGD = T)
+
       repeat {                                      #repeat the whole cycle because if the running mean of inclination is not ok, it can be redrawn
         ifelse(decqst == "y", layout(m5), layout(m3))               #split screen
 
