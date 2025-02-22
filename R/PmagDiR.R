@@ -395,6 +395,244 @@ circle_DI <- function(DI){
   return(c(V3dec,V3inc,MAD_C))
 }
 
+#perform bootstrap reversal test of Heslop et al 2023
+#result is a file with coordinates of the ellipses points
+CMDT_H23 <- function(DI,n_boots=10000,p=0.05){
+  #define some functions
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  #return average direction cartesian
+  mDI <- function(DIC){
+    X <- matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3)
+    #mean direction
+    mDI <- (matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3))/norm(x = X,type = "E")
+    return(mDI)
+  }
+
+  #function calculation of matrix 2X3 M for projecting data onto tangent plane, takes average direction
+  Generate_M <- function(mDI){
+    M <- matrix(ncol=3,nrow = 2)
+    c <- mDI[3]
+    b <- matrix(mDI[1:2],ncol = 1)
+    if(c!=0){
+      M[1:2,1:2] <- (c/abs(c)*diag(2))-(c/(abs(c)+abs(c)^2)*(b%*%t(b)))
+    }else{M[1:2,1:2] <- diag(2)-(b%*%t(b))}
+    M[1:2,3] <- -b
+    return(M)
+  }
+
+  #Function estimation of matrix 2X2 G, covariance of Mm at m, takes M and DIC
+  Generate_G <- function(M,DIC){
+    #sum of all unit vector
+    X <- matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3)
+    DIC <- as.matrix(DIC)
+    N <- nrow(DIC)
+    G <- matrix(nrow = 2,ncol = 2)
+    #left parameter of the equation
+    Gleft <- norm(x = (X/N),type = "E")^(-2)
+    #populate G with calculating all elements
+    for(u in 1:2){
+      for(v in 1:2){
+        Gright <- 0
+        for(i in 1:N){
+          Gright_temp <- (t(M[u,]) %*% (DIC[i,] %*% t(DIC[i,])) %*% M[v,])
+          Gright <- Gright+Gright_temp
+        }
+        Gright <- Gright/N
+        G[u,v] <- Gleft*Gright
+      }
+    }
+    return(G)
+  }
+
+  #calculate basis of the bootstrap confidence region estimate Tm
+  Tm <- function(N,mDI,M,G){
+    Tm <- as.numeric(N*mDI %*% t(M) %*% solve(G) %*% M %*% t(mDI))
+    return(Tm)
+  }
+
+  #calculate value of T at 95% upper limit
+  T_limit <- function(DIC,n_boots,p){
+    m_orig <- mDI(DIC)
+    M_orig <- Generate_M(m_orig)
+    G_orig <- Generate_G(M_orig,DIC)
+    T_ev <- matrix(ncol=4,nrow = 0)
+    n <- nrow(DIC)
+    for(i in 1:n_boots){
+      DIC_b <- DIC[sample(n,n,replace = T),]
+      m_b <- mDI(DIC_b)
+      M_b <- Generate_M(m_b)
+      G_b <- Generate_G(M_b,DIC_b)
+      Tm_b <- Tm(n,m_orig,M_b,G_b)
+      T_ev <- rbind(T_ev,cbind(Tm_b,m_b))
+    }
+    T_ev <- T_ev[order(T_ev[,1]),]
+    Tlim <- T_ev[round(n_boots*(1-p),digits = 0),1]
+    return(Tlim)
+  }
+
+  #calculate bootstrapped confidence ellipse
+  conf_ell <- function(DIC,T_lim){
+    N <- nrow(DIC)
+    M <- Generate_M(mDI(DIC))
+    G <- Generate_G(M,DIC)
+    C <- N*t(M) %*% solve(G) %*% M
+    C_eigen <- eigen(C)
+    C_vec <- C_eigen$vectors
+    C_val <- C_eigen$values
+    idx <- order(C_val, decreasing = TRUE)
+    C_vec <- C_vec[,idx]
+    C_val <- C_val[idx]
+    Ell_conf <- matrix(ncol = 3,nrow = 0)
+    for(i in seq(0,360,2)){
+      y <- matrix(ncol=1,nrow = 3)
+      teta <- d2r(i)
+      y[1,1] <- cos(teta)*sqrt(T_lim/C_val[1])
+      y[2,1] <- sin(teta)*sqrt(T_lim/C_val[2])
+      y[3,1] <- sqrt(1-y[1,1]^2-y[2,1]^2)
+      m <- C_vec %*% y
+      Ell_conf <- rbind(Ell_conf,t(m))
+    }
+    Ell_conf_d <- PmagDiR::c2s(as.data.frame(Ell_conf))
+    #flip if antipodal from mean direction
+    Ell_conf_average <- PmagDiR::c2s(data.frame(t(c(mean(Ell_conf[,1]),mean(Ell_conf[,2]),mean(Ell_conf[,3])))))
+    DIC_aver <- PmagDiR::c2s(data.frame(t(c(mean(DIC[,1]),mean(DIC[,2]),mean(DIC[,3])))))
+    delta <- abs(DIC_aver[1,1]-Ell_conf_average[1,1])
+    diff <- r2d(acos((sin(d2r(DIC_aver[1,2]))*sin(d2r(Ell_conf_average[1,2])))+
+                       (cos(d2r(DIC_aver[1,2]))*cos(d2r(Ell_conf_average[1,2]))*cos(d2r(delta)))))
+    if(diff>90){Ell_conf_d <- PmagDiR::flip_DI(Ell_conf_d)}
+    return(Ell_conf_d)
+  }
+
+  #find rotational matrix, a and b must be in the form 1X3
+  Find_Q <- function(a, b) {
+    # Convertire in vettori colonna
+    a <- matrix(a, nrow = 3, ncol = 1)
+    b <- matrix(b, nrow = 3, ncol = 1)
+
+    # Calcolare il vettore ortogonale c
+    c <- b - a %*% t(a) %*% b
+    c <- c / sqrt(sum(c^2))  # Normalizzazione
+
+    # Calcolare l'angolo alpha tra a e b
+    alpha <- acos(sum(a * b))
+
+    # Matrice A (antisimmetrica)
+    A <- a %*% t(c) - c %*% t(a)
+
+    # Calcolare la matrice di rotazione Q
+    Q <- diag(3) + sin(alpha) * A + (cos(alpha) - 1) * (a %*% t(a) + c %*% t(c))
+    return(Q)
+  }
+
+
+  dat <- DI[,1:2]
+  colnames(dat) <- c("dec", "inc")
+  #directions in Cartesian coordinates
+  dat$x <- cos(d2r(dat$dec))*cos(d2r(dat$inc))
+  dat$y <- sin(d2r(dat$dec))*cos(d2r(dat$inc))
+  dat$z <- sin(d2r(dat$inc))
+  #calculate interpolation of all data set
+  Ta_temp <- as.matrix(dat[,3:5])
+  Ta <- t(Ta_temp) %*% Ta_temp
+  Ta <- Ta/nrow(dat)
+  T_e <- eigen(Ta,symmetric = TRUE)
+  T_vec <- T_e$vectors
+  T_val <- T_e$value
+
+  #calculate dec inc of max variance
+  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
+
+  #flip V1 if negative
+  V1dec <- ifelse(V1inc<0,(V1dec+180)%%360,V1dec)
+  V1inc <- ifelse(V1inc<0,-V1inc,V1inc)
+
+  #next  calculates difference between dec_inc and average
+  dat$Dec_aver <- rep(V1dec)
+  dat$Inc_aver <- rep(V1inc)
+  dat$delta <- abs(dat$dec-dat$Dec_aver)
+  dat$diff <- r2d(acos((sin(d2r(dat$inc))*sin(d2r(dat$Inc_aver)))+
+                         (cos(d2r(dat$inc))*cos(d2r(dat$Inc_aver))*cos(d2r(dat$delta)))))
+  #Isolate modes
+  m1ind <- as.numeric(which(dat$diff<=90), arr.ind = TRUE)
+  m2ind <- as.numeric(which(dat$diff>90), arr.ind = TRUE)
+
+  #terminate if distribution is not bimodal
+  if(length(m2ind)<1) stop("
+DISTRIBUTION NOT BIMODAL")
+  mode1 <- dat[m1ind,1:5]
+  mode2 <- dat[m2ind,1:5]
+
+  #take the two modes and generate all useful parameters
+  DIC1 <- mode1[,3:5]
+  DIC2 <- -mode2[,3:5]
+  N1 <- nrow(DIC1)
+  N2 <- nrow(DIC2)
+  m1 <- mDI(DIC1)
+  M1 <- Generate_M(m1)
+  G1 <- Generate_G(M1,DIC1)
+  m2 <- mDI(DIC2)
+  M2 <- Generate_M(m2)
+  G2 <- Generate_G(M2,DIC2)
+
+  #generate matrix A and find the minimum eigenvector, which estimate m0
+  A <- (N1+N2)*((t(M1)%*%solve(G1)%*%M1)+(t(M2)%*%solve(G2)%*%M2))
+  A_vec <- eigen(A)
+  A_val_index <- which.min(A_vec$values)
+  A_E3<- min(A_vec$values)
+  A_V3 <- A_vec$vectors[,A_val_index]
+
+  #calculate rotation matrix Q1 and Q2
+  Q1 <- Find_Q(A_V3,m1)
+  Q2 <- Find_Q(A_V3,m2)
+
+  #Rotate the two data sets toward the m0 estimates A_V3
+  DIC10 <- matrix(ncol = 3,nrow=N1)
+  for (i in 1:N1){DIC10[i,1:3] <- as.matrix(Q1 %*% t(DIC1[i,1:3]))}
+  DIC20 <- matrix(ncol = 3,nrow=N2)
+  for (i in 1:N2){DIC20[i,1:3] <- as.matrix(Q2 %*% t(DIC2[i,1:3]))}
+
+  Min_eigen_list <- matrix(ncol = 1, nrow = 0)
+  n_lambda <- 0
+  #start bootstrap
+  for(n in 1:n_boots){
+    DIC10b <- DIC10[sample(N1,N1,replace = T),]
+    m10b <- mDI(DIC10b)
+    M10b <- Generate_M(m10b)
+    G10b <- Generate_G(M10b,DIC10b)
+    DIC20b <- DIC20[sample(N2,N2,replace = T),]
+    m20b <- mDI(DIC20b)
+    M20b <- Generate_M(m20b)
+    G20b <- Generate_G(M20b,DIC20b)
+    Ab <- (N1+N2)*((t(M10b)%*%solve(G10b)%*%M10b)+(t(M20b)%*%solve(G20b)%*%M20b))
+    Ab_vec <- eigen(Ab)
+    Ab_E3<- min(Ab_vec$values)
+    Min_eigen_list <- rbind(Min_eigen_list,Ab_E3<- min(Ab_vec$values))
+    if(Ab_E3>=A_E3){n_lambda <- n_lambda+1}
+    if(n%%200==0){cat(paste(n," bootstraps done.
+"))}
+  }
+  Min_eigen_list[,1] <- Min_eigen_list[order(Min_eigen_list[,1]),]
+  p_value <- (n_lambda+1)/(n_boots+1)
+  #if (p_value<p){cat("Directions not antipodal")}else{cat("Direction antipodal")}
+  E_crit <- quantile(Min_eigen_list,probs = 1-p)
+  Hist_res <- hist(Min_eigen_list,breaks = max(Min_eigen_list)*5,col="red", xlim=c(0,30),xlab="V3",main=NA,freq=F)
+  abline(v = E_crit,lwd=1.5)
+  abline(v = A_E3,lwd=1.5,lty=2)
+  text <- paste("V3 obs.:", round(A_E3,digit=2), "
+V3 crit.:", round(E_crit, digit=2),ifelse(A_E3>E_crit,"
+Not passed","
+Passed"))
+  text(x=22.5, y=max(Hist_res$density)-(max(Hist_res$density)/8),pos=4,text, cex=1)
+  result <- list()
+  result$CMDT_value <- A_E3
+  result$CMDT_critical_value <- E_crit
+  result$p_value <- p_value
+  return(result)
+}
+
 #flips all data toward common polarity
 common_DI <- function(DI,down=TRUE, export=FALSE,name="common_dirs") {
   d2r <- function(x) {x*(pi/180)}
@@ -3513,11 +3751,10 @@ revtest <- function(DI,nb=1000,export=TRUE, name="reversal_test"){
 
   #calculate dec inc of max variance
   V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-  V1dec <- r2d(atan2(T_vec[2,1],T_vec[1,1]))
-  V1dec <- ifelse(V1dec<0,V1dec+360,V1dec)
+  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
 
   #flip V1 if negative
-  V1dec <- ifelse(V1inc<0,ifelse((V1dec+180)>360,V1dec-180,V1dec+180),V1dec)
+  V1dec <- ifelse(V1inc<0,(V1dec+180)%%360,V1dec)
   V1inc <- ifelse(V1inc<0,-V1inc,V1inc)
 
 
@@ -3538,7 +3775,7 @@ DISTRIBUTION NOT BIMODAL")
   mode2 <- data[m2ind,1:2]
 
   #flip mode 2 same as mode 1
-  mode2$dec <- ifelse((mode2$dec+180)>360,mode2$dec-180,mode2$dec+180)
+  mode2$dec <- (mode2$dec+180)%%360
   mode2$inc <- -mode2$inc
   nb <- nb
   n <- 0
