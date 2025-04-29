@@ -663,7 +663,7 @@ DISTRIBUTION NOT BIMODAL")
 V3 crit.:", round(E_crit, digit=2),ifelse(A_E3>E_crit,"
 Not passed","
 Passed"))
-    text(x=22.5, y=max(Hist_res$density)-(max(Hist_res$density)/8),pos=4,text, cex=1.5)
+    text(x=22.5, y=max(Hist_res$density)-(max(Hist_res$density)/8),pos=4,text, cex=1)
   }
   #plot_directions_in_common_polarity
   par(fig=c(0.52,1,0,1),new=TRUE)
