@@ -311,7 +311,7 @@ Boots_conf_DI <- function(DI,n_boots=10000,p=0.05, shiny=FALSE,mode=1){
       G_b <- Generate_G(M_b,DIC_b)
       Tm_b <- Tm(n,m_orig,M_b,G_b)
       T_ev <- rbind(T_ev,cbind(Tm_b,m_b))
-      if(shiny==T){
+      if(shiny==TRUE){
         if(mode==1){
           updateProgressBar(
             id="B95_Mode1_b",
@@ -5260,7 +5260,8 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
 #still under development!!
-magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot",save=FALSE,plot_ext=TRUE,POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10, UseInc=1, Shiny=FALSE){
+magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot",save=FALSE,plot_ext=TRUE,
+                        POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10,unit="m", UseInc=1,rev_depth=1, Shiny=FALSE){
   library(plyr, warn.conflicts = F)
   library(PmagDiR)
   dat <- na.omit(DIP)
@@ -5304,8 +5305,13 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
   }
   #eliminate duplicates
   normals <- na.omit(normals)
-  ymin <- plyr::round_any(min(dat$posit), 0.5, f= floor)
-  ymax <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+  if(rev_depth==1){
+    ymin <- plyr::round_any(min(dat$posit), 0.5, f= floor)
+    ymax <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+  }else if(rev_depth==2){
+    ymax <- plyr::round_any(min(dat$posit), 0.5, f= floor)
+    ymin <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+  }
 
   #fix declination if offset is not zero
   if(offset!=0){
@@ -5322,7 +5328,7 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
   inclim <- round(max(abs(dat$inc)), digits = 0)
   #declination
   plot(dat$dec,dat$posit, type="o",
-       pch=21,bg=col,ylab="Position (m)",
+       pch=21,bg=col,ylab=paste("Position (", unit,")",sep = ""),
        xlim=c(-offset,(360-offset)),
        xaxp= c(-offset,(360-offset),4),
        ylim=c(ymin,ymax),
