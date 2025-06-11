@@ -151,4 +151,26 @@
 #' @author Edoardo Dallanave
 #' @source <https://www.sciencedirect.com/science/article/pii/S0012825223002362>
 "V23_GAPWP"
+#'
+#'
+#'
+#' @format ## `Ardo_diRs_example`
+#' A data frame with 1716 rows and 11 columns:
+#' \describe{
+#'   \item{sample}{Sample code}
+#'   \item{step}{Demagnetization step}
+#'   \item{Sx}{Cartesian x component in sample coordinates}
+#'   \item{Sy}{Cartesian y component in sample coordinates}
+#'   \item{Sz}{Cartesian z component in sample coordinates}
+#'   \item{Gx}{Cartesian x component in geographic coordinates}
+#'   \item{Gy}{Cartesian y component in geographic coordinates}
+#'   \item{Gz}{Cartesian z component in geographic coordinates}
+#'   \item{Bx}{Cartesian x component in tilt coorected coordinates}
+#'   \item{By}{Cartesian y component in tilt coorected coordinates}
+#'   \item{Bz}{Cartesian z component in tilt coorected coordinates}
+#'   ...
+#' }
+#' @author Edoardo Dallanave
+#' @source <https://www.sciencedirect.com/science/article/abs/pii/S0031018212002027>
+"Ardo_diRs_example"
 

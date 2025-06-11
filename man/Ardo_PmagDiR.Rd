@@ -6,12 +6,10 @@
 \title{Ardo section paleomagnetic directions}
 \format{
 ## `Ardo_PmagDiR`
-A data frame with 239 rows and 3 columns:
+A data frame with 239 rows and 2 columns:
 \describe{
   \item{B.Dec}{Paleomagnetic declination}
   \item{B.Inc}{Paleomagnetic inclination}
-  \item{Position}{Stratigraphic position}
-
   ...
 }
 }
@@ -22,7 +20,8 @@ A data frame with 239 rows and 3 columns:
 Ardo_PmagDiR
 }
 \description{
-Paleomagnetic declination and incliantion, in tilt-correted coordinates, and stratigraphic position from the Paleogene South Ardo section of the Venetian Southern Alps (Italy)
+Paleomagnetic declination and incliantion, in tilt-correted coordinates, from the Paleogene South
+Ardo section of the Venetian Southern Alps (Italy)
 }
 \author{
 Edoardo Dallanave
