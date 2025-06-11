@@ -1,2 +1,3 @@
 load("/Users/edoardo/PmagDirs/data/Ardo_PmagDir.rda")
 load("/Users/edoardo/PmagDirs/data/world_coastline.rda")
+load("/Users/edoardo/PmagDiR/data/Ardo_diRs_example.rda")
