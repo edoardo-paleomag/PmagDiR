@@ -2847,8 +2847,8 @@ Map_KVII <- function(grid=30, center=0, title="",seaCol="light cyan",landCol="li
        xlab=title, xaxt="n",ylab="", yaxt="n", axes=FALSE)
   #import coastline from PmagDiR
   if (abs(center)==180){
-    cl <- world_coastline_180
-  }else{cl <- world_coastline}
+    cl <- PmagDiR::world_coastline_180
+  }else{cl <- Pmag_DiR::world_coastline}
   # set the coastline offset if longitude is not 0
   if(center!=0 | abs(center)!=180){
     #create the coastline-breaks file (breaks separating the single continental lines)
@@ -2865,7 +2865,7 @@ Map_KVII <- function(grid=30, center=0, title="",seaCol="light cyan",landCol="li
     for(i in 2:nrow(sep)){
       contour <- cl[sep[i-1,1]:sep[i,1],]
       contour <- na.omit(contour)
-      conts <- list.append(conts,contour)
+      conts <- rlist::list.append(conts,contour)
     }
     new_cl <- as.data.frame(matrix(nrow = 0,ncol = 2))
     colnames(new_cl) <- c("lon","lat")
