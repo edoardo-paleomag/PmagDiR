@@ -155,7 +155,7 @@
 #'
 #'
 #' @format ## `Ardo_diRs_example`
-#' A data frame with 1716 rows and 11 columns:
+#' A data frame with 143 rows and 11 columns:
 #' \describe{
 #'   \item{sample}{Sample code}
 #'   \item{step}{Demagnetization step}
