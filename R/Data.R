@@ -22,12 +22,14 @@
 #'
 #'
 #' @format ## `Ardo_Geo_PmagDiR`
-#' A data frame with 239 rows and 4 columns:
+#' A data frame with 239 rows and 5 columns:
 #' \describe{
 #'   \item{G_dec}{Paleomagnetic declination}
 #'   \item{G_inc}{Paleomagnetic inclination}
 #'   \item{B_az}{Bedding dip azimuth}
 #'   \item{B_plung}{Bedding Plunge}
+#'   \item{Position}{Stratigraphic position}
+#'
 #'   ...
 #' }
 #' @author Edoardo Dallanave
