@@ -2793,6 +2793,14 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
       polygon(conf_ALL, col=infill,border=NA)
     }
     lines(circle_ALL$x,circle_ALL$y,col=col, lwd=1.5)
+    rect(xleft = -1,ybottom = 0.85,xright = -0.65,ytop = 1,col = rgb(0,1,1,0.30),lty = 1)       #ATTENZIONE QUIQUIQUIQUIQUIQUIQUI
+    rect(xleft = 0.65,ybottom = 0.85,xright = 1,ytop = 1,col = rgb(0,0,1,0.30),lty = 1)
+    text(x = -1,y = 0.92,labels = "Up-pointing",pos = 4,cex=0.6)
+    text(x = 0.63,y = 0.92,labels = "Down-pointing",pos = 4, cex=0.6)
+    if(bimodal==TRUE){
+      rect(xleft = -1,ybottom = -1,xright = -0.65,ytop = -0.85,col = rgb(1,0,0,0.30),lty = 1)
+      text(x = -1,y = -0.93,labels = "All directions",pos = 4, cex=0.6)
+    }
     if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
   }
   if(Shiny==TRUE){return(inconly_stat[,1:5])} #cut last column with Arithmetic mean
