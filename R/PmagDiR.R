@@ -2796,11 +2796,11 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
     #draw caption on figure
     rect(xleft = -1,ybottom = 0.85,xright = -0.65,ytop = 1,col = rgb(0,1,1,0.30),lty = 1)
     rect(xleft = 0.65,ybottom = 0.85,xright = 1,ytop = 1,col = rgb(0,0,1,0.30),lty = 1)
-    text(x = -1,y = 0.92,labels = "Up-pointing",pos = 4,cex=ifelse(Shiny==T,1.1,0.6))
-    text(x = 0.63,y = 0.92,labels = "Down-pointing",pos = 4, cex=ifelse(Shiny==T,1.1,0.6))
+    text(x = -1,y = 0.92,labels = "Up-pointing",pos = 4,cex=ifelse(Shiny==T,1,0.6))
+    text(x = 0.63,y = 0.92,labels = "Down-pointing",pos = 4, cex=ifelse(Shiny==T,1,0.6))
     if(bimodal==TRUE){
       rect(xleft = -1,ybottom = -1,xright = -0.65,ytop = -0.85,col = rgb(1,0,0,0.30),lty = 1)
-      text(x = -1,y = -0.93,labels = "All directions",pos = 4, cex=ifelse(Shiny==T,1.1,0.6))
+      text(x = -1,y = -0.93,labels = "All directions",pos = 4, cex=ifelse(Shiny==T,1,0.6))
     }
     if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
   }
