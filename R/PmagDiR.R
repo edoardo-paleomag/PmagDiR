@@ -3788,6 +3788,49 @@ A95: ", round(PPole[1,3], digits=2))
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
+#calculate average direction of DI set using PCA
+Principal_DiR <- function(DI){
+  #fucnctions deg to rads and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+  data <- DI[,1:2]
+  data <- na.omit(data)
+  colnames(data) <- c("dec", "inc")
+
+  #directions in Cartesian coordinates
+  data$x <- cos(d2r(data$dec))*cos(d2r(data$inc))
+  data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
+  data$z <- sin(d2r(data$inc))
+
+  #averaged Cartesian coordinates
+  x_av <- mean(data$x)
+  y_av <- mean(data$y)
+  z_av <- mean(data$z)
+
+  #elements of the distribution matrix
+  T_elements <- c(sum((data$x)*(data$x)),sum(data$x*data$y),sum(data$x*data$z),
+                  sum(data$y*data$x),sum(data$y*data$y),sum(data$y*data$z),
+                  sum(data$z*data$x),sum(data$z*data$y),sum(data$z*data$z))
+
+  #distribution matrix
+  T <- matrix(T_elements,nrow=3, byrow=TRUE)
+
+  #calculate and copy eigenvalues and vectors
+  T_e <- eigen(T,symmetric = TRUE)
+  T_vec <- T_e$vectors
+
+  #calculate dec inc of max variance
+  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
+
+  V1dec <-  if (V1inc<0){(V1dec+180)%%360} else{V1dec}
+  V1inc <- abs(V1inc)
+  result <- data.frame(t(c(V1dec,V1inc)))
+  colnames(result) <- c("dec","inc")
+  return(result)
+}
+
 #reversal test boostrapped following Tauxe
 revtest <- function(DI,nb=1000,export=TRUE, name="reversal_test"){
   #fucnctions deg to rads and vice versa
