@@ -1822,7 +1822,7 @@ fisher <- function(DI, export=FALSE, name="fisher_mean"){
   return(result)
 }
 
-#function generating fisher distributed data
+#function generating fisher distributed VGPs data
 fisher_generator <- function(N,k,lon,lat,k_tol){
   #sub-function generating random long lat
   fisherDiR <- function(k){
