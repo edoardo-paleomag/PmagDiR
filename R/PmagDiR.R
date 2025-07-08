@@ -728,13 +728,13 @@ common_DI <- function(DI,down=TRUE, export=FALSE,name="common_dirs") {
   if(down==TRUE){
     if(V1inc<0){
       V1inc <- -V1inc
-      V1dec <- ifelse((V1dec+180)>360,V1dec-180,V1dec+180)
+      V1dec <- (V1dec+180)%%360
     }
   }
   if(down==FALSE){
     if(V1inc>=0){
       V1inc <- -V1inc
-      V1dec <- ifelse((V1dec+180)>360,V1dec-180,V1dec+180)
+      V1dec <- (V1dec+180)%%360
     }
   }
   #next  calculates difference between dec_inc and average
@@ -748,7 +748,6 @@ common_DI <- function(DI,down=TRUE, export=FALSE,name="common_dirs") {
   data$inc_N <- ifelse(data$diff>90,-data$inc,data$inc)
   new_dec_inc <- subset(data,select=c(dec_N,inc_N))
   colnames(new_dec_inc) <- c("dec", "inc")
-  new_dec_inc
   #if export==TRUE export flipped data into file
   if(export==TRUE){
     write.csv(new_dec_inc,paste(name, ".csv"), row.names = FALSE)
