@@ -1667,6 +1667,14 @@ ffind <-function(DI, f_inc=0.005) {
   if(Emin>Eminlim) {return(as.data.frame(t(c(NA, NA, NA, NA))))} else {return(inc_E_seq)}
 }
 
+#find lat from inc using dipole formula
+findlat <- function(inc){
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  lat <- r2d(atan((tan(d2r(inc)))/2))
+  return(lat)
+}
+
 #plot bimodal fisher from dec_inc and print results on console
 fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
