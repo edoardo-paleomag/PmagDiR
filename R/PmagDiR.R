@@ -1679,7 +1679,7 @@ findlat <- function(inc){
 findinc <- function(lat){
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
-  inc <- r2d(2*atan(tan(d2r(lat))))
+  inc <- r2d(atan(2*tan(d2r(lat))))
   return(inc)
 }
 
