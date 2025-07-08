@@ -3826,15 +3826,24 @@ Principal_DiR <- function(DI){
   #calculate and copy eigenvalues and vectors
   T_e <- eigen(T,symmetric = TRUE)
   T_vec <- T_e$vectors
+  T_val <- T_e$values
 
-  #calculate dec inc of max variance
+  #calculate dec inc of max, in and min variance
   V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
   V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
 
-  V1dec <-  if (V1inc<0){(V1dec+180)%%360} else{V1dec}
-  V1inc <- abs(V1inc)
-  result <- data.frame(t(c(V1dec,V1inc)))
-  colnames(result) <- c("dec","inc")
+  V2inc <- r2d(asin(T_vec[3,2]/(sqrt((T_vec[1,2]^2)+(T_vec[2,2]^2)+(T_vec[3,2]^2)))))
+  V2dec <- (r2d(atan2(T_vec[2,2],T_vec[1,2])))%%360
+
+  V3inc <- r2d(asin(T_vec[3,3]/(sqrt((T_vec[1,3]^2)+(T_vec[2,3]^2)+(T_vec[3,3]^2)))))
+  V3dec <- (r2d(atan2(T_vec[2,3],T_vec[1,3])))%%360
+
+  vectors <- data.frame(t(c(V1dec,V1inc,V2dec,V2inc,V3dec,V3inc)))
+  colnames(vectors) <- c("V1dec","V1inc","V2dec","V2inc","V3dec","V3inc")
+
+  result <- list()
+  result$vectors <- vectors
+  result$values <- T_val
   return(result)
 }
 
