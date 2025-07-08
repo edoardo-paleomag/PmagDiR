@@ -1675,6 +1675,15 @@ findlat <- function(inc){
   return(lat)
 }
 
+#find inc from lat using dipole formula
+findinc <- function(lat){
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  inc <- r2d(2*atan(tan(d2r(lat))))
+  return(inc)
+}
+
+
 #plot bimodal fisher from dec_inc and print results on console
 fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
   d2r <- function(x) {x*(pi/180)}
