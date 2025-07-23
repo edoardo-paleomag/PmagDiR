@@ -1832,6 +1832,7 @@ fisher <- function(DI, export=FALSE, name="fisher_mean"){
 
 #simpler fisher generator only for DecInc without any check for file or k tollerance
 fisher_DI_generator <- function(N=100,k=50,Dec=0,Inc=90){
+  Inc <- (90-Inc)
   #functions degree to radians and vice versa
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
