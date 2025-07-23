@@ -1830,6 +1830,62 @@ fisher <- function(DI, export=FALSE, name="fisher_mean"){
   return(result)
 }
 
+#simpler fisher generator only for DecInc without any check for file or k tollerance
+fisher_DI_generator <- function(N=100,k=50,Dec=0,Inc=90){
+  #functions degree to radians and vice versa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+  #functions spherical (Dec=x, Inc=y) to Cartesian
+  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
+  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
+  s2cz <- function(y) {sin(d2r(y))}
+
+
+  #sub-function generating random long lat
+  fisherDiR <- function(k){
+    r2d <- function(x) {x*(180/pi)}
+    L <- exp(-2*k)
+    a <- runif(1)*(1-L)+L
+    f <- sqrt(-log(a)/(2*k))
+    latitude <- 90-r2d(2*asin(f))
+    longitude <- r2d(2*pi*runif(1))
+    return(c(longitude, latitude))
+  }
+  result <- data.frame(matrix(ncol = 2,nrow = N))
+  colnames(result) <- c("dec", "inc")
+  for(i in 1:N){
+    decInc <- fisherDiR(k)
+    result[i,1:2] <- fisherDiR(k)
+  }
+  #calculates parameters for rotation
+  sbd <- -sin(d2r(Dec))
+  cbd <- cos(d2r(Dec))
+  sbi <- sin(d2r(Inc))
+  cbi <- cos(d2r(Inc))
+
+  #build empty file
+  newDI <- as.data.frame(matrix(ncol=2,nrow=N))
+  colnames(newDI) <- c("dec", "inc")
+
+  for(l in 1:N){
+    x <- s2cx(result[l,1],result[l,2])
+    y <- s2cy(result[l,1],result[l,2])
+    z <- s2cz(result[l,2])
+    xn <- x*(sbd^2+cbd^2*cbi)+
+      y*(cbd*sbd*(1-cbi))+
+      z*sbi*cbd
+    yn <- x*cbd*sbd*(1-cbi)+
+      y*(cbd^2+sbd*sbd*cbi)-
+      z*sbd*sbi
+    zn <- -(x*cbd*sbi-
+              y*sbi*sbd-
+              z*cbi)
+    newDI[l,1] <- (r2d(atan2(yn,xn)))%%360
+    newDI[l,2] <- r2d(asin(zn))
+  }
+  return(newDI)
+}
+
 #function generating fisher distributed VGPs data
 fisher_generator <- function(N,k,lon,lat,k_tol){
   #sub-function generating random long lat
