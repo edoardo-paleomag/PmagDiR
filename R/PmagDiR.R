@@ -1819,9 +1819,7 @@ fisher <- function(DI, export=FALSE, name="fisher_mean"){
   R <- sqrt(X_sum^2+Y_sum^2+Z_sum^2)
   K <- (N-1)/(N-R)
   a95 <- r2d(acos(1-(((N-R)/R)*(((1/0.05)^(1/(N-1)))-1))))
-  Dec_aver <- r2d(atan2(Y_aver,X_aver))
-  #corrects for negative declination
-  Dec_aver <- ifelse(Dec_aver<0,Dec_aver+360,Dec_aver)
+  Dec_aver <- (r2d(atan2(Y_aver,X_aver)))%%360
   Inc_aver <- r2d(asin(Z_aver/B))
   result <- as.data.frame(matrix(ncol=6,nrow=1))
   colnames(result) <- c("dec","inc","a95","N","R","k")
