@@ -315,12 +315,14 @@ Boots_conf_DI <- function(DI,n_boots=10000,p=0.05, shiny=FALSE,mode=1){
         if(mode==1){
           updateProgressBar(
             id="B95_Mode1_b",
+            title = "Bootstrap Mode 1",
             value=i,total=n_boots
           )
         }else if(mode==2){
           updateProgressBar(
             id="B95_Mode2_b",
-          value=i,total=n_boots)
+            title = "Bootstrap Mode 2",
+            value=i,total=n_boots)
         }
       }else{if(i%%200==0){cat(paste(i,"bootstraps done.","\n"))}}
     }
@@ -581,6 +583,7 @@ DISTRIBUTION NOT BIMODAL")
     if(Shiny==T){
       updateProgressBar(
         id="Rev_test_b",
+        title = "Bootstraps",
         value=n,total=n_boots
       )
     }else{if(n%%200==0){cat(paste(n," bootstraps done.
