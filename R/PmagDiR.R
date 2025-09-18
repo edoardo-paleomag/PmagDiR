@@ -4323,7 +4323,7 @@ strain_DI <- function(DIAP,M,export=FALSE,name="strained_dirs"){
   return(str_data)
 }
 
-#function generating E from TK03.GAD model from given inclination
+#function generating E from TK03.GAD model from given inclination#
 tk03 <- function(I) {
   x <- sqrt(I^2)
   y <- 2.895-(0.01466*x)-(0.0003525*(x^2))+(0.00000316*(x^3)) #E-I equation
