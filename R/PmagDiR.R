@@ -647,7 +647,7 @@ DISTRIBUTION NOT BIMODAL")
   Aver <- PmagDiR::c2s(t(c(A_V3[1],A_V3[2],A_V3[3])))
   delta <- abs(Aver[1,1]-Ell_conf_ALL_average[1,1])
 
-  #acos go crazy if it is bigger than 1 or smaller than -1 (subdecimal). this will fix!!
+  #acos go crazy if it is bigger than 1 or smaller than -1 (subdecimal). this will fix
   argument <- (sin(d2r(Aver[1,2]))*sin(d2r(Ell_conf_ALL_average[1,2])))+
     (cos(d2r(Aver[1,2]))*cos(d2r(Ell_conf_ALL_average[1,2]))*cos(d2r(delta)))
   if(argument>1) argument <- 1
