@@ -3043,6 +3043,15 @@ Map_KVII <- function(grid=30, center=0, title="",seaCol="light cyan",landCol="li
   }
   #plot contour
   polygon(bord$x,bord$y, col=NA)
+  text(x = c2x(180,0), y=c2y(0), "0°", pos=4)
+  text(x = c2x(180,30), y=c2y(30), "30°N", pos=4)
+  text(x = c2x(180,60), y=c2y(60), "60°N", pos=4)
+  text(x = c2x(180,-30), y=c2y(-30), "30°S", pos=4)
+  text(x = c2x(180,-60), y=c2y(-60), "60°S", pos=4)
+  text(x = c2x(180,90), y=c2y(90), "90°N", pos=4)
+  text(x = c2x(180,-90), y=c2y(-90), "90°S", pos=4)
+
+
 }
 
 #calculate PCA-derived direction and MAD from demagnetization steps
