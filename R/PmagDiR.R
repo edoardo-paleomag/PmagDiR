@@ -5553,9 +5553,6 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
 #plot the vector sum of the demagnetization diagrams loading LASA file type. Designed for Serena.
 modulo_demag <- function(type="pdf"){
 
-  library("dplyr")
-  library("PmagDiR")
-
   #funzioni grad 2 rad e viceversa
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
@@ -5567,14 +5564,12 @@ modulo_demag <- function(type="pdf"){
   data <- data[,-c(3,4,8:13)]
   data <- na.omit(data)
 
-  assign("data", data, .GlobalEnv)
-
 
   sample_list <- data.frame(unique(data[,1]))
   colnames(sample_list) <- "samples"
 
   for (i in sample_list$samples) {
-    dat_temp <- filter_all(data,all_vars(data[1]==i))
+    dat_temp <- data[(data[,1]==i),]
     dat_temp$x <- dat_temp[,3]*cos(d2r(dat_temp[,4]))*cos(d2r(dat_temp[,5]))
     dat_temp$y <- dat_temp[,3]*sin(d2r(dat_temp[,4]))*cos(d2r(dat_temp[,5]))
     dat_temp$z <- dat_temp[,3]*sin(d2r(dat_temp[,5]))
