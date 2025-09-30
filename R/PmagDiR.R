@@ -5407,7 +5407,6 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
 }
 
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
-#still under development!!
 magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot",save=FALSE,plot_ext=TRUE,
                         POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10,unit="m", UseInc=1,rev_depth=1, Shiny=FALSE){
   library(plyr, warn.conflicts = F)
@@ -5545,6 +5544,72 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
     return(Table_of_normal_polarity_zones)
   }
 }
+
+
+
+
+
+
+#plot the vector sum of the demagnetization diagrams loading LASA file type. Designed for Serena.
+modulo_demag <- function(type="pdf"){
+
+  library("dplyr")
+  library("PmagDiR")
+
+  #funzioni grad 2 rad e viceversa
+  d2r <- function(x) {x*(pi/180)}
+  r2d <- function(x) {x*(180/pi)}
+
+
+  #importa dati
+  #data <- read.csv(file.choose())
+  data <- read.table(file.choose(),header = F,skip = 6)
+  data <- data[,-c(3,4,8:13)]
+  data <- na.omit(data)
+
+  assign("data", data, .GlobalEnv)
+
+
+  sample_list <- data.frame(unique(data[,1]))
+  colnames(sample_list) <- "samples"
+
+  for (i in sample_list$samples) {
+    dat_temp <- filter_all(data,all_vars(data[1]==i))
+    dat_temp$x <- dat_temp[,3]*cos(d2r(dat_temp[,4]))*cos(d2r(dat_temp[,5]))
+    dat_temp$y <- dat_temp[,3]*sin(d2r(dat_temp[,4]))*cos(d2r(dat_temp[,5]))
+    dat_temp$z <- dat_temp[,3]*sin(d2r(dat_temp[,5]))
+    dat_temp$D1 <- rep(NA)
+    dat_temp$D2 <- rep(NA)
+    dat_temp$D3 <- rep(NA)
+    dat_temp$D123 <- rep(NA)
+    total <- 0
+    for(l in 2:nrow(dat_temp)){
+      dat_temp[l,9] <- dat_temp[l-1,6]-dat_temp[l,6]
+      dat_temp[l,10] <- dat_temp[l-1,7]-dat_temp[l,7]
+      dat_temp[l,11] <- dat_temp[l-1,8]-dat_temp[l,8]
+      dat_temp[l,12] <- sqrt((dat_temp[l,9]^2)+(dat_temp[l,10]^2)+(dat_temp[l,11]^2))
+      total <- total+dat_temp[l,12]
+    }
+    dat_temp$Dtot <- rep(NA)
+    dat_temp[1,13] <- total
+    for(n in 2:nrow(dat_temp)){
+      dat_temp[n,13] <-  dat_temp[n-1,13]-dat_temp[n,12]
+    }
+    plot(x = dat_temp[,2],
+         y = dat_temp[,13],type="l",col="blue",lwd=2,
+         xlab="Temp. (°C)",
+         ylab="Intensity (A/m)",
+         xlim = c(0,700))
+    points(x=dat_temp[,2],
+           y=dat_temp[,12],
+           pch=21,col="black",bg="red")
+    if(type=="jpeg"){
+      dev.copy(jpeg,filename=paste(i,".jpg"));
+      dev.off ()
+    }else if(type=="pdf") {PmagDiR::save_pdf(name = paste(i,".pdf",sep=""),width = 8,height = 7)}
+  }
+}
+
 
 
 
