@@ -3386,7 +3386,7 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
   circle$x <- a2cx(circle$inc,circle$dec)
   circle$y <- a2cy(circle$inc,circle$dec)
   #restore screen
-  par(fig=c(0,1,0,1))
+  #par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
   if (on_plot==FALSE) {
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
