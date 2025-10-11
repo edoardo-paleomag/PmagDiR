@@ -1421,6 +1421,10 @@ equalarea <- function(title="") {
   lines(c(0, 0), c(-1, 1), col = "gray")
   lines(c(xd1_1, xd1_2), c(yd1_1, yd1_2), col = "gray")
   lines(c(xd2_1, xd2_2), c(yd2_1, yd2_2), col = "gray")
+  text(x = a2cx(0,0),y=a2cy(0,0),"0°",pos=3)
+  text(x = a2cx(0,90),y=a2cy(0,90),"90°",pos=4)
+  text(x = a2cx(0,180),y=a2cy(0,180),"180°",pos=1)
+  text(x = a2cx(0,270),y=a2cy(0,270),"270°",pos=2)
   title(xlab = title, line=0.2, cex=0.1)
 }
 
