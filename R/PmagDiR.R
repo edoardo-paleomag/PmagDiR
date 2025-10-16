@@ -3342,6 +3342,8 @@ PPCA_HR16 <- function(VEPs){
   results$All_directions <- All_directions
   results$verdict_a <- verdict_a
   results$verdict_c <- verdict_c
+  results$pHa <- pHa
+  results$pHc <- pHc
   return(results)
 }
 
