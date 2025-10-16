@@ -4,8 +4,7 @@
 Magnetic polarity generator
 }
 \description{
-Creates plot of declination, inclination, and VGP latitude versus stratirgaphic position, and polarity interpretation \n
-Application working but still under development!
+Creates plot of declination, inclination, and VGP latitude versus stratirgaphic position, and polarity interpretation.
 }
 \usage{
 magstrat_DI(DIP,lat=0,long=0,col="red",name="polarity_plot",save=TRUE, plot_ext=FALSE, POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10, Shiny=FALSE)
