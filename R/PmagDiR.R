@@ -5628,7 +5628,7 @@ Press Enter and select:(1) srmsection file; (2) Core summary file: ")
     srm.data_backup <- srm.data                #copy the file for later use
 
     #Next two line ask if there is a MTF file to upload
-    decornt <- readline("Do you have MTF data?
+    decornt <- readline("Do you have MTF orientation data (orient file)?
 Type y and select file (downloaded from https://web.iodp.tamu.edu/LORE/) or type n: ")
     drnt.bk <- decornt              #Backup for use in decHist
     if(decornt=="y") {
