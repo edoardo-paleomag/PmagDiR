@@ -5412,6 +5412,39 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   if(type=="VGPsR"){return(VGPsR)}
 }
 
+#perform Watson's test of randomness at 95% confidence
+Watson_Random <- function(DI){
+  dat <- DI[,1:2]
+  dat <- na.omit(dat)
+  Fishdat <- PmagDiR::fisher(dat)
+  N <- Fishdat[1,4]
+  R <- Fishdat[1,5]
+  W_table <- data.frame(matrix(ncol = 2,nrow=17))
+  colnames(W_table) <- c("N","W95")
+  W_table[,1] <- seq(5,21,1)
+  W_table[,2] <- c(3.5,3.85,4.18,4.48,4.76,5.03,
+                   5.29,5.52,5.75,5.98,6.19,6.4,
+                   6.6,6.79,6.98,7.17,7.815)
+  if(N >= 21){Ro <- sqrt((N*W_table[17,2])/3)}
+  if(N < 21){
+    for(i in 1:17){
+      if(N==W_table[i,1]){
+        Ro <- sqrt((N*W_table[i,2])/3)
+      }
+    }
+  }
+  if(R <= Ro){verdict <- "Random distribution at 95%"}
+  if(R > Ro){verdict <- "Distribution not random at 95%"}
+  if(nrow(dat)<5){verdict <- "N must be at least 5"}
+  result <- list()
+  result[1] <- N
+  result[2] <- R
+  result[3] <- Ro
+  result[4] <- verdict
+  return(result)
+}
+
+
 #plot decl, inc, VGP lat, polarity in stratigraphic depth, and directions and VGP plots if requested
 magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot",save=FALSE,plot_ext=TRUE,
                         POLE=TRUE, E.A.=TRUE,cex.main=1,cex.lab=1,cex.axis=1,lwd.grid=1,h_grid=10,unit="m", UseInc=1,rev_depth=1, Shiny=FALSE){
