@@ -24,6 +24,14 @@ c2s <- function(xyz){
   return(result)
 }
 
+#functions converting degree and radians
+d2r <- function(x) {x*(pi/180)}
+r2d <- function(x) {x*(180/pi)}
+#functions converting inc(x) and dec(y) into equal area
+a2cx <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*sin(PmagDiR::d2r(y))}
+a2cy <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*cos(PmagDiR::d2r(y))}
+
+
 #return the eigenvectors of the AMS inverse matrix for later unstrain
 AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
   library(matlib)
