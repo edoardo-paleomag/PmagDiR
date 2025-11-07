@@ -6159,11 +6159,10 @@ inclination (°)",
 
 
 #temporary function that Finds Bcr of DCD curves, saved as tab delimited text, field in Gauss, mag in emu
-Bcr_finder <- function(){
+Bcr_finder <- function(save=TRUE){
   DCD <- read.table(file.choose(), skip = 1)
   DCD[,1] <- DCD[,1]/10
   zeroline <- data.frame(rbind(t(c(0,0)),t(c(1500,0))))
-  dev.new()
   plot(x = DCD[,1],y=DCD[,2],type="l",
        xlab ="field (mT)",ylab="Magnetization (emu)")
   abline(h = 0,lty=2)
@@ -6171,6 +6170,7 @@ Bcr_finder <- function(){
   Bcr <- cross[1]
   points(x=Bcr,y = 0,pch=23,bg="red")
   text(x = max(DCD[,1])/2,y=0,labels = paste("Bcr=",round(Bcr,digits = 2),"mT"),pos = 3)
+  if(save==TRUE){PmagDiR::save_pdf()}
 
 }
 
