@@ -848,7 +848,7 @@ CMDT_H23_2DiRs <- function(DI,DI2,n_boots=10000,p=0.05,Shiny=F){
 
     if(Shiny==T){
       updateProgressBar(
-        id="Rev_test_b",
+        id="Rev_test_b2",
         title = "Bootstraps",
         value=n,total=n_boots
       )
