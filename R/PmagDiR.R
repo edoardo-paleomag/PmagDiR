@@ -5433,17 +5433,21 @@ Watson_Random <- function(DI){
   W_table[,2] <- c(3.5,3.85,4.18,4.48,4.76,5.03,
                    5.29,5.52,5.75,5.98,6.19,6.4,
                    6.6,6.79,6.98,7.17,7.815)
-  if(N >= 21){Ro <- sqrt((N*W_table[17,2])/3)}
-  if(N < 21){
-    for(i in 1:17){
-      if(N==W_table[i,1]){
-        Ro <- sqrt((N*W_table[i,2])/3)
+  if(N>4){
+    if(N >= 21){Ro <- sqrt((N*W_table[17,2])/3)}
+    if(N < 21){
+      for(i in 1:17){
+        if(N==W_table[i,1]){
+          Ro <- sqrt((N*W_table[i,2])/3)
+        }
       }
     }
+    if(R <= Ro){verdict <- "Random distribution at 95%"}
+    if(R > Ro){verdict <- "Distribution not random at 95%"}
+  }else{
+    Ro <- "Not etimated"
+    verdict <- "N must be at least 5"
   }
-  if(R <= Ro){verdict <- "Random distribution at 95%"}
-  if(R > Ro){verdict <- "Distribution not random at 95%"}
-  if(nrow(dat)<5){verdict <- "N must be at least 5"}
   result <- list()
   result[1] <- N
   result[2] <- R
