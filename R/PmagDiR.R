@@ -418,9 +418,6 @@ circle_DI <- function(DI){
 #result is a file with coordinates of the ellipses points
 CMDT_H23 <- function(DI,n_boots=10000,p=0.05,Shiny=F){
   DI <- na.omit(DI)
-  #define some functions
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
 
   #return average direction cartesian
   mDI <- function(DIC){
@@ -490,10 +487,10 @@ CMDT_H23 <- function(DI,n_boots=10000,p=0.05,Shiny=F){
   dat <- DI[,1:2]
   colnames(dat) <- c("dec", "inc")
   #directions in Cartesian coordinates
-  dat$x <- cos(d2r(dat$dec))*cos(d2r(dat$inc))
-  dat$y <- sin(d2r(dat$dec))*cos(d2r(dat$inc))
-  dat$z <- sin(d2r(dat$inc))
-
+  dat$x <- NA
+  dat$y <- NA
+  dat$z <- NA
+  dat[,3:5] <- PmagDiR::s2c(dat[,1:2])
   #calculate interpolation of all data set
   Ta_temp <- as.matrix(dat[,3:5])
   Ta <- t(Ta_temp) %*% Ta_temp
@@ -503,15 +500,15 @@ CMDT_H23 <- function(DI,n_boots=10000,p=0.05,Shiny=F){
   T_val <- T_e$value
 
   #calculate dec inc of max variance
-  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
+  V1inc <- PmagDiR::r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- (PmagDiR::r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
 
   #next  calculates difference between dec_inc and average
   dat$Dec_aver <- rep(V1dec)
   dat$Inc_aver <- rep(V1inc)
   dat$delta <- abs(dat$dec-dat$Dec_aver)
-  dat$diff <- r2d(acos((sin(d2r(dat$inc))*sin(d2r(dat$Inc_aver)))+
-                         (cos(d2r(dat$inc))*cos(d2r(dat$Inc_aver))*cos(d2r(dat$delta)))))
+  dat$diff <- PmagDiR::r2d(acos((sin(PmagDiR::d2r(dat$inc))*sin(PmagDiR::d2r(dat$Inc_aver)))+
+                                  (cos(PmagDiR::d2r(dat$inc))*cos(PmagDiR::d2r(dat$Inc_aver))*cos(PmagDiR::d2r(dat$delta)))))
   #Isolate modes
   m1ind <- as.numeric(which(dat$diff<=90), arr.ind = TRUE)
   m2ind <- as.numeric(which(dat$diff>90), arr.ind = TRUE)
@@ -650,11 +647,11 @@ DISTRIBUTION NOT BIMODAL")
   delta <- abs(Aver[1,1]-Ell_conf_ALL_average[1,1])
 
   #acos go crazy if it is bigger than 1 or smaller than -1 (subdecimal). this will fix
-  argument <- (sin(d2r(Aver[1,2]))*sin(d2r(Ell_conf_ALL_average[1,2])))+
-    (cos(d2r(Aver[1,2]))*cos(d2r(Ell_conf_ALL_average[1,2]))*cos(d2r(delta)))
+  argument <- (sin(PmagDiR::d2r(Aver[1,2]))*sin(PmagDiR::d2r(Ell_conf_ALL_average[1,2])))+
+    (cos(PmagDiR::d2r(Aver[1,2]))*cos(PmagDiR::d2r(Ell_conf_ALL_average[1,2]))*cos(PmagDiR::d2r(delta)))
   if(argument>1) argument <- 1
   if(argument<(-1)) argument <- -1
-  diff <- r2d(acos(argument))
+  diff <- PmagDiR::r2d(acos(argument))
   if(diff>90){Ell_conf_ALL <- PmagDiR::flip_DI(Ell_conf_ALL)}
 
   #clean screen to avoid figure over figure
@@ -689,9 +686,276 @@ Passed"))
       PmagDiR::plot_B95((Aver[1,1]+180)%%360,-Aver[1,2],B_conf = PmagDiR::flip_DI(Ell_conf_ALL),
                         on_plot = T,col_d = "orange",col_u = "yellow")
     }else{PmagDiR::plot_B95(Aver[1,1],Aver[1,2],B_conf = Ell_conf_ALL,on_plot = T,col_d = "orange",col_u = "yellow")}
-    }
+  }
 
   #buld result file
+  result <- list()
+  result$CMDT_value <- A_E3
+  result$CMDT_critical_value <- E_crit
+  result$p_value <- p_value
+  if(A_E3<E_crit){
+    result$mean_direction <- Aver
+    result$ellipsis <- Ell_conf_ALL
+  }else{
+    result$mean_direction <- NULL
+    result$ellipsis <- NULL
+  }
+  return(result)
+}
+
+#perform bootstraptest of Heslop et al 2023 for common mean direction of tow separate datasets
+#result is a file with coordinates of the ellipses points
+CMDT_H23_2DiRs <- function(DI,DI2,n_boots=10000,p=0.05,Shiny=F){
+  DI <- na.omit(DI)
+  DI2 <- na.omit(DI2)
+
+  #return average direction cartesian
+  mDI <- function(DIC){
+    X <- matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3)
+    #mean direction
+    mDI <- (matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3))/norm(x = X,type = "E")
+    return(mDI)
+  }
+
+  #function calculation of matrix 2X3 M for projecting data onto tangent plane, takes average direction
+  Generate_M <- function(mDI){
+    M <- matrix(ncol=3,nrow = 2)
+    c <- mDI[3]
+    b <- matrix(mDI[1:2],ncol = 1)
+    if(c!=0){
+      M[1:2,1:2] <- (c/abs(c)*diag(2))-(c/(abs(c)+abs(c)^2)*(b%*%t(b)))
+    }else{M[1:2,1:2] <- diag(2)-(b%*%t(b))}
+    M[1:2,3] <- -b
+    return(M)
+  }
+
+  #Function estimation of matrix 2X2 G, covariance of Mm at m, takes M and DIC
+  Generate_G <- function(M,DIC){
+    #sum of all unit vector
+    X <- matrix(c(sum(DIC[,1]),sum(DIC[,2]),sum(DIC[,3])),nrow = 1,ncol = 3)
+    DIC <- as.matrix(DIC)
+    N <- nrow(DIC)
+    G <- matrix(nrow = 2,ncol = 2)
+    #left parameter of the equation
+    Gleft <- norm(x = (X/N),type = "E")^(-2)
+    #populate G with calculating all elements
+    for(u in 1:2){
+      for(v in 1:2){
+        Gright <- 0
+        for(i in 1:N){
+          Gright_temp <- (t(M[u,]) %*% (DIC[i,] %*% t(DIC[i,])) %*% M[v,])
+          Gright <- Gright+Gright_temp
+        }
+        Gright <- Gright/N
+        G[u,v] <- Gleft*Gright
+      }
+    }
+    return(G)
+  }
+
+  #find rotational matrix, a and b must be in the form 1X3
+  Find_Q <- function(a, b) {
+    # Convertire in vettori colonna
+    a <- matrix(a, nrow = 3, ncol = 1)
+    b <- matrix(b, nrow = 3, ncol = 1)
+
+    # Calcolare il vettore ortogonale c
+    c <- b - a %*% t(a) %*% b
+    c <- c / sqrt(sum(c^2))  # Normalizzazione
+
+    # Calcolare l'angolo alpha tra a e b
+    alpha <- acos(sum(a * b))
+
+    # Matrice A (antisimmetrica)
+    A <- a %*% t(c) - c %*% t(a)
+
+    # Calcolare la matrice di rotazione Q
+    Q <- diag(3) + sin(alpha) * A + (cos(alpha) - 1) * (a %*% t(a) + c %*% t(c))
+    return(Q)
+  }
+
+  #calculate cartesian of both sets
+  DI$x <- NA
+  DI$y <- NA
+  DI$z <- NA
+  DI[,3:5] <- PmagDiR::s2c(DI[,1:2])
+
+  DI2$x <- NA
+  DI2$y <- NA
+  DI2$z <- NA
+  DI2[,3:5] <- PmagDiR::s2c(DI2[,1:2])
+
+
+  #take the two modes and generate all necessary parameters
+  DIC1 <- DI[,3:5]
+  DIC2 <- DI2[,3:5]
+  N1 <- nrow(DIC1)
+  N2 <- nrow(DIC2)
+  m1 <- mDI(DIC1)
+  M1 <- Generate_M(m1)
+  G1 <- Generate_G(M1,DIC1)
+  m2 <- mDI(DIC2)
+  M2 <- Generate_M(m2)
+  G2 <- Generate_G(M2,DIC2)
+
+  #generate matrix A and find the minimum eigenvector, which estimate m0
+  A <- (N1+N2)*((t(M1)%*%solve(G1)%*%M1)+(t(M2)%*%solve(G2)%*%M2))
+  A_vec <- eigen(A)
+  A_val_index <- which.min(A_vec$values)
+  A_E3<- min(A_vec$values)
+  A_V3 <- A_vec$vectors[,A_val_index] #m0
+
+  #take eigenvectors of A are reorder, to calulate the 95% confidence of the whole dataset below
+  #eigenvectors and eigenvalues of A
+  A_idx <- order(A_vec$values, decreasing = TRUE)
+  A_vec_ord <- A_vec$vectors[,A_idx]
+  A_val <- A_vec$values[A_idx]
+
+
+  #calculate rotation matrix Q1 and Q2
+  Q1 <- Find_Q(A_V3,m1)
+  Q2 <- Find_Q(A_V3,m2)
+
+  #Rotate the two data sets toward the m0 estimates A_V3
+  DIC10 <- matrix(ncol = 3,nrow=N1)
+  for (i in 1:N1){DIC10[i,1:3] <- as.matrix(Q1 %*% t(DIC1[i,1:3]))}
+  DIC20 <- matrix(ncol = 3,nrow=N2)
+  for (i in 1:N2){DIC20[i,1:3] <- as.matrix(Q2 %*% t(DIC2[i,1:3]))}
+
+  Min_eigen_list <- matrix(ncol = 1, nrow = 0)
+
+  #list of T for confidence calculation
+  T_b <- matrix(ncol = 1,nrow = 0)
+  n_lambda <- 0
+  #start bootstrap
+  for(n in 1:n_boots){
+    DIC10b <- DIC10[sample(N1,N1,replace = T),]
+    m10b <- mDI(DIC10b)
+    M10b <- Generate_M(m10b)
+    G10b <- Generate_G(M10b,DIC10b)
+    DIC20b <- DIC20[sample(N2,N2,replace = T),]
+    m20b <- mDI(DIC20b)
+    M20b <- Generate_M(m20b)
+    G20b <- Generate_G(M20b,DIC20b)
+    Ab <- (N1+N2)*((t(M10b)%*%solve(G10b)%*%M10b)+(t(M20b)%*%solve(G20b)%*%M20b))
+    Ab_vec <- eigen(Ab)
+    Ab_E3<- min(Ab_vec$values)
+    Min_eigen_list <- rbind(Min_eigen_list,Ab_E3<- min(Ab_vec$values))
+    if(Ab_E3>=A_E3){n_lambda <- n_lambda+1}
+
+    T_b0 <- t(A_V3) %*% Ab %*% A_V3 #equation 11
+    T_b <- rbind(T_b,T_b0)
+
+    if(Shiny==T){
+      updateProgressBar(
+        id="Rev_test_b",
+        title = "Bootstraps",
+        value=n,total=n_boots
+      )
+    }else{if(n%%200==0){cat(paste(n," bootstraps done.
+"))}}
+  }
+
+  Min_eigen_list[,1] <- Min_eigen_list[order(Min_eigen_list[,1]),]
+  p_value <- (n_lambda+1)/(n_boots+1)
+  E_crit <- quantile(Min_eigen_list,probs = 1-p)
+
+  T_b[,1] <- T_b[order(T_b[,1]),]
+  T_c <- quantile(T_b, probs= 1-p)
+
+  #find confidence ellipses
+  mCI <- matrix(ncol = 3,nrow = 0)  # 181 perché seq(0,360,2) ha 181 valori
+
+  # Loop su theta
+  for (i in seq(0, 360, 2)) {
+    theta <- i * pi/180  # Conversione gradi -> radianti
+
+    ylen <- numeric(201)
+    phi <- seq(0, pi/2, length.out = 201)
+
+    for (j in 1:201) {
+      y <- c(
+        sin(phi[j]) * cos(theta) * sqrt(T_c)/sqrt(A_val[1]),
+        sin(phi[j]) * sin(theta) * sqrt(T_c)/sqrt(A_val[2]),
+        cos(phi[j]) * sqrt(T_c)/sqrt(A_val[3])
+      )
+      ylen[j] <- sqrt(sum(y^2))
+    }
+
+    # Interpolazione con gestione dei NA
+    sorted_idx <- order(ylen)
+    phi_sorted <- phi[sorted_idx]
+    ylen_sorted <- ylen[sorted_idx]
+
+    if (min(ylen_sorted) <= 1.0 && max(ylen_sorted) >= 1.0) {
+      phi0 <- approx(ylen_sorted, phi_sorted, xout = 1.0, rule = 2)$y
+    } else {
+      phi0 <- tail(phi_sorted, 1)  # Se l’interpolazione fallisce, usa il massimo di phi
+    }
+
+    # Ricalcola y usando phi0 interpolato
+    y <- c(
+      sin(phi0) * cos(theta) * sqrt(T_c)/sqrt(A_val[1]),
+      sin(phi0) * sin(theta) * sqrt(T_c)/sqrt(A_val[2]),
+      cos(phi0) * sqrt(T_c)/sqrt(A_val[3])
+    )
+
+    # Trasforma nello spazio originale senza `t()`
+    mCI_t <- t(A_vec_ord %*% y)
+    mCI <- rbind(mCI,mCI_t)
+
+  }
+  Ell_conf_ALL <- PmagDiR::c2s(as.data.frame(mCI))
+  #flip if antipodal from mean direction
+  Ell_conf_ALL_average <- PmagDiR::c2s(data.frame(t(c(mean(mCI[,1]),mean(mCI[,2]),mean(mCI[,3])))))
+
+  #calculate average of what is plot (A_V3 could be antipodal)
+  Aver <- PmagDiR::c2s(t(c(A_V3[1],A_V3[2],A_V3[3])))
+  delta <- abs(Aver[1,1]-Ell_conf_ALL_average[1,1])
+
+  #acos go crazy if it is bigger than 1 or smaller than -1 (subdecimal). this will fix
+  argument <- (sin(PmagDiR::d2r(Aver[1,2]))*sin(PmagDiR::d2r(Ell_conf_ALL_average[1,2])))+
+    (cos(PmagDiR::d2r(Aver[1,2]))*cos(PmagDiR::d2r(Ell_conf_ALL_average[1,2]))*cos(PmagDiR::d2r(delta)))
+  if(argument>1) argument <- 1
+  if(argument<(-1)) argument <- -1
+  diff <- PmagDiR::r2d(acos(argument))
+  if(diff>90){Ell_conf_ALL <- PmagDiR::flip_DI(Ell_conf_ALL)}
+
+  #clean screen to avoid figure over figure
+  par(fig=c(0,1,0,1))
+  plot(0, xlim=c(0,1), ylim=c(0,1),
+       xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+
+  #plot histogram
+  par(fig=c(0,0.6,0.1,1))
+  Hist_res <- hist(Min_eigen_list,breaks = max(Min_eigen_list)*4,col="red",
+                   xlim=c(0,30),xlab="V3",main=NA,freq=F,cex.lab=1.5)
+  abline(v = E_crit,lwd=1.5)
+  abline(v = A_E3,lwd=1.5,lty=2)
+  if(Shiny==FALSE){
+    text <- paste("V3 obs.:", round(A_E3,digit=2), "
+V3 crit.:", round(E_crit, digit=2),ifelse(A_E3>E_crit,"
+Not passed","
+Passed"))
+    text(x=22.5, y=max(Hist_res$density)-(max(Hist_res$density)/8),pos=4,text, cex=1)
+  }
+  #plot_directions_in_common_polarity
+  par(fig=c(0.52,1,0,1),new=TRUE)
+  PmagDiR::plot_DI(DI,col_d = rgb(1,0,0,0.5),col_u=rgb(1,0.75,1,0.5),
+                   col_ext = "black")
+  PmagDiR::plot_DI(DI2,col_d = rgb(0,0,1,0.5),
+                   col_u=rgb(0,1,1,0.5),col_ext = "black",on_plot = TRUE)
+  if(A_E3<E_crit) {
+    #calculare average mode 1 cartesian
+    mode1_check <- PmagDiR::fisher(DI)
+    #check if mode 1 and whole average are not antipodal
+    if(sign(mode1_check[1,2]) != sign(Aver[1,2])){
+      PmagDiR::plot_B95((Aver[1,1]+180)%%360,-Aver[1,2],B_conf = PmagDiR::flip_DI(Ell_conf_ALL),
+                        on_plot = T,col_d = "orange",col_u = "yellow")
+    }else{PmagDiR::plot_B95(Aver[1,1],Aver[1,2],B_conf = Ell_conf_ALL,on_plot = T,col_d = "orange",col_u = "yellow")}
+  }
+
+  #build result file
   result <- list()
   result$CMDT_value <- A_E3
   result$CMDT_critical_value <- E_crit
@@ -3437,7 +3701,7 @@ plot_B95 <- function(D,I,B_conf, col_d="red",col_u="white",col_l="black", symbol
   s2cz <- function(y) {sin(d2r(y))}
   #save declination and inc and calculate new system for rotation
   dec <- D
-  newSdec <- ifelse((D+180)>360,D-180,D+180)
+  newSdec <- (D+180)%%360
   inc <- I
   newSinc <- 90-I
 
