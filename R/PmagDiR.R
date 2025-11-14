@@ -3,23 +3,17 @@
 #service functs
 #directions in Cartesian coordinates, and vice versa
 s2c <- function(DI,J=1){
-  #cart do rad and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
   data <- DI
-  data$x <- J*cos(d2r(data[,1]))*cos(d2r(data[,2]))
-  data$y <- J*sin(d2r((data[,1])))*cos(d2r((data[,2])))
-  data$z <- J*sin(d2r((data[,2])))
+  data$x <- J*cos(PmagDiR::d2r(data[,1]))*cos(PmagDiR::d2r(data[,2]))
+  data$y <- J*sin(PmagDiR::d2r((data[,1])))*cos(PmagDiR::d2r((data[,2])))
+  data$z <- J*sin(PmagDiR::d2r((data[,2])))
   result <- data[,-c(1,2)]
   return(result)
 }
 c2s <- function(xyz){
-  #cart do rad and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
   data <- as.data.frame(xyz)
-  data$dec <- r2d(atan2(data[,2],data[,1]))
-  data$inc <- r2d(asin(data[,3]/(sqrt((data[,1]^2)+(data[,2]^2)+(data[,3]^2)))))
+  data$dec <- PmagDiR::r2d(atan2(data[,2],data[,1]))
+  data$inc <- PmagDiR::r2d(asin(data[,3]/(sqrt((data[,1]^2)+(data[,2]^2)+(data[,3]^2)))))
   result <- data[,-c(1,2,3)]
   return(result)
 }
