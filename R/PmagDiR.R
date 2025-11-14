@@ -5445,7 +5445,7 @@ Watson_Random <- function(DI){
     if(R <= Ro){verdict <- "Random distribution at 95%"}
     if(R > Ro){verdict <- "Distribution not random at 95%"}
   }else{
-    Ro <- "Not etimated"
+    Ro <- 0
     verdict <- "N must be at least 5"
   }
   result <- list()
