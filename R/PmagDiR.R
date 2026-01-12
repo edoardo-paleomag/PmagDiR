@@ -2657,15 +2657,13 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   T_val <- T_e$values
   #calculate dec inc of max variance
   V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-  V1dec <- r2d(atan2(T_vec[2,1],T_vec[1,1]))
-  V1dec <- ifelse(V1dec<0,V1dec+360,V1dec)
+  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
 
   #force V1 to positive
-  V1inc <- abs(V1inc)
   V1dec <- ifelse(V1inc<0,(V1dec+180)%%360,V1dec)
+  V1inc <- abs(V1inc)
 
-  V2dec <- r2d(atan2(T_vec[2,2],T_vec[1,2]))
-  V2dec <- ifelse(V2dec<0,V2dec+360,V2dec)
+  V2dec <- (r2d(atan2(T_vec[2,2],T_vec[1,2])))%%360
   V2inc <- r2d(asin(T_vec[3,2]/(sqrt((T_vec[1,2]^2)+(T_vec[2,2]^2)+(T_vec[3,2]^2)))))
 
   #Calculate difference between V1 and V2 to have the declination of V2 with respect to V1
