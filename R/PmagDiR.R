@@ -1915,6 +1915,211 @@ Graph saved as",paste(name,".pdf"),"
   if(return==TRUE){return(unf_data)}
 }
 
+#ffind_boot_S function is part of PmagDiR, compiled for Magnetic-A after the ffind_boot function
+ffind_boot_S <- function(DI,confidence=95,nb=1000, bootstrap= 1, f_increment=0.01,strat_pos=F) {
+  data <- DI[,1:2]
+  data <- na.omit(data)
+  N <- nrow(data)
+  colnames(data) <- c("dec", "inc")
+  #calculate E-I of real data
+  Inc_E_R <- inc_E_finder(data)
+  Inc_E_R$V1inc <- abs(Inc_E_R$V1inc)
+  Inc <- round(Inc_E_R$V1inc, digits=1)
+  Ecut <- round(Inc_E_R$E, digits=2)
+  Edec <- round(Inc_E_R$DV1V2, digits=1)
+
+  #calculate E-I correction sequence of real data
+  Seq_I_E_R <- PmagDiR::ffind(data,f_inc = 0.0005)
+  colnames(Seq_I_E_R) <- c("V1inc","E","DV1V2","f")
+  alert <- ifelse(length(Seq_I_E_R$V1inc)==1,"y","n")
+  Ffinal <- round(Seq_I_E_R[length(Seq_I_E_R$f),4], digits=2)
+  Inc_f <- round(Seq_I_E_R[length(Seq_I_E_R$V1inc),1], digits=1)
+  Efinal <- round(Seq_I_E_R[length(Seq_I_E_R$E),2], digits=2)
+  Edec_f <- round(Seq_I_E_R[length(Seq_I_E_R$DV1V2),3], digits=1)
+  f <- min(Seq_I_E_R$f)
+  if(alert=="y") f <- 1
+  unf_data <- PmagDiR::unflat_DI(data,f)
+  colnames(unf_data) <- c("dec","inc")
+
+  #plot frame
+  par(fig=c(0,1,0,1), new= FALSE)
+  plot(NA, xlim= c(0,90), ylim= c(1,3.5), xaxp= c(0,90, 9),
+       xlab="Inclination (°)", ylab="Elongation",cex.lab=1.5)
+
+  #plot tk03.GAD model E-I
+  x <- 0:90
+  y <- PmagDiR::tk03(x)
+  points(x=x, y= y, type= "l", col="blue", lwd=3)
+
+  #Plot real data E-I and correction of real data
+  points(x=Seq_I_E_R$V1inc, y= Seq_I_E_R$E, type= "l", col="red", lwd=3)
+  points(x=Inc_E_R$V1inc,y=Inc_E_R$E,pch=21,
+         col="black", bg="blue", cex=1.5)
+  points(x=Inc_f,y=Efinal,
+         pch=21, col="black", bg="red", cex=1.5)
+
+  text <- paste("N:", N, "
+Inc:", Inc,"
+E:", Ecut,"
+Edec:",Edec)
+
+  text2 <- paste("f:", Ffinal, "
+Inc_Unfl:", Inc_f, "
+E_Unfl:", Efinal, "
+Edec_Unfl:", Edec_f)
+
+  text(x=0, y=3.2,pos=4,text, cex= 1.2)
+  text(x=20, y=3.2, pos=4, text2, cex=1.2)
+  if (alert=="y"){
+    text3 <- "Distribution not flattened"
+    text(x=0, y=3, pos=4,text3,cex=1)
+  }
+  #create files for initial and final readings for the histograms
+  init_E_I <- as.data.frame(matrix(ncol=3,nrow=0))
+  final_E_I <- as.data.frame(matrix(ncol=3,nrow=0))
+  colnames(init_E_I) <- c("Inc","E","E_dec")
+  colnames(final_E_I)<- c("Inc","E","E_dec")
+  if(alert=="y") par(fig=c(0,1,0,1))
+  if(alert=="y") stop("
+DISTRIBUTION NOT FLATTENED.")
+  #creates file for fisher of bootstrapped pseudosamples
+  b_fisher <- data.frame(matrix(ncol=6, nrow=0))
+  n <- 0
+  par(fig=c(0,1,0,1), new=TRUE)
+  plot(NA, xlim= c(0,90), ylim= c(1,3.5), xaxt="n",yaxt="n",
+       xlab="", ylab="", axes=FALSE)
+  if(bootstrap==2){
+    repeat {
+      n <- n+1
+      Seq_I_E_B <- as.data.frame(matrix(ncol=3,nrow=0))
+      dataprov <- PmagDiR::boots_DI(data)
+      Seq_I_E_B <- PmagDiR::ffind(dataprov, f_inc = f_increment)
+      #calculate fisher of bootstrapped flattened dataset and paste on file
+      b_fisher_temp <- PmagDiR::fisher(unflat_DI(common_DI(dataprov),f = min(Seq_I_E_B[,4])))
+      b_fisher <- rbind(b_fisher,b_fisher_temp)
+      #plot bootstrapped lines
+      points(x=Seq_I_E_B$V1inc, y= Seq_I_E_B$E,
+             type= "l", col=rgb(1, 0, 0, 0.08), lwd=1.2)
+      i_E_I <- Seq_I_E_B[1,]
+      f_E_I <- Seq_I_E_B[length(Seq_I_E_B[,1]),]
+      colnames(i_E_I) <- c("Inc","E","E_dec")
+      colnames(f_E_I)<- c("Inc","E","E_dec")
+
+      #isolate initial and final readings for histograms
+      init_E_I <- rbind(init_E_I,i_E_I)
+      final_E_I <- rbind(final_E_I,f_E_I)
+      init_E_I <- na.omit(init_E_I)
+      final_E_I <- na.omit(final_E_I)
+      finaln <- length(final_E_I[,1])
+      updateProgressBar(
+        id="ffindbootstrap",
+        value=finaln,total=nb,
+      )
+
+      if(finaln==nb) {
+        output$validboots <- renderText({paste("Total number of simulations:",n)})
+        break
+      }
+    }
+
+    #replot real data with different color
+    points(x=Seq_I_E_R$V1inc, y= Seq_I_E_R$E, type= "l", col="yellow", lwd=3)
+    points(x=Inc_E_R$V1inc,y=Inc_E_R$E,pch=21,
+           col="black", bg="blue", cex=1.5)
+    points(x=x, y= y, type= "l", col="blue", lwd=3)
+    points(x=Inc_f,y=Efinal,
+           pch=21, col="black", bg="red", cex=1.5)
+
+
+    #replot results in case covered by boostrapps
+    text(x=0, y=3.2,pos=4,text, cex= 1.2)
+    text(x=20, y=3.2, pos=4, text2, cex=1.2)
+
+    colnames(init_E_I) <- c("Inc","E","E_dec","f")
+    colnames(final_E_I)<- c("Inc","E","E_dec","f")
+    final_E_I <- final_E_I[order(final_E_I$Inc),] #order final results by inclination
+    final_E_Ibk <- final_E_I
+
+    conf <- confidence/100
+    num <- round((nb*(1-conf))/2,digits=0)
+    Lconf <- num
+    Uconf <- nb-num
+    final_E_I <- final_E_I[Lconf:Uconf,]    #cut bootstrapped results for 95% confidence
+
+    #draw two lines for 95% confidence margin
+    arrows(x0=final_E_I[1,1],x1=final_E_I[1,1],
+           y0=1,y1=final_E_I[1,2], length = 0,lty=2)
+
+    arrows(x0=final_E_I[length(final_E_I$Inc),1],
+           x1=final_E_I[length(final_E_I$Inc),1],
+           y0= 1, y1= final_E_I[length(final_E_I$Inc),2],
+           length = 0,lty=2)
+    Inc_l95 <- round(final_E_I[1,1], digits= 1)
+    Inc_u95 <- round(final_E_I[length(final_E_I$Inc),1], digits=1)
+
+    text(x=final_E_I[1,1], y=1, pos=2, Inc_l95,cex=1.2)
+    text(x=final_E_I[length(final_E_I$Inc),1], y=1, pos=4, Inc_u95,cex=1.2)
+
+
+    #plot histogram of E_declination with respect V1 before and after correction
+    par(fig=c(0.6,1,0.56,0.99), new=TRUE)
+    hist(init_E_I$E_dec, xlim=c(-90,90), breaks= 90,
+         axes=FALSE,xlab="",ylab="",col="blue", border="blue", main="")
+    #plot lables closer than standard to axes
+    title(xlab = "Edec(°)", line=1.9, cex=0.2)
+    title(ylab = "Frequency", line=1.9,cex=0.2)
+    #after
+    par(fig=c(0.6,1,0.56,0.99), new=TRUE)
+    hist(final_E_Ibk$E_dec, xlim=c(-90,90), xaxp=c(-90,90,4),
+         breaks = 90, xlab = "", ylab = "",
+         main="", cex.axis=0.8,col="red",border ="red")
+
+    #recalculate boostrtapped confidence for Edec for plotting confidence margin
+    final_E_I_Edec <- final_E_Ibk
+    colnames(final_E_I_Edec) <- c("Inc","E","E_dec")
+    final_E_I_Edec <- final_E_I_Edec[order(final_E_I_Edec$E_dec),]
+    final_E_I_Edec <- final_E_I_Edec[Lconf:Uconf,]
+    abline(v=final_E_I_Edec[1,3],lwd=1, lty=2)
+    abline(v=final_E_I_Edec[length(final_E_I_Edec[,3]),3],lwd=1, lty=2)
+
+    #plot histogram of inclination before and after correction
+    par(fig=c(0.6,1,0.25,0.68), new=TRUE)
+    hist(init_E_I$Inc,xlim=c(0,90), breaks=90,
+         axes=FALSE,xlab="",ylab="",col="blue",border="blue", main="")
+    par(fig=c(0.6,1,0.25,0.68), new=TRUE)
+    hist(final_E_Ibk$Inc, xlim=c(0,90), xaxp=c(0,90,6),
+         breaks=90,xlab = "", ylab = "",
+         main="",cex.axis=0.8,col="red",border ="red")
+    abline(v=final_E_I[1,1],lwd=1,lty=2)
+    abline(v=final_E_I[length(final_E_I[,1]),1],lwd=1,lty=2)
+    title(xlab = "Inc(°)", line=1.9, cex=0.2)
+    title(ylab = "Frequency", line=1.9, cex=0.2)
+  }
+
+  ffind_boot_stat <- data.frame(matrix(ncol=3,nrow = 5))
+  colnames(ffind_boot_stat) <- c("Mean","Low","High")
+  rownames(ffind_boot_stat) <- c("Inc","E_dec","f","Elong","N")
+  ffind_boot_stat[1,1] <- Inc_f
+  ffind_boot_stat[1,2] <- ifelse(bootstrap==2,Inc_l95,"")
+  ffind_boot_stat[1,3] <- ifelse(bootstrap==2,Inc_u95,"")
+  ffind_boot_stat[2,1] <- Edec_f
+  ffind_boot_stat[2,2] <- ifelse(bootstrap==2,round(final_E_I_Edec[1,3],digits = 2),"")
+  ffind_boot_stat[2,3] <- ifelse(bootstrap==2,round(final_E_I_Edec[nrow(final_E_I_Edec),3],digits=2),"")
+  ffind_boot_stat[3,1] <- round(f, digits=2)
+  ffind_boot_stat[3,2:3] <- t(c("",""))
+  ffind_boot_stat[4,1] <- Efinal
+  ffind_boot_stat[4,2:3] <- t(c("",""))
+  ffind_boot_stat[5,1] <- N
+  ffind_boot_stat[5,2:3] <- t(c("",""))
+  #create result list for export
+  ffind_boot_result <- list(0)
+  ffind_boot_result[[1]] <- unf_data
+  ffind_boot_result[[2]] <- ffind_boot_stat
+  ffind_boot_result[[3]] <- b_fisher
+  return(ffind_boot_result)
+  par(fig=c(0,1,0,1))
+}
+
 #flattening factor finder function from Dec Inc, results in Inc, E, and E declination
 ffind <-function(DI, f_inc=0.005) {
   data <- DI[,1:2]
@@ -2464,10 +2669,11 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   V2inc <- r2d(asin(T_vec[3,2]/(sqrt((T_vec[1,2]^2)+(T_vec[2,2]^2)+(T_vec[3,2]^2)))))
 
   #Calculate difference between V1 and V2 to have the declination of V2 with respect to V1
-  DV1V2 <- V1dec-V2dec
-  DV1V2 <- ifelse(DV1V2<0,DV1V2+360,DV1V2)
-  DV1V2 <- ifelse(DV1V2>90,ifelse(DV1V2<270,DV1V2-180,DV1V2),DV1V2)
-  DV1V2 <- ifelse(DV1V2>270,DV1V2-360,DV1V2)
+  DV1V2 <- (V1dec-V2dec)%%360
+  if (DV1V2 < 90 || DV1V2 > 270) DV1V2 <- (DV1V2-180)%%360
+  #
+  # DV1V2 <- ifelse(DV1V2>90,ifelse(DV1V2<270,DV1V2-180,DV1V2),DV1V2)
+  # DV1V2 <- ifelse(DV1V2>270,DV1V2-360,DV1V2)
 
   E <- T_val[2]/T_val[3]
 
