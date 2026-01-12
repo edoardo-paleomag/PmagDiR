@@ -2017,7 +2017,6 @@ DISTRIBUTION NOT FLATTENED.")
       )
 
       if(finaln==nb) {
-        output$validboots <- renderText({paste("Total number of simulations:",n)})
         break
       }
     }
@@ -2116,6 +2115,7 @@ DISTRIBUTION NOT FLATTENED.")
   ffind_boot_result[[1]] <- unf_data
   ffind_boot_result[[2]] <- ffind_boot_stat
   ffind_boot_result[[3]] <- b_fisher
+  ffind_boot_result[[4]] <- n
   return(ffind_boot_result)
   par(fig=c(0,1,0,1))
 }
