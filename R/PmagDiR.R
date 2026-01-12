@@ -2644,7 +2644,7 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   #declination of elongation
   DV1V2 <- (pars[["vectors"]][["V2dec"]]-pars[["vectors"]][["V1dec"]])%%360
   #V2dec <- (V2dec-fpars$dec)%%360
-  if (DV1V2 > 90 && DV1V2 < 270) DV1V2 <- (DV1V2+180)%%360
+  if (DV1V2 > 90 && DV1V2 < 270) DV1V2 <- DV1V2-180
   E <- pars[["values"]][2] / pars[["values"]][3]
   V1inc <- pars[["vectors"]][["V1inc"]]
 
