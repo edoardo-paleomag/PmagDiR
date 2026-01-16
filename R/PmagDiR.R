@@ -3980,7 +3980,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
   s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
   s2cz <- function(y) {sin(d2r(y))}
   #save declination and inc and calculate new system for rotation
-  newSlon <- ifelse((lon+180)>360,lon-180,lon+180)
+  newSlon <- (lon+180)%%360
   newSlat <- 90-lat
   newSlonr <- d2r(newSlon)
   newSlatr <- d2r(newSlat)
@@ -4736,7 +4736,7 @@ sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
        xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
   #plot coastline if true
   if(coast==TRUE){
-    cst <- world_coastline
+    cst <- PmagDiR::world_coastline
     colnames(cst) <- c("lon","lat")
     cst$x <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2x(cst$lon,cst$lat))
     cst$y <- ifelse(cut(cst$lon,cst$lat)<0,NA,c2y(cst$lon,cst$lat))
@@ -4770,14 +4770,11 @@ sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
     }
   }
 
-  #plot black frame around globe
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
   #plot external circle
   frame_dec = 0:360
   frame_inc=rep(0,length(frame_dec))
-  x = a2cx(frame_inc,frame_dec)
-  y = a2cy(frame_inc,frame_dec)
+  x = PmagDiR::a2cx(frame_inc,frame_dec)
+  y = PmagDiR::a2cy(frame_inc,frame_dec)
   lines(x, y, col = "black")
   title(xlab = title, line=0.2, cex=0.1)
 }
