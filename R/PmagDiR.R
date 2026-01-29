@@ -25,6 +25,11 @@ r2d <- function(x) {x*(180/pi)}
 a2cx <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*sin(PmagDiR::d2r(y))}
 a2cy <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*cos(PmagDiR::d2r(y))}
 
+#functions spherical (Dec=x, Inc=y) to Cartesian
+s2cx <- function(x,y) {cos(PmagDiR::d2r(x))*cos(PmagDiR::d2r(y))}
+s2cy <- function(x,y) {sin(PmagDiR::d2r(x))*cos(PmagDiR::d2r(y))}
+s2cz <- function(y) {sin(PmagDiR::d2r(y))}
+
 
 #return the eigenvectors of the AMS inverse matrix for later unstrain
 AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
@@ -2611,10 +2616,10 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
   else if(symbol=="t") {pch <- 24}
   else{stop("Please select valid symbol. Check help for info.",call. = F)}
   if(UD=="D"){
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg= col_d)
   }else{
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg=col_u)
   }
   lines(ellipses$x,ellipses$y,lty=1, col=col_l, lwd=1.8)
@@ -3836,47 +3841,37 @@ PPCA_HR16 <- function(VEPs){
 #function that plots a95 with dec,inc,a95
 plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FALSE, save=FALSE, name="F_a95"){
   library("dplyr", warn.conflicts = FALSE)
-  #functions converting degree and radians
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
-  #functions spherical (Dec=x, Inc=y) to Cartesian
-  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
-  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
-  s2cz <- function(y) {sin(d2r(y))}
   #save declination and inc and calculate new system for rotation
   dec <- D
   newSdec <- ifelse((D+180)>360,D-180,D+180)
   inc <- I
   newSinc <- 90-I
-  newSdecr <- d2r(newSdec)
-  newSincr <- d2r(newSinc)
+  newSdecr <- PmagDiR::d2r(newSdec)
+  newSincr <- PmagDiR::d2r(newSinc)
   a95 <- a
   circle <- as.data.frame(matrix(ncol=2,nrow=0))
   #loop that create a95 and rotate it around new coordinate (dec, inc)
   for (i in seq(0,360,2)){
     circleP <- as.data.frame(matrix(ncol=2,nrow=1))
-    x <- s2cx(i,(90-a95))
-    y <- s2cy(i,(90-a95))
-    z <- s2cz(90-a95)
+    x <- PmagDiR::s2cx(i,(90-a95))
+    y <- PmagDiR::s2cy(i,(90-a95))
+    z <- PmagDiR::s2cz(90-a95)
     vec <- as.matrix(c(x,y,z))
     R_elements <- c(cos(newSincr)*cos(newSdecr), -sin(newSdecr), -sin(newSincr)*cos(newSdecr),
                     cos(newSincr)*sin(newSdecr), cos(newSdecr), -sin(newSincr)*sin(newSdecr),
                     sin(newSincr), 0, cos(newSincr))
     R <- matrix(R_elements,nrow=3, byrow=TRUE)
     newvec <- R%*%vec
-    newdec <- r2d(atan2(newvec[2,1],newvec[1,1]))
+    newdec <- PmagDiR::r2d(atan2(newvec[2,1],newvec[1,1]))
     newdec <- ifelse(newdec<0,newdec+360,newdec)
     #absolute value avoid point outside the graph
-    newinc <- abs(r2d(asin(newvec[3,1])))
+    newinc <- abs(PmagDiR::r2d(asin(newvec[3,1])))
     circleP[1,1:2] <- c(newdec,newinc)
     circle <- rbind(circle,circleP)
   }
   colnames(circle) <- c("dec","inc")
-  circle$x <- a2cx(circle$inc,circle$dec)
-  circle$y <- a2cy(circle$inc,circle$dec)
+  circle$x <- PmagDiR::a2cx(circle$inc,circle$dec)
+  circle$y <- PmagDiR::a2cy(circle$inc,circle$dec)
   #restore screen
   #par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
@@ -3884,11 +3879,11 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
     equalarea()
-    }
+  }
   UD <- ifelse(inc>0,"D","U")
   inc <- abs(inc)
-  X <- a2cx(inc,dec)
-  Y <- a2cy(inc,dec)
+  X <- PmagDiR::a2cx(inc,dec)
+  Y <- PmagDiR::a2cy(inc,dec)
   if(symbol=="c") {pch <- 21}
   else if(symbol=="s") {pch <- 22}
   else if(symbol=="d") {pch <- 23}
@@ -3896,10 +3891,10 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
   else{stop("Please select valid symbol. Check help for info.",call. = F)}
 
   if(UD=="D"){
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg= col_d)
   }else{
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg=col_u)
   }
   lines(circle$x,circle$y,lty=1, col=col_l, lwd=1.8)
