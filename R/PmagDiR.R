@@ -1499,23 +1499,20 @@ Graph saved as", paste(name,".pdf"),"
 
 #function that calculated DeltaDec and DeltaInc
 ellips_DI <- function(DI,lat,long,export=FALSE){
-  #degree to radians and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
   #cut NA rows
   DI <- na.omit(DI)
   #calculate average dir and paleolat in radians
   aver_DI <- fisher(DI)
   aver_inc <- aver_DI[1,2]
-  lat_r <- atan((tan(d2r(aver_inc)))/2)
+  lat_r <- atan((tan(PmagDiR::d2r(aver_inc)))/2)
   #calculate vgps
   poles <- VGP_DI(DI,in_file=FALSE,lat=lat,long=long,export=F,type="VGPs",Prnt=FALSE)
   #calculate A95
   PPole <- fisher(poles)
   A95 <- PPole[1,3]
   #calculated ∂Dec and ∂Inc
-  D_dec <- r2d(asin((sin(d2r(A95)))/cos(lat_r)))
-  D_inc <- r2d((2*d2r(A95))/(1+(3*(sin(lat_r))^2)))
+  D_dec <- PmagDiR::r2d(asin((sin(PmagDiR::d2r(A95)))/cos(lat_r)))
+  D_inc <- PmagDiR::r2d((2*PmagDiR::d2r(A95))/(1+(3*(sin(lat_r))^2)))
   result <- as.data.frame(matrix(nrow = 1,ncol=4))
   colnames(result) <- c("dec","inc","delta_dec","delta_inc")
   result[1,1] <- aver_DI[1,1]
@@ -2576,12 +2573,6 @@ Figure saved as Map.pdf
 
 #function that generate and plot confidence ellipses calculated from A95 back to directions, delta Inc > delta dec
 generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FALSE, save=FALSE, name="confidence_ellipse"){
-  #degree to radians and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
   #create circle with dummy bedding only for strain_DI to work
   circle <- as.data.frame(seq(0,360,2))
   circle$inc <- rep(90-delta_inc)
@@ -2589,7 +2580,7 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
   circle$dummy_az <- rep(0)
   circle$dummy_pl <- rep(0)
   #calculate parameter for adjusting delta_dec
-  fol <- tan(d2r(delta_inc))/tan(d2r(delta_dec))
+  fol <- tan(PmagDiR::d2r(delta_inc))/tan(PmagDiR::d2r(delta_dec))
   #create matrix deforming circle
   M <- matrix_maker(Fol = fol,v1d = D,v1i = 0,v2d = 0,v2i = 90,v3d = ((D-90)%%360),v3i = 0, return_P=F)
   ell <- strain_DI(DIAP = circle,M = M)
@@ -2597,8 +2588,8 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
   #uses bedding correction to place final ellipses in the right position
   ellipses <- bed_DI(ell,in_file = FALSE,bed_az = D,bed_plunge = 90-I,export = FALSE)
   colnames(ellipses) <- c("dec","inc")
-  ellipses$x <- a2cx(abs(ellipses$inc),ellipses$dec)
-  ellipses$y <- a2cy(abs(ellipses$inc),ellipses$dec)
+  ellipses$x <- PmagDiR::a2cx(abs(ellipses$inc),ellipses$dec)
+  ellipses$y <- PmagDiR::a2cy(abs(ellipses$inc),ellipses$dec)
   #restore screen
   par(fig=c(0,1,0,1))
   #standalone graph or on existing graph
@@ -5819,9 +5810,6 @@ B95: ", results$ang_conf)
 
 #calculate virtual geomagnetic pole(s)
 VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs",Prnt=TRUE){
-  #conversion functions
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
   #start data table
   data <- DI[,1:2]
   data <- na.omit(data)
@@ -5833,20 +5821,20 @@ VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs
   #fix col names
   colnames(data) <- c("dec","inc","slat","slong")
   #populate data table with used data
-  data$dec_r <- d2r(data$dec)
-  data$inc_r <- d2r(data$inc)
-  data$slat_r <- d2r(data$slat)
-  data$slong_r <- d2r(data$slong)
+  data$dec_r <- PmagDiR::d2r(data$dec)
+  data$inc_r <- PmagDiR::d2r(data$inc)
+  data$slat_r <- PmagDiR::d2r(data$slat)
+  data$slong_r <- PmagDiR::d2r(data$slong)
   #calculate pole colatitude
   data$p_colat_r <- atan(2/tan(data$inc_r))
-  data$p_colat_d <- r2d(data$p_colat_r)
+  data$p_colat_d <- PmagDiR::r2d(data$p_colat_r)
   #calculate pole latitude
   data$PLat_r <- asin((sin(data$slat_r)*cos(data$p_colat_r))+
                         (cos(data$slat_r)*sin(data$p_colat_r)*cos(data$dec_r)))
-  data$Plat_d<- r2d(data$PLat)
+  data$Plat_d<- PmagDiR::r2d(data$PLat)
   #Longitudinal difference between site and pole
   data$LDist_r <- asin((sin(data$p_colat_r)*sin(data$dec_r))/cos(data$PLat_r))
-  data$LDist_d <- r2d(data$LDist_r)
+  data$LDist_d <- PmagDiR::r2d(data$LDist_r)
   #calculate longitude
   data$PLong_d <- ifelse(cos(data$p_colat_r)<(sin(data$slat_r)*sin(data$PLat_r)),
                          data$slong+180-data$LDist_d,
