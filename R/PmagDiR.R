@@ -3904,16 +3904,6 @@ plot_a95 <- function(D,I,a, col_d="red",col_u="white",col_l="black", symbol="c",
 #function that plots bootstrapped confidence with dec,inc, and file with circle coordinates
 plot_B95 <- function(D,I,B_conf, col_d="red",col_u="white",col_l="black", symbol="c", on_plot=FALSE){
   library("dplyr", warn.conflicts = FALSE)
-  #functions converting degree and radians
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
-  #functions spherical (Dec=x, Inc=y) to Cartesian
-  s2cx <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
-  s2cy <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
-  s2cz <- function(y) {sin(d2r(y))}
   #save declination and inc and calculate new system for rotation
   dec <- D
   newSdec <- (D+180)%%360
@@ -3922,8 +3912,8 @@ plot_B95 <- function(D,I,B_conf, col_d="red",col_u="white",col_l="black", symbol
 
   colnames(B_conf) <- c("dec","inc")
   B_conf[,2] <- abs(B_conf[,2])
-  B_conf$x <- a2cx(B_conf$inc,B_conf$dec)
-  B_conf$y <- a2cy(B_conf$inc,B_conf$dec)
+  B_conf$x <- PmagDiR::a2cx(B_conf$inc,B_conf$dec)
+  B_conf$y <- PmagDiR::a2cy(B_conf$inc,B_conf$dec)
   #standalone graph or on existing graph
   if (on_plot==FALSE) {
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
@@ -3932,17 +3922,17 @@ plot_B95 <- function(D,I,B_conf, col_d="red",col_u="white",col_l="black", symbol
   }
   UD <- ifelse(inc>0,"D","U")
   inc <- abs(inc)
-  X <- a2cx(inc,dec)
-  Y <- a2cy(inc,dec)
+  X <- PmagDiR::a2cx(inc,dec)
+  Y <- PmagDiR::a2cy(inc,dec)
   if(symbol=="c") {pch <- 21}
   else if(symbol=="s") {pch <- 22}
   else if(symbol=="d") {pch <- 23}
   else if(symbol=="t") {pch <- 24}
   if(UD=="D"){
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg= col_d)
   }else{
-    points(X,Y, pch=pch,cex=1.3, col="black",
+    points(X,Y, pch=pch,cex=1.3, col=col_l,
            bg=col_u)
   }
   lines(B_conf$x,B_conf$y,lty=1, col=col_l, lwd=1.8)
@@ -5805,6 +5795,9 @@ B95: ", results$ang_conf)
 
 #calculate virtual geomagnetic pole(s)
 VGP_DI <- function(DI,in_file=FALSE,lat,long,export=TRUE,type="VGPsN",name="VGPs",Prnt=TRUE){
+  #does not leave lat and long 0 because it creates problems
+  if(lat==0) lat <- 0.001
+  if(long==0) long <- 0.001
   #start data table
   data <- DI[,1:2]
   data <- na.omit(data)
@@ -5969,13 +5962,24 @@ magstrat_DI <- function(DIP,lat=0,long=0,offset=0,col="red",name="polarity_plot"
   }
   #eliminate duplicates
   normals <- na.omit(normals)
+
+
+  # if(rev_depth==1){
+  #   ymin <- plyr::round_any(min(dat$posit), 0.5, f= floor)
+  #   ymax <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+  # }else if(rev_depth==2){
+  #   ymax <- plyr::round_any(min(dat$posit), 0.5, f= floor)
+  #   ymin <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+  # }
+
   if(rev_depth==1){
-    ymin <- plyr::round_any(min(dat$posit), 0.5, f= floor)
-    ymax <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+    ymin <- min(dat$posit)
+    ymax <- max(dat$posit)
   }else if(rev_depth==2){
-    ymax <- plyr::round_any(min(dat$posit), 0.5, f= floor)
-    ymin <- plyr::round_any(max(dat$posit), 0.5, f=ceiling)
+    ymax <- min(dat$posit)
+    ymin <- max(dat$posit)
   }
+
 
   #fix declination if offset is not zero
   if(offset!=0){
