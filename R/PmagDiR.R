@@ -2154,17 +2154,13 @@ ffind <-function(DI, f_inc=0.005) {
 
 #find lat from inc using dipole formula
 findlat <- function(inc){
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  lat <- r2d(atan((tan(d2r(inc)))/2))
+  lat <- PmagDiR::r2d(atan((tan(PmagDiR::d2r(inc)))/2))
   return(lat)
 }
 
 #find inc from lat using dipole formula
 findinc <- function(lat){
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-  inc <- r2d(atan(2*tan(d2r(lat))))
+  inc <- PmagDiR::r2d(atan(2*tan(PmagDiR::d2r(lat))))
   return(inc)
 }
 
@@ -4170,28 +4166,20 @@ plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",s
 plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col_u="cyan",col_ext="black", on_plot=FALSE, title="",save=FALSE,name="Equal_area"){
   library("dplyr", warn.conflicts = FALSE)
 
-  #functions converting degree and radians
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-
-  #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
-
   data <- DI[,1:2]
   data <- na.omit(data)
   data <- data[,1:2]
   colnames(data) <- c("dec","inc")
-  if(single_mode==TRUE) {data <- common_DI(data,down=down)}
+  if(single_mode==TRUE) {data <- PmagDiR::common_DI(data,down=down)}
   data_U <- filter_all(data,all_vars(inc<0))
   data_D <- filter_all(data,all_vars(inc>=0))
   data_U$inc <- abs(data_U$inc)
-  xU <- a2cx(data_U$inc,data_U$dec)
-  yU <- a2cy(data_U$inc,data_U$dec)
-  xD <- a2cx(data_D$inc,data_D$dec)
-  yD <- a2cy(data_D$inc,data_D$dec)
+  xU <- PmagDiR::a2cx(data_U$inc,data_U$dec)
+  yU <- PmagDiR::a2cy(data_U$inc,data_U$dec)
+  xD <- PmagDiR::a2cx(data_D$inc,data_D$dec)
+  yD <- PmagDiR::a2cy(data_D$inc,data_D$dec)
   if(on_plot==FALSE){
-    equalarea(title=title)
+    PmagDiR::equalarea(title=title)
   }
   if(symbol=="c") {pch <- 21}
   else if(symbol=="s") {pch <- 22}
@@ -4203,6 +4191,34 @@ plot_DI <- function(DI,single_mode=FALSE, down=TRUE,symbol="c", col_d="blue",col
          bg= col_d)
   points(xU,yU, pch=pch,col=col_ext,
          bg=col_u)
+  if(save==TRUE){PmagDiR::save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
+}
+
+#plot GAD on equal area
+plot_GAD <- function(lat,on_plot=TRUE,col_u="white",col_d="red",circle=F,save=FALSE,size=0.12){
+  #find GAD
+  gad_inc <- PmagDiR::findinc(lat = lat)
+  gad_inc_abs <- abs(gad_inc)
+  #find coordinates
+  gad_x <- PmagDiR::a2cx(x = abs(gad_inc),y = 0)
+  gad_y <- PmagDiR::a2cy(x = abs(gad_inc),y = 0)
+  #check for existing plot
+  if(on_plot==FALSE){
+    PmagDiR::equalarea()
+  }
+  #plot circle
+  if(circle==TRUE){
+    circle <- data.frame(matrix(ncol=2,nrow = 181))
+    circle[,1] <- seq(0,360,2)
+    circle[,2] <- abs(gad_inc)
+    circle$x <- PmagDiR::a2cx(circle[,2],circle[,1])
+    circle$y <- PmagDiR::a2cy(circle[,2],circle[,1])
+    points(x=circle$x,y=circle$y,type="l", col=col_d,lty=2)
+  }
+  #plot star on GAD
+  symbols(x = gad_x,y = gad_y, stars = cbind(5,2,5,2,5,2,5,2), inches = size,
+          bg = ifelse(gad_inc<0,col_u,col_d),fg = ifelse(gad_inc<0,col_d,"black"), add=TRUE)
+
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
