@@ -30,6 +30,13 @@ s2cx <- function(x,y) {cos(PmagDiR::d2r(x))*cos(PmagDiR::d2r(y))}
 s2cy <- function(x,y) {sin(PmagDiR::d2r(x))*cos(PmagDiR::d2r(y))}
 s2cz <- function(y) {sin(PmagDiR::d2r(y))}
 
+#functions converting long & lat to xy in spherical orto
+c2x <- function(lon,lat,centLon) {cos(PmagDiR::d2r(lat))*sin(PmagDiR::d2r(lon-centLon))}
+c2y <- function(lon,lat,centLon,centLat) {(cos(PmagDiR::d2r(centLat))*sin(PmagDiR::d2r(lat)))-(sin(PmagDiR::d2r(centLat))*cos(PmagDiR::d2r(lat))*cos(PmagDiR::d2r(lon-centLon)))}
+#cut is cosin of c, when negative is behind projections, needs to be cut
+cut <- function(lon,lat,centLon,centLat) {(sin(PmagDiR::d2r(centLat))*sin(PmagDiR::d2r(lat)))+(cos(PmagDiR::d2r(centLon))*cos(PmagDiR::d2r(lat))*cos(PmagDiR::d2r(lon-centLon)))}
+
+
 
 #return the eigenvectors of the AMS inverse matrix for later unstrain
 AMS_inv <- function(mat,type="v",prnt=TRUE, Shiny=FALSE){
@@ -4659,40 +4666,32 @@ DISTRIBUTION NOT BIMODAL")
 
 #function that rotate Longitude and Latitude around a Euler pole
 rot_DI <- function(Lonlat,P_long=0,P_lat=90,rot=0){
-  #degree to radians and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
-
-  #functions spherical (long=x, lat=y) to Cartesian
-  s2c1 <- function(x,y) {cos(d2r(x))*cos(d2r(y))}
-  s2c2 <- function(x,y) {sin(d2r(x))*cos(d2r(y))}
-  s2c3 <- function(y) {sin(d2r(y))}
 
   #functions converting cartesian to spherical
-  c2sLon <- function(C1,C2) {r2d(atan2(C2,C1))}
-  c2sLat <- function(C1,C2,C3) {r2d(asin(C3/(sqrt((C1^2)+(C2^2)+(C3^2)))))}
+  c2sLon <- function(C1,C2) {PmagDiR::r2d(atan2(C2,C1))}
+  c2sLat <- function(C1,C2,C3) {PmagDiR::r2d(asin(C3/(sqrt((C1^2)+(C2^2)+(C3^2)))))}
 
   #define cos and sin of rotation for simplicity
-  cosrot <- cos(d2r(rot))
-  sinrot <- sin(d2r(rot))
+  cosrot <- cos(PmagDiR::d2r(rot))
+  sinrot <- sin(PmagDiR::d2r(rot))
   #build rotation matrix
-  R <- matrix(c((s2c1(P_long,P_lat)^2)*(1-cosrot)+cosrot,
-                s2c1(P_long,P_lat)*s2c2(P_long,P_lat)*(1-cosrot)-s2c3(P_lat)*sinrot,
-                s2c1(P_long,P_lat)*s2c3(P_lat)*(1-cosrot)+s2c2(P_long,P_lat)*sinrot,
-                s2c2(P_long,P_lat)*s2c1(P_long,P_lat)*(1-cosrot)+s2c3(P_lat)*sinrot,
-                (s2c2(P_long,P_lat)^2)*(1-cosrot)+cosrot,
-                s2c2(P_long,P_lat)*s2c3(P_lat)*(1-cosrot)-s2c1(P_long,P_lat)*sinrot,
-                s2c3(P_lat)*s2c1(P_long,P_lat)*(1-cosrot)-s2c2(P_long,P_lat)*sinrot,
-                s2c3(P_lat)*s2c2(P_long,P_lat)*(1-cosrot)+s2c1(P_long,P_lat)*sinrot,
-                (s2c3(P_lat)^2)*(1-cosrot)+cosrot),
+  R <- matrix(c((PmagDiR::s2cx(P_long,P_lat)^2)*(1-cosrot)+cosrot,
+                PmagDiR::s2cx(P_long,P_lat)*PmagDiR::s2cy(P_long,P_lat)*(1-cosrot)-PmagDiR::s2cz(P_lat)*sinrot,
+                PmagDiR::s2cx(P_long,P_lat)*PmagDiR::s2cz(P_lat)*(1-cosrot)+PmagDiR::s2cy(P_long,P_lat)*sinrot,
+                PmagDiR::s2cy(P_long,P_lat)*PmagDiR::s2cx(P_long,P_lat)*(1-cosrot)+PmagDiR::s2cz(P_lat)*sinrot,
+                (PmagDiR::s2cy(P_long,P_lat)^2)*(1-cosrot)+cosrot,
+                PmagDiR::s2cy(P_long,P_lat)*PmagDiR::s2cz(P_lat)*(1-cosrot)-PmagDiR::s2cx(P_long,P_lat)*sinrot,
+                PmagDiR::s2cz(P_lat)*PmagDiR::s2cx(P_long,P_lat)*(1-cosrot)-PmagDiR::s2cy(P_long,P_lat)*sinrot,
+                PmagDiR::s2cz(P_lat)*PmagDiR::s2cy(P_long,P_lat)*(1-cosrot)+PmagDiR::s2cx(P_long,P_lat)*sinrot,
+                (PmagDiR::s2cz(P_lat)^2)*(1-cosrot)+cosrot),
               nrow = 3,ncol = 3,byrow = F)
   #creates result file
   Lonlat_R <- data.frame(matrix(ncol = 2,nrow = 0))
   #apply rotation to all data
   for(i in 1:nrow(Lonlat)){
-    C <- matrix(c(s2c1(Lonlat[i,1],Lonlat[i,2]),
-                  s2c2(Lonlat[i,1],Lonlat[i,2]),
-                  s2c3(Lonlat[i,2])),
+    C <- matrix(c(PmagDiR::s2cx(Lonlat[i,1],Lonlat[i,2]),
+                  PmagDiR::s2cy(Lonlat[i,1],Lonlat[i,2]),
+                  PmagDiR::s2cz(Lonlat[i,2])),
                 nrow = 3,ncol = 1)
     C_rot <- R%*%C
     Lonlat_R_temp <- data.frame(t(c(c2sLon(C_rot[1,1],C_rot[2,1])%%360,
