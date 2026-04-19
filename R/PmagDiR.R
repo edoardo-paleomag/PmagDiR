@@ -122,6 +122,14 @@ P:", round(P,digits = 4),"
   }
 }
 
+#return angular distance between two sets of Dec-inc (or Long-Lat)
+angle_DI <- function(dec1,inc1,dec2,inc2){
+  Delta <- abs(dec1-dec2)
+  Angle <- PmagDiR::r2d(acos((sin(PmagDiR::d2r(inc1))*sin(PmagDiR::d2r(inc2)))+
+                               (cos(PmagDiR::d2r(inc1))*cos(PmagDiR::d2r(inc2))*cos(PmagDiR::d2r(Delta)))))
+  return(Angle)
+}
+
 #Function that rotate geographic dec_inc pair(DI) into bedding coordinates
 #if bedding ins not in the file as 3 and 4 column, can be added in function
 bed_DI <- function(DI,in_file=TRUE, bed_az,bed_plunge,export=FALSE){
@@ -2173,16 +2181,14 @@ findinc <- function(lat){
 
 #plot bimodal fisher from dec_inc and print results on console
 fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",col_l="black",symbol="c",text=FALSE,export=TRUE,save=FALSE,name="Fisher_mean") {
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
   data <- DI
   data <- na.omit(data)
   data <- data[,1:2]
   colnames(data) <- c("dec", "inc")
   #directions in Cartesian coordinates
-  data$x <- cos(d2r(data$dec))*cos(d2r(data$inc))
-  data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
-  data$z <- sin(d2r(data$inc))
+  data$x <- cos(PmagDiR::d2r(data$dec))*cos(PmagDiR::d2r(data$inc))
+  data$y <- sin(PmagDiR::d2r(data$dec))*cos(PmagDiR::d2r(data$inc))
+  data$z <- sin(PmagDiR::d2r(data$inc))
   #averaged Cartesian coordinates
   x_av <- mean(data$x)
   y_av <- mean(data$y)
@@ -2198,14 +2204,14 @@ fisher_plot <- function(DI, plot=TRUE, on_plot=TRUE,col_d="red",col_u="white",co
   T_vec <- T_e$vectors
   T_val <- T_e$values
   #calculate dec inc of max variance
-  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-  V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
+  V1inc <- PmagDiR::r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- (PmagDiR::r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
   #next  calculates difference between dec_inc and average
   data$Dec_aver <- rep(V1dec)
   data$Inc_aver <- rep(V1inc)
   data$delta <- abs(data$dec-data$Dec_aver)
-  data$diff <- r2d(acos((sin(d2r(data$inc))*sin(d2r(data$Inc_aver)))+
-                          (cos(d2r(data$inc))*cos(d2r(data$Inc_aver))*cos(d2r(data$delta)))))
+  data$diff <- PmagDiR::r2d(acos((sin(PmagDiR::d2r(data$inc))*sin(PmagDiR::d2r(data$Inc_aver)))+
+                          (cos(PmagDiR::d2r(data$inc))*cos(PmagDiR::d2r(data$Inc_aver))*cos(PmagDiR::d2r(data$delta)))))
   #Isolate modes
   if(any(data$diff<=90)){
     mode1 <- as.data.frame(data$dec[data$diff<=90])
