@@ -4087,6 +4087,54 @@ plot_pole_APWP <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="
   if(save==TRUE){save_pdf(name = paste(name,".pdf"),width = 8,height = 8)}
 }
 
+#plot Small Circle on a spherical orthographic plot
+plot_SCircle <- function(lon,lat,radius,lon0=0,lat0=90,grid=30, col_l="black",lty=1, coast=FALSE, on_plot=FALSE, lwd=1){
+  library("dplyr", warn.conflicts = FALSE)
+
+  #save declination and inc and calculate new system for rotation
+  newSlon <- (lon+180)%%360
+  newSlat <- 90-lat
+  newSlonr <- PmagDiR::d2r(newSlon)
+  newSlatr <- PmagDiR::d2r(newSlat)
+  a95 <- radius
+  circle <- as.data.frame(matrix(ncol=2,nrow=0))
+  #loop that create a95 and rotate it around new coordinate (dec, inc)
+  for (i in seq(0,360,2)){
+    circleP <- as.data.frame(matrix(ncol=2,nrow=1))
+    x <- PmagDiR::s2cx(i,(90-a95))
+    y <- PmagDiR::s2cy(i,(90-a95))
+    z <- PmagDiR::s2cz(90-a95)
+    vec <- as.matrix(c(x,y,z))
+    R_elements <- c(cos(newSlatr)*cos(newSlonr), -sin(newSlonr), -sin(newSlatr)*cos(newSlonr),
+                    cos(newSlatr)*sin(newSlonr), cos(newSlonr), -sin(newSlatr)*sin(newSlonr),
+                    sin(newSlatr), 0, cos(newSlatr))
+    R <- matrix(R_elements,nrow=3, byrow=TRUE)
+    newvec <- R%*%vec
+    newlon <- PmagDiR::r2d(atan2(newvec[2,1],newvec[1,1]))
+    newlon <- ifelse(newlon<0,newlon+360,newlon)
+    #absolute value avoid point outside the graph
+    newlat <- PmagDiR::r2d(asin(newvec[3,1]))
+    circleP[1,1:2] <- c(newlon,newlat)
+    circle <- rbind(circle,circleP)
+  }
+  colnames(circle) <- c("lon","lat")
+  circle$x <- PmagDiR::c2x(circle$lon,circle$lat,centLon = lon0)
+  circle$y <- PmagDiR::c2y(circle$lon,circle$lat,centLon = lon0,centLat = lat0)
+  circle$cut <- PmagDiR::cut(circle$lon,circle$lat,centLon = lon0,centLat = lat0)
+  #restore screen
+  par(fig=c(0,1,0,1))
+  #standalone graph or on existing graph
+  if (on_plot==FALSE) {
+    plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
+         xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
+    sph_ortho(lat = lat0,long = lon0,grid = grid, coast=coast)
+  }
+
+  #plot alfa 95
+  lines(circle$x,circle$y, col=col_l, lwd=lwd,lty= lty)
+
+}
+
 #plot only apparent polar wander path
 plot_APWP <- function(APWP= "V23",lon0=0,lat0=90,grid=30,col="gray",symbol="c",size=0.6, coast=FALSE, on_plot=FALSE, save=FALSE, name="APWP",S_APWP=FALSE,Shiny=FALSE,Y=0,O=320,frame=1,Age_size=1){
   if (on_plot==FALSE) {
