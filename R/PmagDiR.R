@@ -2661,55 +2661,6 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
 }
 
 
-# inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
-#   d2r <- function(x) {x*(pi/180)}
-#   r2d <- function(x) {x*(180/pi)}
-#   data <- DI[,1:2]
-#   data <- na.omit(data)
-#   colnames(data) <- c("dec", "inc")
-#   #directions in Cartesian coordinates
-#   data$x <- cos(d2r(data$dec))*cos(d2r(data$inc))
-#   data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
-#   data$z <- sin(d2r(data$inc))
-#   #averaged Cartesian coordinates
-#   x_av <- mean(data$x)
-#   y_av <- mean(data$y)
-#   z_av <- mean(data$z)
-#   #elements of the distribution matrix
-#   T_elements <- c(sum((data$x)*(data$x)),sum(data$x*data$y),sum(data$x*data$z),
-#                   sum(data$y*data$x),sum(data$y*data$y),sum(data$y*data$z),
-#                   sum(data$z*data$x),sum(data$z*data$y),sum(data$z*data$z))
-#   #distribution matrix
-#   T <- matrix(T_elements,nrow=3, byrow=TRUE)
-#   #calculate and copy eigenvalues and vectors
-#   T_e <- eigen(T)
-#   T_vec <- T_e$vectors
-#   T_val <- T_e$values
-#   #calculate dec inc of max variance
-#   V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-#   V1dec <- (r2d(atan2(T_vec[2,1],T_vec[1,1])))%%360
-#
-#   #force V1 to positive
-#   V1dec <- ifelse(V1inc<0,(V1dec+180)%%360,V1dec)
-#   V1inc <- abs(V1inc)
-#
-#   V2dec <- (r2d(atan2(T_vec[2,2],T_vec[1,2])))%%360
-#   V2inc <- r2d(asin(T_vec[3,2]/(sqrt((T_vec[1,2]^2)+(T_vec[2,2]^2)+(T_vec[3,2]^2)))))
-#
-#   #Calculate difference between V1 and V2 to have the declination of V2 with respect to V1
-#   DV1V2 <- (V1dec-V2dec)%%360
-#   #if (DV1V2 < 90 || DV1V2 > 270) DV1V2 <- (DV1V2-180)%%360
-#
-#   DV1V2 <- ifelse(DV1V2>90,ifelse(DV1V2<270,DV1V2-180,DV1V2),DV1V2)
-#   DV1V2 <- ifelse(DV1V2>270,DV1V2-360,DV1V2)
-#
-#   E <- T_val[2]/T_val[3]
-#
-#   inc_E <- as.data.frame(cbind(V1inc,E,DV1V2))
-#   #export result if requested
-#   if(export==TRUE){write.csv(round(inc_E,digits = 2),paste(name,".csv"),row.names = FALSE)}
-#   return(inc_E)
-# }
 
 #Arason and Levi(2010) inclination only calculation
 #adepted from the original fortran source code ARALEV available at http://hergilsey.is/arason/paleomag/aralev.txt
@@ -4027,7 +3978,7 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
 }
 
 #plot great circle on spherical projection with given pole and camera location
-plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plot=TRUE,col_f="red",col_b="white",symbol="c",coast=F){
+plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plot=TRUE,col_f="red",col_b="white",symbol="c",coast=F,lwd=1){
   #plot empty sph if required
   if(on_plot==FALSE){PmagDiR::sph_ortho(lat = lat0,long = lon0,coast = coast)}
 
@@ -4050,8 +4001,8 @@ plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plo
   repeat{
     repeat{
       if(sign(r_circle[l+1,3])!=sign(r_circle[l,3]) || l==nrow(r_circle)){
-        if(sign(r_circle[l,3])>=0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", col=col_f)}
-        else if(sign(r_circle[l,3])<0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", lty=2,col=col_f )}
+        if(sign(r_circle[l,3])>=0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", col=col_f,lwd=lwd) }
+        else if(sign(r_circle[l,3])<0) {points(x = r_circle[i:l,1],y = r_circle[i:l,2],type="l", lty=2,col=col_f,lwd=lwd )}
         break
       }
       l <- l+1
