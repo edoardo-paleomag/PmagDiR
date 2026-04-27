@@ -3979,6 +3979,13 @@ plot_PA95 <- function(lon,lat,A,lon0=0,lat0=90,grid=30, col_f="red",col_b="white
 
 #plot great circle on spherical projection with given pole and camera location
 plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plot=TRUE,col_f="red",col_b="white",symbol="c",coast=F,lwd=1){
+  #functions converting long & lat to xy
+  c2x <- function(lon,lat) {cos(d2r(lat))*sin(d2r(lon-lon0))}
+  c2y <- function(lon,lat) {(cos(d2r(lat0))*sin(d2r(lat)))-(sin(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+  #cut is cosin of c, when negative is behind projections, needs to be cut
+  cut <- function(lon,lat) {(sin(d2r(lat0))*sin(d2r(lat)))+(cos(d2r(lat0))*cos(d2r(lat))*cos(d2r(lon-lon0)))}
+
+
   #plot empty sph if required
   if(on_plot==FALSE){PmagDiR::sph_ortho(lat = lat0,long = lon0,coast = coast)}
 
@@ -3990,10 +3997,15 @@ plot_plane_sph <- function(P_long=0,P_lat=0,lon0=0,lat0=90,plot_pole=TRUE,on_plo
   #rotate circle to real coordinates
   r_circle <- PmagDiR::bed_DI(DI = eq_circle,in_file = F,bed_az = (P_long+180)%%360,bed_plunge = (P_lat-90),export = F)
   colnames(r_circle) <- c("lon","lat")
+  # #transform coordinates of circle in x and y file
+  # r_circle$x <- PmagDiR::c2x(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0)
+  # r_circle$y <- PmagDiR::c2y(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0,centLat = lat0)
+  # r_circle$cut <- PmagDiR::cut(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0,centLat = lat0)
   #transform coordinates of circle in x and y file
-  r_circle$x <- PmagDiR::c2x(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0)
-  r_circle$y <- PmagDiR::c2y(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0,centLat = lat0)
-  r_circle$cut <- PmagDiR::cut(lon = r_circle[,1],lat = r_circle[,2],centLon = lon0,centLat = lat0)
+  r_circle$x <- c2x(lon = r_circle[,1],lat = r_circle[,2])
+  r_circle$y <- c2y(lon = r_circle[,1],lat = r_circle[,2])
+  r_circle$cut <- cut(lon = r_circle[,1],lat = r_circle[,2])
+
   r_circle <- r_circle[,-c(1,2)]
   l <- 1
   i <- 1
