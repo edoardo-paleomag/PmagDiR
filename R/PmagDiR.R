@@ -1526,9 +1526,9 @@ ellips_DI <- function(DI,lat,long,export=FALSE){
   aver_inc <- aver_DI[1,2]
   lat_r <- atan((tan(PmagDiR::d2r(aver_inc)))/2)
   #calculate vgps
-  poles <- VGP_DI(DI,in_file=FALSE,lat=lat,long=long,export=F,type="VGPs",Prnt=FALSE)
+  poles <- PmagDiR::VGP_DI(DI,in_file=FALSE,lat=lat,long=long,export=F,type="VGPs",Prnt=FALSE)
   #calculate A95
-  PPole <- fisher(poles)
+  PPole <- PmagDiR::fisher(poles)
   A95 <- PPole[1,3]
   #calculated ∂Dec and ∂Inc
   D_dec <- PmagDiR::r2d(asin((sin(PmagDiR::d2r(A95)))/cos(lat_r)))
@@ -2596,11 +2596,11 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
   #calculate parameter for adjusting delta_dec
   fol <- tan(PmagDiR::d2r(delta_inc))/tan(PmagDiR::d2r(delta_dec))
   #create matrix deforming circle
-  M <- matrix_maker(Fol = fol,v1d = D,v1i = 0,v2d = 0,v2i = 90,v3d = ((D-90)%%360),v3i = 0, return_P=F)
-  ell <- strain_DI(DIAP = circle,M = M)
+  M <- PmagDiR::matrix_maker(Fol = fol,v1d = D,v1i = 0,v2d = 0,v2i = 90,v3d = ((D-90)%%360),v3i = 0, return_P=F)
+  ell <- PmagDiR::strain_DI(DIAP = circle,M = M)
   ell <- ell[,1:2]
   #uses bedding correction to place final ellipses in the right position
-  ellipses <- bed_DI(ell,in_file = FALSE,bed_az = D,bed_plunge = 90-I,export = FALSE)
+  ellipses <- PmagDiR::bed_DI(ell,in_file = FALSE,bed_az = D,bed_plunge = 90-I,export = FALSE)
   colnames(ellipses) <- c("dec","inc")
   ellipses$x <- PmagDiR::a2cx(abs(ellipses$inc),ellipses$dec)
   ellipses$y <- PmagDiR::a2cy(abs(ellipses$inc),ellipses$dec)
