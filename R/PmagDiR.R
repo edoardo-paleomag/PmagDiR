@@ -2486,7 +2486,7 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
       updateProgressBar(
         id="fold_test_b",
         title = "Bootstraps",
-        value=n,total=n_boots
+        value=n,total=boots_num
       )
     }
     #or result in text in case of command line
