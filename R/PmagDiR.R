@@ -2436,6 +2436,99 @@ flip_DI <- function(DI,export=FALSE,name="flipped_dirs"){
   return(dat_fl)
 }
 
+#perform the fold test of Tauxe and Watson_1994
+fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, shiny=FALSE) {
+
+  # unfolding stages
+  Percs <- min_untilt:(max_untilt-1)
+
+  # prepare boots result file
+  Untilt <- numeric(boots_num)
+
+  # tilt correcting function that uses existing PmagDiR function
+  tilt_correct <- function(DIAP,percent=100) {
+    #progressive untilting depending on percent
+    DIAP[,4] <- DIAP[,4]*(percent/100)
+    DI_untilt <- PmagDiR::bed_DI(DI = DIAP)
+    return(DI_untilt)
+  }
+
+  # calculate max eigenvalue
+  find_tau1 <- function(DI) {
+    M <- PmagDiR::Principal_DiR(DI)
+    tau1 <- max((M$values/sum(M$values)))
+    return(tau1)
+  }
+  #sets plot
+  plot(NA,xlim=c(min_untilt,max_untilt),xaxp=c(min_untilt,max_untilt,(max_untilt-min_untilt)/10),
+       ylim=c(0,1),
+       xlab = "% Untilting",
+       ylab = "v1 (red), CDF (purple)")
+
+  # Bootstrap
+  for (n in 1:boots_num) {
+    #ricampionamento dati
+    DI_sim <- PmagDiR::boots_DI(DIAP)
+
+    Taus <- numeric(length(Percs))
+
+    # sequence of unfolding
+    for (l in seq_along(Percs)){
+      perc <- Percs[l]
+      TC <- tilt_correct(DI = DI_sim,percent=perc)
+      Taus[l] <- find_tau1(TC)
+    }
+    lines(x = Percs,y=Taus,col=rgb(1,0,0,0.2))
+    # isolate unfolding with max eigenvalue
+    Untilt[n] <- Percs[which.max(Taus)]
+    #fill with bar widget
+    if(shiny==T){
+      updateProgressBar(
+        id="fold_test_b",
+        title = "Bootstraps",
+        value=n,total=n_boots
+      )
+    }
+    #or result in text in case of command line
+    else{if(n%%10==0){cat(paste(n," bootstraps done.
+"))}}
+  }
+
+  # Confidence interval
+  Untilt <- sort(Untilt)
+  CI95 <- quantile(Untilt,probs = c(0.025, 0.975),names = FALSE)
+
+  #calculate and plot original data
+  Taus_DIAP <- numeric(length(Percs))
+  for (m in seq_along(Percs)) {
+    perc <- Percs[m]
+    TC <- tilt_correct(DI = DIAP,percent=perc)
+    Taus_DIAP[m] <- find_tau1(TC)
+  }
+  ##plot confidence rectangle
+  rect(xleft = CI95[1],ybottom = 0,xright = CI95[2],ytop = 1,col = rgb(0,0,1,0.3),border = NA)
+  maxTau <- Percs[which.max(Taus_DIAP)]
+  #plot unfolding with max eigenvalue of real data
+  arrows(x0 = maxTau,y0 = 0,x1 = maxTau,y1 = 1,length = 0,lty = 2)
+
+  # plot cumulative curve
+  Cdf <- (seq_along(Untilt) - 1) / boots_num
+  lines(x=Untilt,y=Cdf,
+        type = "l",
+        col = "purple",
+        lwd = 2)
+  lines(x = Percs,y=Taus_DIAP,col="black",lwd=2)
+
+  #plot text values on plot, confidence bounds and best untilt
+  text(x = CI95[1]-1,y = 0.5,
+       labels = paste("Lower conf.: ", round(CI95[1],digits = 1),"%",sep=""),
+       pos = 3, srt=90, cex=0.8, col="black")
+  text(x = CI95[2]-1,y = 0.5,
+       labels = paste("Upper conf.: ", round(CI95[2],digits = 1),"%",sep=""),
+       pos = 3, srt=90, cex=0.8, col="black")
+  text(x=maxTau-1,y=0.1,labels = paste("Best: ",maxTau,"%",sep=""),srt=90,pos=3,cex=0.8,)
+}
+
 #function that plots points on a KavrayskiyVII geographic map
 geo_point <- function(S_file=FALSE,symbol="c",col="red",center=0,grid=30,A95=FALSE,fill_A=TRUE,export=TRUE,on_plot=FALSE){
   d2r <- function(x) {x*(pi/180)}
@@ -2659,7 +2752,6 @@ inc_E_finder <- function(DI, export=FALSE, name="I_E_Edec") {
   if(export==TRUE){write.csv(round(inc_E,digits = 2),paste(name,".csv"),row.names = FALSE)}
   return(inc_E)
 }
-
 
 
 #Arason and Levi(2010) inclination only calculation
