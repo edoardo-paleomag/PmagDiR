@@ -2478,7 +2478,7 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
       TC <- tilt_correct(DI = DI_sim,percent=perc)
       Taus[l] <- find_tau1(TC)
     }
-    lines(x = Percs,y=Taus,col=rgb(1,0,0,0.2))
+    lines(x = Percs,y=Taus,col=rgb(1,0,0,0.2),lwd = ifelse(shiny==T,1.8,1))
     # isolate unfolding with max eigenvalue
     Untilt[n] <- Percs[which.max(Taus)]
     #fill with bar widget
@@ -2509,24 +2509,24 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
   rect(xleft = CI95[1],ybottom = 0,xright = CI95[2],ytop = 1,col = rgb(0,0,1,0.3),border = NA)
   maxTau <- Percs[which.max(Taus_DIAP)]
   #plot unfolding with max eigenvalue of real data
-  arrows(x0 = maxTau,y0 = 0,x1 = maxTau,y1 = 1,length = 0,lty = 2)
+  arrows(x0 = maxTau,y0 = 0,x1 = maxTau,y1 = 1,length = 0,lwd = ifelse(shiny==T,3,2),lty=2)
 
   # plot cumulative curve
   Cdf <- (seq_along(Untilt) - 1) / boots_num
   lines(x=Untilt,y=Cdf,
         type = "l",
         col = "purple",
-        lwd = 2)
+        lwd = ifelse(shiny==T,3,2))
   lines(x = Percs,y=Taus_DIAP,col="black",lwd=2)
 
   #plot text values on plot, confidence bounds and best untilt
   text(x = CI95[1]-1,y = 0.5,
        labels = paste("Lower conf.: ", round(CI95[1],digits = 1),"%",sep=""),
-       pos = 3, srt=90, cex=0.8, col="black")
+       pos = 3, srt=90, cex=ifelse(shiny==T,1,0.8), col="black")
   text(x = CI95[2]-1,y = 0.5,
        labels = paste("Upper conf.: ", round(CI95[2],digits = 1),"%",sep=""),
-       pos = 3, srt=90, cex=0.8, col="black")
-  text(x=maxTau-1,y=0.1,labels = paste("Best: ",maxTau,"%",sep=""),srt=90,pos=3,cex=0.8,)
+       pos = 3, srt=90, cex=ifelse(shiny==T,1,0.8), col="black")
+  text(x=maxTau-1,y=0.1,labels = paste("Best: ",maxTau,"%",sep=""),srt=90,pos=3,cex=ifelse(shiny==T,1,0.8))
 }
 
 #function that plots points on a KavrayskiyVII geographic map
