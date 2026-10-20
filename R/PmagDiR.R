@@ -2463,7 +2463,8 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
   plot(NA,xlim=c(min_untilt,max_untilt),xaxp=c(min_untilt,max_untilt,(max_untilt-min_untilt)/10),
        ylim=c(0,1),
        xlab = "% Untilting",
-       ylab = "v1 (red), CDF (purple)")
+       ylab = "v1 (red), CDF (purple)",
+       cex.lab=ifelse(shiny==T,1.5,1))
 
   # Bootstrap
   for (n in 1:boots_num) {
@@ -2517,16 +2518,17 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
         type = "l",
         col = "purple",
         lwd = ifelse(shiny==T,3,2))
-  lines(x = Percs,y=Taus_DIAP,col="black",lwd=2)
+  #plot unfolding with max eigenvalue of real data
+  lines(x = Percs,y=Taus_DIAP,col="black",lwd = ifelse(shiny==T,3,2))
 
   #plot text values on plot, confidence bounds and best untilt
   text(x = CI95[1]-1,y = 0.5,
        labels = paste("Lower conf.: ", round(CI95[1],digits = 1),"%",sep=""),
-       pos = 3, srt=90, cex=ifelse(shiny==T,1,0.8), col="black")
+       pos = 3, srt=90, cex=ifelse(shiny==T,1.2,0.8), col="black")
   text(x = CI95[2]-1,y = 0.5,
        labels = paste("Upper conf.: ", round(CI95[2],digits = 1),"%",sep=""),
-       pos = 3, srt=90, cex=ifelse(shiny==T,1,0.8), col="black")
-  text(x=maxTau-1,y=0.1,labels = paste("Best: ",maxTau,"%",sep=""),srt=90,pos=3,cex=ifelse(shiny==T,1,0.8))
+       pos = 3, srt=90, cex=ifelse(shiny==T,1.2,0.8), col="black")
+  text(x=maxTau-1,y=0.1,labels = paste("Best: ",maxTau,"%",sep=""),srt=90,pos=3,cex=ifelse(shiny==T,1.2,0.8))
 }
 
 #function that plots points on a KavrayskiyVII geographic map
