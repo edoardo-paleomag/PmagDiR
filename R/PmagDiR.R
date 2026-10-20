@@ -2479,7 +2479,7 @@ fold_test <- function(DIAP,boots_num = 1000,min_untilt = -10,max_untilt = 120, s
       TC <- tilt_correct(DI = DI_sim,percent=perc)
       Taus[l] <- find_tau1(TC)
     }
-    lines(x = Percs,y=Taus,col=rgb(1,0,0,0.05),lwd = ifelse(shiny==T,4,3))
+    lines(x = Percs,y=Taus,col=rgb(1,0,0,0.03),lwd = ifelse(shiny==T,4,3))
     # isolate unfolding with max eigenvalue
     Untilt[n] <- Percs[which.max(Taus)]
     #fill with bar widget
