@@ -1551,22 +1551,19 @@ ellips_DI <- function(DI,lat,long,export=FALSE){
 }
 
 #plot bimodal elliptical confidence (calculated from A95 inversion) from dec_inc  and print results on console
-ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=TRUE,save=FALSE,name="ellipse"){
-  #degrees to radians and vice versa
-  d2r <- function(x) {x*(pi/180)}
-  r2d <- function(x) {x*(180/pi)}
+ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",col_u="white",col_l="black",symbol="c", text=FALSE,export=FALSE,save=FALSE,name="ellipse"){
   #functions converting inc(x) and dec(y) into equal area
-  a2cx <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*sin(d2r(y))}
-  a2cy <- function(x,y) {sqrt(2)*sin((d2r(90-x))/2)*cos(d2r(y))}
+  a2cx <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*sin(PmagDiR::d2r(y))}
+  a2cy <- function(x,y) {sqrt(2)*sin((PmagDiR::d2r(90-x))/2)*cos(PmagDiR::d2r(y))}
   data <- DI
   #cut lines with empty cells
   data <- na.omit(data)
   data <- data[,1:2]
   colnames(data) <- c("dec", "inc")
   #directions in Cartesian coordinates
-  data$x <- cos(d2r(data$dec))*cos(d2r(data$inc))
-  data$y <- sin(d2r(data$dec))*cos(d2r(data$inc))
-  data$z <- sin(d2r(data$inc))
+  data$x <- PmagDiR::s2cx(data$dec,data$inc)
+  data$y <- PmagDiR::s2cy(data$dec,data$inc)
+  data$z <- PmagDiR::s2cz(data$inc)
   #averaged Cartesian coordinates
   x_av <- mean(data$x)
   y_av <- mean(data$y)
@@ -1582,15 +1579,15 @@ ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",co
   T_vec <- T_e$vectors
   T_val <- T_e$values
   #calculate dec inc of max variance
-  V1inc <- r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
-  V1dec <- r2d(atan2(T_vec[2,1],T_vec[1,1]))
+  V1inc <- PmagDiR::r2d(asin(T_vec[3,1]/(sqrt((T_vec[1,1]^2)+(T_vec[2,1]^2)+(T_vec[3,1]^2)))))
+  V1dec <- PmagDiR::r2d(atan2(T_vec[2,1],T_vec[1,1]))
   V1dec <- V1dec%%360
   #next  calculates difference between dec_inc and average
   data$Dec_aver <- rep(V1dec)
   data$Inc_aver <- rep(V1inc)
   data$delta <- abs(data$dec-data$Dec_aver)
-  data$diff <- r2d(acos((sin(d2r(data$inc))*sin(d2r(data$Inc_aver)))+
-                          (cos(d2r(data$inc))*cos(d2r(data$Inc_aver))*cos(d2r(data$delta)))))
+  data$diff <- PmagDiR::r2d(acos((sin(PmagDiR::d2r(data$inc))*sin(PmagDiR::d2r(data$Inc_aver)))+
+                                   (cos(PmagDiR::d2r(data$inc))*cos(PmagDiR::d2r(data$Inc_aver))*cos(PmagDiR::d2r(data$delta)))))
   #Isolate modes
   if(any(data$diff<=90)){
     mode1 <- as.data.frame(data$dec[data$diff<=90])
@@ -1603,25 +1600,25 @@ ellips_plot <- function(DI,lat=0,long=0, plot=TRUE, on_plot=TRUE, col_d="red",co
     colnames(mode2) <- c("dec","inc")
   }
   #calculate ellipses
-  if(exists("mode1")==TRUE) {ellips_M1 <- ellips_DI(mode1, lat=lat, long=long)}
-  if(exists("mode2")==TRUE) {ellips_M2 <- ellips_DI(mode2, lat=lat, long=long)}
+  if(exists("mode1")==TRUE) {ellips_M1 <- PmagDiR::ellips_DI(mode1, lat=lat, long=long)}
+  if(exists("mode2")==TRUE) {ellips_M2 <- PmagDiR::ellips_DI(mode2, lat=lat, long=long)}
 
   if(plot==TRUE){
     if(on_plot==FALSE){
       par(fig=c(0,1,0,1), new= FALSE)
       plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
            xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-      equalarea()
+      PmagDiR::equalarea()
     }
-    if(exists("mode1")==TRUE){generate_ellips(ellips_M1[1,1],ellips_M1[1,2],ellips_M1[1,3],ellips_M1[1,4],
-                                              on_plot = TRUE,symbol=symbol, col_d = col_d,
-                                              col_u=col_u,col_l=col_l)}
-    if(exists("mode2")==TRUE){generate_ellips(ellips_M2[1,1],ellips_M2[1,2],ellips_M2[1,3],ellips_M2[1,4],
-                                              on_plot = TRUE,symbol=symbol, col_d = col_d,
-                                              col_u=col_u,col_l=col_l)}
+    if(exists("mode1")==TRUE){PmagDiR::generate_ellips(ellips_M1[1,1],ellips_M1[1,2],ellips_M1[1,3],ellips_M1[1,4],
+                                                       on_plot = TRUE,symbol=symbol, col_d = col_d,
+                                                       col_u=col_u,col_l=col_l)}
+    if(exists("mode2")==TRUE){PmagDiR::generate_ellips(ellips_M2[1,1],ellips_M2[1,2],ellips_M2[1,3],ellips_M2[1,4],
+                                                       on_plot = TRUE,symbol=symbol, col_d = col_d,
+                                                       col_u=col_u,col_l=col_l)}
   }
-  data_M12 <- common_DI(data)
-  ellips_M12 <- ellips_DI(data_M12,lat=lat, long=long)
+  data_M12 <- PmagDiR::common_DI(data)
+  ellips_M12 <- PmagDiR::ellips_DI(data_M12,lat=lat, long=long)
   #plot text with results
   N <- ellips_M12[1,5]
   Dec <- round(ellips_M12[1,1],digits=2)
@@ -2705,15 +2702,15 @@ generate_ellips <- function(D,I,delta_dec,delta_inc,col_d="red",col_u="white",co
   if (on_plot==FALSE) {
     plot(NA, xlim=c(-1,1), ylim=c(-1,1), asp=1,
          xlab="", xaxt="n",ylab="", yaxt="n", axes=FALSE)
-    equalarea()
+    PmagDiR::equalarea()
   }
   #check for negative inclination
   inc <- I
   dec <- D
   UD <- ifelse(inc>0,"D","U")
   inc <- abs(inc)
-  X <- a2cx(inc,dec)
-  Y <- a2cy(inc,dec)
+  X <- PmagDiR::a2cx(inc,dec)
+  Y <- PmagDiR::a2cy(inc,dec)
   if(symbol=="c") {pch <- 21}
   else if(symbol=="s") {pch <- 22}
   else if(symbol=="d") {pch <- 23}
@@ -3436,7 +3433,7 @@ inc_plot <- function(DI,dec=TRUE,plot=TRUE,bimodal=FALSE,on_plot=TRUE, col="blac
 
 #create matrix from fol,lin, and dec inc of vectors
 matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name="matrix",return_P=TRUE){
-  library(matlib)
+  #library(matlib)
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
   P <- Fol*Lin
@@ -3455,7 +3452,7 @@ matrix_maker <- function(Fol=1,Lin=1,v1d,v1i,v2d,v2i,v3d,v3i, export=FALSE, name
   A_vec <- t(A[,3:5])
   A_val <- c(v1,0,0,0,v2,0,0,0,v3)
   A_val <- matrix(A_val,nrow=3,byrow=TRUE)
-  M <- A_vec%*%A_val%*%inv(A_vec)
+  M <- A_vec%*%A_val%*%solve(A_vec)
   if(return_P==TRUE){
     cat(paste("P:",P,"
 "))
@@ -4874,7 +4871,7 @@ sph_ortho <- function(lat=90,long=0,grid=30,coast=FALSE, title="") {
 
 #function that deform dec Inc from eigenvectors
 strain_DI <- function(DIAP,M,export=FALSE,name="strained_dirs"){
-  library(matlib)
+  #library(matlib)
   #degree to radians and vice versa
   d2r <- function(x) {x*(pi/180)}
   r2d <- function(x) {x*(180/pi)}
